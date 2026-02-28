@@ -140,6 +140,6 @@ int main()
     // 5. 汇总输出（如果有多次循环，进行汇总）
     summaryCirculationPrint(damageStatisticsList, maxTime);
     
-    system("pause"); // Windows系统下暂停，等待用户按键后退出
+    //system("pause"); // Windows系统下暂停，等待用户按键后退出
     return 0;  // 程序正常退出
 }

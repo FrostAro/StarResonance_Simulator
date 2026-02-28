@@ -58,9 +58,6 @@ std::string MukuScout::name = "MukuScout";
 
 MukuScout::MukuScout(Person *p) : FightingFantasy(), InstantSkill()
 {
-
-    this->canCharge = true;
-
     this->multiplying = 0;
     this->fixedValue = 0;
 
@@ -91,12 +88,106 @@ std::string MukuScout::getSkillName() const
 
 void MukuScout::setPassiveEffect(Person *p)
 {
-    // p->changeAattackIncrease(0.15);
     p->triggerAction<AttackIncreaseModifyAction>(0.15);
 }
 
 void MukuScout::removePassiveEffect(Person *p)
 {
-    //p->changeAattackIncrease(-0.15);
     p->triggerAction<AttackIncreaseModifyAction>(-0.15);
+}
+
+// 博伊斯
+std::string BYS::name = "BYS";
+
+BYS::BYS(Person *p) : FightingFantasy(), InstantSkill()
+{
+
+    this->canCharge = true;
+    this->maxStack = 2;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->BYS::setSkillType();
+}
+
+void BYS::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void BYS::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, BYSBuff::name);
+}
+
+std::string BYS::getSkillName() const
+{
+    return BYS::name;
+}
+
+void BYS::setPassiveEffect(Person *p)
+{
+    p->triggerAction<PrimaryAttributesPercentModifyAction>(0.15);
+}
+
+void BYS::removePassiveEffect(Person *p)
+{
+    p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.15);
+}
+
+// 伊戈雷乌斯
+std::string YGLWS::name = "YGLWS";
+
+YGLWS::YGLWS(Person *p) : FightingFantasy(), InstantSkill()
+{
+
+    this->canCharge = true;
+    this->maxStack = 2;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->YGLWS::setSkillType();
+}
+
+void YGLWS::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void YGLWS::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, YGLWSBuff::name);
+}
+
+std::string YGLWS::getSkillName() const
+{
+    return YGLWS::name;
+}
+
+void YGLWS::setPassiveEffect(Person *p)
+{
+    p->triggerAction<AttackIncreaseModifyAction>(0.2);
+}
+
+void YGLWS::removePassiveEffect(Person *p)
+{
+    p->triggerAction<AttackIncreaseModifyAction>(-0.2);
 }

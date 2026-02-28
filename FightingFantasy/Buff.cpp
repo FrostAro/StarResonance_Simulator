@@ -66,3 +66,50 @@ MukuScoutBuff::~MukuScoutBuff()
     //this->p->changeAattackIncrease(-this->number);
     this->p->triggerAction<AttackIncreaseModifyAction>(-this->number);
 }
+
+// 博伊斯
+std::string BYSBuff::name = "BYSBuff";
+
+BYSBuff::BYSBuff(Person *p, double) : Buff(p)
+{
+    this->number = 0; // 用作增攻数值
+    this->duration = 2000;
+    this->maxDuration = this->duration;
+    this->p->triggerAction<AttackIncreaseModifyAction>(0.26);
+    this->p->triggerAction<AttackSpeedPercentModifyAction>(0.1);
+}
+
+void BYSBuff::listenerCallback(const DamageInfo &) {}
+
+void BYSBuff::update(const double) {}
+bool BYSBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string BYSBuff::getBuffName() const { return BYSBuff::name; }
+
+BYSBuff::~BYSBuff()
+{
+    this->p->triggerAction<AttackIncreaseModifyAction>(-0.26);
+    this->p->triggerAction<AttackSpeedPercentModifyAction>(-0.1);
+}
+
+// 伊戈雷乌斯
+std::string YGLWSBuff::name = "YGLWSBuff";
+
+YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
+{
+    this->number = 0; // 用作增攻数值
+    this->duration = 2000;
+    this->maxDuration = this->duration;
+    this->p->triggerAction<CriticalCountModifyAction>(6800);
+    this->p->triggerAction<CriticalPercentModifyAction>(0.12);
+}
+
+void YGLWSBuff::listenerCallback(const DamageInfo &) {}
+void YGLWSBuff::update(const double) {}
+bool YGLWSBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string YGLWSBuff::getBuffName() const { return YGLWSBuff::name; }
+
+YGLWSBuff::~YGLWSBuff()
+{
+    this->p->triggerAction<CriticalCountModifyAction>(-6800);
+    this->p->triggerAction<CriticalPercentModifyAction>(-0.12);
+}

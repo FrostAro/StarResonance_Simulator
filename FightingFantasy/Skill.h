@@ -28,3 +28,31 @@ public:
 
 	explicit MukuScout(Person *p);
 };
+
+class BYS : public FightingFantasy, public InstantSkill
+{ // 博伊斯
+public:
+	static std::string name;
+
+	void setSkillType() override;
+	void trigger(Person *p) override;
+	std::string getSkillName() const override;
+	void setPassiveEffect(Person *p) override;
+    void removePassiveEffect(Person *p) override;
+
+	explicit BYS(Person *p);
+};
+
+class YGLWS : public FightingFantasy, public InstantSkill
+{ // 伊戈雷乌斯
+public:
+	static std::string name;
+
+	void setSkillType() override;
+	void trigger(Person *p) override;
+	std::string getSkillName() const override;
+	void setPassiveEffect(Person *p) override;
+    void removePassiveEffect(Person *p) override;
+
+	explicit YGLWS(Person *p);
+};

@@ -620,7 +620,7 @@ std::string DoubleProficientBuff::getBuffName() const { return DoubleProficientB
 DoubleProficientBuff::~DoubleProficientBuff()
 {
     ProficientCountModifyAction::deleteListener(this->getBuffID());
-    this->p->changeProficientCount(static_cast<int>(-this->number));
+    this->p->triggerAction<ProficientCountModifyAction>(-this->number);
 }
 
 // 寒风凝聚
@@ -953,6 +953,7 @@ std::string IllusoryDreamBuff::getBuffName() const { return IllusoryDreamBuff::n
 
 IllusoryDreamBuff::~IllusoryDreamBuff()
 {
+    this->p->triggerAction<RefineATKCountModifyAction>(this->number * -0.1);
     AttackAction::deleteListener(this->getBuffID());
 }
 

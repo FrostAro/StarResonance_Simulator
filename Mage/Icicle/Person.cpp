@@ -22,7 +22,9 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
     this->coolDownReduce = 0.1;
     this->max_energy = 125;
 
-    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle>(this);
+    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_MukuScout>(this);
+    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_BYS>(this);
+    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_YGLWS>(this);
 
     setATK(atk);
 
@@ -30,13 +32,11 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
     changeLuckyMultiplyingByAddMultiplying(0.15 + (this->Lucky - 0.05) / 2);
 
     // 因子效果:智力
-    triggerAction<PrimaryAttributesCountModifyAction>(70);
-    triggerAction<PrimaryAttributesPercentModifyAction>(0.0184);
+    // triggerAction<PrimaryAttributesCountModifyAction>(70);
+    // triggerAction<PrimaryAttributesPercentModifyAction>(0.0184);
     // 因子效果：暴击，幸运
-    //this->changeCriticalCount(static_cast<int>(this->CriticalCount * 0.1));
-    triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.1));
-    //this->changeLuckyCount(static_cast<int>(this->LuckyCount * 0.0927));
-    triggerAction<LuckyCountModifyAction_Icicle>(static_cast<int>(this->LuckyCount * 0.0927));
+    // triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.1));
+    // triggerAction<LuckyCountModifyAction_Icicle>(static_cast<int>(this->LuckyCount * 0.0927));
     
     initializeIncrease();
     changeDamageIncrease(0.08);

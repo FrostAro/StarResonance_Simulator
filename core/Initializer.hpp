@@ -197,6 +197,7 @@ protected:
         {
                 this->p->equipInherentBuff(buffName);
         }
+        this->p->resetATK();
     }
 
 public:

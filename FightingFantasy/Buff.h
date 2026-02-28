@@ -33,3 +33,35 @@ public:
     MukuScoutBuff(Person *p, double n);
     ~MukuScoutBuff() override;
 };
+
+class BYSBuff : public Buff
+{
+public:
+    // 博伊斯
+    static std::string name;
+
+public:
+    void listenerCallback(const DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    BYSBuff(Person *p, double n);
+    ~BYSBuff() override;
+};
+
+class YGLWSBuff : public Buff
+{
+public:
+    // 博伊斯
+    static std::string name;
+
+public:
+    void listenerCallback(const DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    YGLWSBuff(Person *p, double n);
+    ~YGLWSBuff() override;
+};

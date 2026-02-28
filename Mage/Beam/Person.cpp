@@ -24,17 +24,19 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     this->present_energy = max_energy;
     this->proficientToEnergyRatio = 1;
 
-    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam>(this);
+    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
+    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_YGLWS>(this);
 
     setATK(atk);
+    resetATK();
 
     // 奇妙bug：因子效果不可删
     // 因子效果:智力
-    triggerAction<PrimaryAttributesCountModifyAction>(1);
-    triggerAction<PrimaryAttributesPercentModifyAction>(0.0000000184);
+    //triggerAction<PrimaryAttributesCountModifyAction>(1);
+    //triggerAction<PrimaryAttributesPercentModifyAction>(0.0000000184);
     // 因子效果：暴击，全能
-    triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.0000001));
-    triggerAction<AlmightyCountModifyAction>(static_cast<int>(this->AlmightyCount * 0.0000001));
+    // triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.0000001));
+    // triggerAction<AlmightyCountModifyAction>(static_cast<int>(this->AlmightyCount * 0.0000001));
     
     initializeIncrease();
     changeDamageIncrease(0.08);

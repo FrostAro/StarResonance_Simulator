@@ -16,7 +16,9 @@ class Initializer_Mage_Icicle : public Initializer
         equipCertainSkill(Flood_Icicle::name);
         equipCertainSkill(Ultimate_Icicle::name);
         equipCertainSkill(MukuChief::name);
-        equipCertainSkill(MukuScout::name);
+        //equipCertainSkill(MukuScout::name);
+        //equipCertainSkill(BYS::name);
+        equipCertainSkill(YGLWS::name);
     }
 
     void registerSkills() override
@@ -33,6 +35,8 @@ class Initializer_Mage_Icicle : public Initializer
         registerCertainSkill<FantasyImpact>();
         registerCertainSkill<MukuChief>();
         registerCertainSkill<MukuScout>();
+        registerCertainSkill<BYS>();
+        registerCertainSkill<YGLWS>();
     }
 
     void registerBuffs() override
@@ -51,6 +55,8 @@ class Initializer_Mage_Icicle : public Initializer
         registerCertainBuff<MeteoriteSynergyBuff>();
         registerCertainBuff<MukuChiefBuff>();
         registerCertainBuff<MukuScoutBuff>();
+        registerCertainBuff<BYSBuff>();
+        registerCertainBuff<YGLWSBuff>();
         registerCertainBuff<SimulateNormalAttackToRevertIceBuff>();
         registerCertainBuff<PierceSpearBuff>();
         registerCertainBuff<EquipmentSetEffectBuff_Icicle>();
