@@ -191,3 +191,43 @@ void YGLWS::removePassiveEffect(Person *p)
 {
     p->triggerAction<AttackIncreaseModifyAction>(-0.2);
 }
+
+// 嗜血毛球
+std::string SXMQ::name = "SXMQ";
+
+SXMQ::SXMQ(Person *p) : FightingFantasy(), InstantSkill()
+{
+    this->maxStack = 1;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->SXMQ::setSkillType();
+    p->triggerAction<CreateBuffAction>(0,SXMQBuff_Passive::name);
+}
+
+void SXMQ::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void SXMQ::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, SXMQBuff::name);
+}
+
+std::string SXMQ::getSkillName() const
+{
+    return SXMQ::name;
+}
+
+void SXMQ::setPassiveEffect(Person *p) {}
+void SXMQ::removePassiveEffect(Person *p) {}

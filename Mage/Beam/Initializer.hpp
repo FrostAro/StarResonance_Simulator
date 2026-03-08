@@ -18,7 +18,8 @@ class Initializer_Mage_Beam : public Initializer
         equipCertainSkill(Ultimate_Beam::name);
         equipCertainSkill(MukuChief::name);
         //equipCertainSkill(MukuScout::name);
-        equipCertainSkill(YGLWS::name);
+        //equipCertainSkill(YGLWS::name);
+        equipCertainSkill(SXMQ::name);
     }
 
     void registerSkills() override
@@ -36,6 +37,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<MukuChief>();
         registerCertainSkill<MukuScout>();
         registerCertainSkill<YGLWS>();
+        registerCertainSkill<SXMQ>();
     }
 
     void registerBuffs() override
@@ -61,6 +63,8 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<MukuChiefBuff>();
         registerCertainBuff<MukuScoutBuff>();
         registerCertainBuff<YGLWSBuff>();
+        registerCertainBuff<SXMQBuff>();
+        registerCertainBuff<SXMQBuff_Passive>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
 

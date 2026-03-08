@@ -320,6 +320,7 @@ public:
     double getDamageTriggerInterval() const;
     double getDamageTriggerTimer() const;
     int getSinging() const;
+    std::vector<Skill::skillTypeEnum> getSkillType();
 };
 
 // ============================================================================
@@ -464,4 +465,17 @@ public:
 
 	FightingFantasy() = default;
     virtual ~FightingFantasy() = default;
+};
+
+// 临时直接释放型技能（可自定义倍率，便于实现某些临时攻击）
+class temp_InstantSkill : public InstantSkill
+{
+public:
+	static std::string name;
+
+	void setSkillType() {};
+	void trigger(Person *p) {};
+	std::string getSkillName() const override;
+
+	explicit temp_InstantSkill(std::string skillName,double multiplying,double fixedValue);
 };

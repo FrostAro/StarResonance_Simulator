@@ -24,7 +24,7 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
 
     //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_MukuScout>(this);
     //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_BYS>(this);
-    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_YGLWS>(this);
+    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_YGLWS>(this);
 
     setATK(atk);
 

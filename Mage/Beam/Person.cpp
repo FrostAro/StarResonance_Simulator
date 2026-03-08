@@ -25,7 +25,8 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     this->proficientToEnergyRatio = 1;
 
     //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
-    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_YGLWS>(this);
+    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_YGLWS>(this);
+    this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_SXMQ>(this);
 
     setATK(atk);
     resetATK();
@@ -37,7 +38,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     // 因子效果：暴击，全能
     // triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.0000001));
     // triggerAction<AlmightyCountModifyAction>(static_cast<int>(this->AlmightyCount * 0.0000001));
-    
+    this->triggerAction<AttackIncreaseModifyAction>(0.0000001);
     initializeIncrease();
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.1);

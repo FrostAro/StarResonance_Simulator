@@ -445,3 +445,12 @@ int Person::findSkillInSkillCDList()
 	}
 	return -1;
 }
+
+
+// 临时的person类，用于初始化buff判断buff是否为固定
+class temp_Person : public Person
+{   
+public:
+    temp_Person() : Person(){};
+    ~temp_Person(){};
+};

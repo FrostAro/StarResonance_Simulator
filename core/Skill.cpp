@@ -348,6 +348,7 @@ double Skill::getDuration() const { return this->duration; }
 double Skill::getDamageTriggerInterval() const { return this->damageTriggerInterval; }
 double Skill::getDamageTriggerTimer() const { return this->damageTriggerTimer; }
 int Skill::getSinging() const { return this->singing; }
+std::vector<Skill::skillTypeEnum> Skill::getSkillType() { return this->skillTypeList; }
 
 // ============================================================================
 // InstantSkill 类实现
@@ -433,3 +434,13 @@ void FacilitationSkill::stop()
 {
     this->duration = 0;
 }
+
+std::string temp_InstantSkill::name = "temp_InstantSkill";
+temp_InstantSkill::temp_InstantSkill(std::string skillName,double multiplying,double fixedValue) : InstantSkill()
+{
+    this->name = skillName;
+    this->multiplying = multiplying;
+    this->fixedValue = fixedValue;
+}
+
+std::string temp_InstantSkill::getSkillName() const { return temp_InstantSkill::name; }

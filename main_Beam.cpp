@@ -51,11 +51,11 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
         /*三维属性*/ 4593,
-        /*暴击(%)*/ 45.00,/*例如51.63*/
-        /*急速(%)*/ 30.00,
+        /*暴击(%)*/ 40.00,/*例如51.63*/
+        /*急速(%)*/ 30.0,
         /*幸运(%)*/ 05.00,
         /*精通(%)*/ 30.00,
-        /*全能(%)*/ 24.00,
+        /*全能(%)*/ 30.00,
         /*攻击(物理攻击/魔法攻击)*/ 3111,
         /*精炼攻击*/ 820,
         /*元素攻击*/ 35,
@@ -137,7 +137,7 @@ int main()
     // - deltaTime: 时间增量
     // - true: 使用随机种子（每次运行结果不同）
     // - 42: 种子值（当 isRandomSeed=false 时有效，此处未使用）
-    executeSimulation_Beam(damageStatisticsList, 20, maxTime, deltaTime, true, 42);
+    executeSimulation_Beam(damageStatisticsList, 1, maxTime, deltaTime, true, 42);
     
     // 5. 汇总输出（如果有多次循环，进行汇总）
     summaryCirculationPrint(damageStatisticsList, maxTime);

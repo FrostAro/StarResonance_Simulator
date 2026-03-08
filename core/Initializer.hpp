@@ -7,14 +7,6 @@
 #include <memory>
 #include <vector>
 
-// 临时的person类，用于初始化buff判断buff是否为固定
-class temp_Person : public Person
-{   
-public:
-    temp_Person() : Person(){};
-    ~temp_Person(){};
-};
-
 /* ============================================================================
  * @class Initializer
  * @brief 游戏初始化器基类，负责角色和战斗系统的初始化

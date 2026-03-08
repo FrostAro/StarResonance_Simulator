@@ -17,8 +17,8 @@ class Initializer_Mage_Icicle : public Initializer
         equipCertainSkill(Ultimate_Icicle::name);
         equipCertainSkill(MukuChief::name);
         //equipCertainSkill(MukuScout::name);
-        //equipCertainSkill(BYS::name);
-        equipCertainSkill(YGLWS::name);
+        equipCertainSkill(BYS::name);
+        //equipCertainSkill(YGLWS::name);
     }
 
     void registerSkills() override

@@ -1,8 +1,10 @@
 #include "Buff.h"
 #include "../core/Action.h"
 #include "../core/Person.h"
+#include "../core/Skill.h"
 #include "../core/AutoAttack.h"
 #include "../core/Logger.h"
+#include "../core/creators.hpp"
 
 // 姆克头目
 std::string MukuChiefBuff::name = "MukuChiefBuff";
@@ -99,7 +101,7 @@ YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
     this->number = 0; // 用作增攻数值
     this->duration = 2000;
     this->maxDuration = this->duration;
-    this->p->triggerAction<CriticalCountModifyAction>(6800);
+    this->p->triggerAction<CriticalCountModifyAction>(5600);
     this->p->triggerAction<CriticalPercentModifyAction>(0.12);
 }
 
@@ -110,6 +112,89 @@ std::string YGLWSBuff::getBuffName() const { return YGLWSBuff::name; }
 
 YGLWSBuff::~YGLWSBuff()
 {
-    this->p->triggerAction<CriticalCountModifyAction>(-6800);
+    this->p->triggerAction<CriticalCountModifyAction>(-5600);
     this->p->triggerAction<CriticalPercentModifyAction>(-0.12);
+}
+
+// 嗜血毛球
+std::string SXMQBuff::name = "SXMQBuff";
+
+SXMQBuff::SXMQBuff(Person *p, double) : Buff(p)
+{
+    this->number = 0.6; // 用作主动倍率
+    this->duration = 2000;
+    this->maxDuration = this->duration;
+
+    auto info = std::make_unique<CreateSkillListener>(
+        this->getBuffID(), [this](Skill *const skill)
+        { this->listenerCallback(skill); });
+    CreateSkillAction::addListener(std::move(info));
+}
+
+void SXMQBuff::listenerCallback(Skill *const skill) 
+{
+    skill->multiplying += this->number;
+}
+
+void SXMQBuff::update(const double) {}
+bool SXMQBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string SXMQBuff::getBuffName() const { return SXMQBuff::name; }
+
+SXMQBuff::~SXMQBuff() 
+{
+    CreateSkillAction::deleteListener(this->getBuffID());
+}
+
+// 嗜血毛球(被动)
+std::string SXMQBuff_Passive::name = "SXMQBuff_Passive";
+
+SXMQBuff_Passive::SXMQBuff_Passive(Person *p, double) : Buff(p)
+{
+    this->number = 10; // 用作触发层数
+    this->duration = 9999999;
+    this->maxDuration = this->duration;
+
+    this->tempPerson = std::make_unique<temp_Person>();
+
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo &info)
+        { this->listenerCallback(info); });
+    AttackAction::addListener(std::move(info));
+}
+
+void SXMQBuff_Passive::listenerCallback(const DamageInfo &info) 
+{
+    // 防重入标志（成员变量，初始为 false）
+    if (inCallback) return;
+    inCallback = true;
+
+    auto skill = SkillCreator::createSkill(info.skillName,this->tempPerson.get());
+    bool a = false;
+    for(const auto& i : skill->getSkillType())
+    {
+        if(i == Skill::skillTypeEnum::PARTICULAR || i == Skill::skillTypeEnum::SPECIALIZED)
+        {
+            a = true;
+        }
+    }
+    if(a)
+    {
+        this->stack++;
+        if(this->stack >= this->number)
+        {
+            auto willAttackSkill = std::make_unique<temp_InstantSkill>("SXMQ_Passive",4.00,0);
+            this->p->triggerAction<AttackAction>(0,willAttackSkill.get());
+            this->stack = 0;
+        }
+    }
+
+    inCallback = false;
+}
+
+void SXMQBuff_Passive::update(const double) {}
+bool SXMQBuff_Passive::shouldBeRemoved() { return this->duration < 0; }
+std::string SXMQBuff_Passive::getBuffName() const { return SXMQBuff_Passive::name; }
+SXMQBuff_Passive::~SXMQBuff_Passive() 
+{
+    AttackAction::deleteListener(this->getBuffID());
 }

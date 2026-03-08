@@ -1025,7 +1025,7 @@ int Person::getLuckyCount(const double lucky)
 
 int Person::getProficientCount(const double proficient)
 {
-    const double y = proficient;
+    const double y = proficient;    
     return static_cast<int>((this->propertyTransformationCoeffcient_General * y) / (1 - y));
 }
 
