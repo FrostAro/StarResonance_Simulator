@@ -15,10 +15,17 @@ class Initializer_Mage_Icicle : public Initializer
         equipCertainSkill(WaterDrop::name);
         equipCertainSkill(Flood_Icicle::name);
         equipCertainSkill(Ultimate_Icicle::name);
-        equipCertainSkill(MukuChief::name);
-        //equipCertainSkill(MukuScout::name);
-        equipCertainSkill(BYS::name);
-        //equipCertainSkill(YGLWS::name);
+        // 根据幻想配置装备第二个幻想技能
+        if (m_fantasyConfig == 0) {
+            equipCertainSkill(MukuChief::name);
+            equipCertainSkill(MukuScout::name);   // 姆头+尖兵
+        } else if (m_fantasyConfig == 1) {
+            equipCertainSkill(MukuChief::name);
+            equipCertainSkill(BYS::name);         // 姆头+博伊斯
+        } else {
+            equipCertainSkill(MukuChief::name);
+            equipCertainSkill(YGLWS::name);       // 姆头+伊戈雷乌斯
+        }
     }
 
     void registerSkills() override
@@ -68,5 +75,5 @@ class Initializer_Mage_Icicle : public Initializer
     }
 
 public:
-    Initializer_Mage_Icicle(Person* p, double deltaTime) : Initializer(p,deltaTime){}
+    Initializer_Mage_Icicle(Person* p, double deltaTime, int fantasyConfig) : Initializer(p,deltaTime,fantasyConfig){}
 };

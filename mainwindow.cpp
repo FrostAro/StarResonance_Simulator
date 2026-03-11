@@ -47,7 +47,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
                                    int maxTime,
                                    int deltaTime,
                                    bool randomSeed,
-                                   uint32_t seed)
+                                   uint32_t seed,
+                                   int fantasyConfig)
     : m_profession(profession),
       m_primaryAttr(primaryAttr),
       m_crit(crit),
@@ -67,7 +68,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
       m_maxTime(maxTime),
       m_deltaTime(deltaTime),
       m_randomSeed(randomSeed),
-      m_seed(seed)
+      m_seed(seed),
+      m_fantasyConfig(fantasyConfig)
 {
 }
 
@@ -99,14 +101,14 @@ void SimulationWorker::run()
                 m_atk, m_refineAtk, m_elementAtk,
                 m_attackSpeed, m_castingSpeed,  // 注意：这里直接传入百分比值，不在内部除以100（与控制台版本一致）
                 m_critDmgSet, m_incSet, m_eleIncSet,
-                m_maxTime);
+                m_maxTime, m_fantasyConfig);
         } else {
             person = std::make_unique<Mage_Beam>(
                 m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
                 m_atk, m_refineAtk, m_elementAtk,
                 m_attackSpeed, m_castingSpeed,
                 m_critDmgSet, m_incSet, m_eleIncSet,
-                m_maxTime);
+                m_maxTime, m_fantasyConfig);
         }
 
         // 设置随机种子
@@ -118,10 +120,10 @@ void SimulationWorker::run()
 
         // 初始化角色（装备技能、Buff等）
         if (m_profession == "icicle") {
-            auto init = std::make_unique<Initializer_Mage_Icicle>(person.get(), m_deltaTime);
+            auto init = std::make_unique<Initializer_Mage_Icicle>(person.get(), m_deltaTime, m_fantasyConfig);
             init->Initialize();
         } else {
-            auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime);
+            auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig);
             init->Initialize();
         }
 
@@ -222,8 +224,9 @@ MainWindow::MainWindow(QWidget *parent)
         {"primaryAttr", 4593}, {"crit", 36.00}, {"quickness", 1.05}, {"lucky", 51.70}, {"proficient", 6.00}, {"almighty", 17.58}, {"atk", 3111}, {"refineAtk", 820}, {"elementAtk", 35}, {"attackSpeed", 10.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
     m_defaults["beam"] = {
         {"primaryAttr", 4593}, {"crit", 45.00}, {"quickness", 30.00}, {"lucky", 5.00}, {"proficient", 30.00}, {"almighty", 24.00}, {"atk", 3111}, {"refineAtk", 820}, {"elementAtk", 35}, {"attackSpeed", 10.00}, {"castingSpeed", 60.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
-
-    onProfessionChanged(0); // 加载默认值
+    connect(m_professionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &MainWindow::onProfessionChanged);
+    onProfessionChanged(0); // 初始化冰矛
 }
 
 MainWindow::~MainWindow()
@@ -267,11 +270,21 @@ QWidget *MainWindow::createInputPanel()
     QGridLayout *layout = new QGridLayout(groupBox);
 
     // 职业选择
+    int row = 0;
     layout->addWidget(new QLabel("职业 *"), 0, 0);
     m_professionCombo = new QComboBox;
     m_professionCombo->addItem("冰矛 · Icicle");
     m_professionCombo->addItem("射线 · Beam");
-    layout->addWidget(m_professionCombo, 0, 1);
+    layout->addWidget(m_professionCombo, row++, 1);
+
+    // 幻想配置下拉框
+    layout->addWidget(new QLabel("幻想配置"), row, 0);
+    m_fantasyCombo = new QComboBox;
+    // 初始默认填充冰矛的选项
+    m_fantasyCombo->addItem("姆头 + 尖兵");
+    m_fantasyCombo->addItem("姆头 + 博伊斯");
+    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+    layout->addWidget(m_fantasyCombo, row++, 1);
 
     // 创建输入控件
     auto createRow = [&](int row, const QString &label, QLineEdit *&edit, const QString &defaultVal)
@@ -355,6 +368,18 @@ QWidget *MainWindow::createResultPanel()
 
 void MainWindow::onProfessionChanged(int index)
 {
+    m_fantasyCombo->clear(); // 清空原有选项
+    if (index == 0) { // 冰矛
+        m_fantasyCombo->addItem("姆头 + 尖兵");
+        m_fantasyCombo->addItem("姆头 + 博伊斯");
+        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+        m_fantasyCombo->setCurrentIndex(0); // 默认姆头+尖兵
+    } else { // 射线
+        m_fantasyCombo->addItem("姆头 + 尖兵");
+        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+        m_fantasyCombo->addItem("姆头 + 嗜血毛球");
+        m_fantasyCombo->setCurrentIndex(0); // 默认尖兵（与之前保持一致）
+    }
     QString prof = (index == 0) ? "icicle" : "beam";
     updateDefaultsForProfession(prof);
 }
@@ -413,6 +438,7 @@ void MainWindow::onRunClicked()
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
+    int fantasyConfig = m_fantasyCombo->currentIndex(); // 获取幻想配置索引
 
     // 清空之前的日志和表格
     m_logText->clear();
@@ -439,7 +465,8 @@ void MainWindow::onRunClicked()
                                     maxTime,
                                     deltaTime,
                                     randomSeed,
-                                    seed);
+                                    seed,
+                                    fantasyConfig);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &SimulationWorker::run);

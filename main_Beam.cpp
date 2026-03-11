@@ -64,8 +64,8 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         /*爆伤额外值*/ 0,/*例如0.2*/
         /*增伤额外值*/ 0,
         /*元素增伤额外值*/ 0,
-        /*程序运行总tick*/ maxTime
-        );
+        /*程序运行总tick*/ maxTime,
+        /*幻想配置*/ 0);
         
         // 设置随机种子
         if (isRandomSeed) {
@@ -77,7 +77,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         }
         
         // 初始化角色（装备技能、设置buff等）
-        auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime);
+        auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime,0);
         Initializer->Initialize();
         
         // 开始模拟运行

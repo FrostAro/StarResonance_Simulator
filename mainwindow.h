@@ -20,6 +20,21 @@
 #include "core/Person.h"
 #include "core/AutoAttack.h"
 
+// 在 MainWindow 类前定义幻想配置枚举
+enum class FantasyBeamConfig {
+    MukuChief_MukuScout = 0,
+    MukuChief_YGLWS,
+    MukuChief_SXMQ
+};
+
+enum class FantasyIcicleConfig {
+    MukuChief_MukuScout = 0,
+    MukuChief_BYS,
+    MukuChief_YGLWS
+};
+
+// ============================================================================
+// 模拟循环实现
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -48,7 +63,8 @@ public:
                               int maxTime,
                               int deltaTime,
                               bool randomSeed,
-                              uint32_t seed);
+                              uint32_t seed,
+                              int fantasyConfig);
     ~SimulationWorker(); 
 public slots:
     void run();  // 在子线程中执行模拟循环
@@ -76,6 +92,7 @@ private:
     int m_deltaTime;
     bool m_randomSeed;
     uint32_t m_seed;
+    int m_fantasyConfig;  // 保存幻想配置索引
 };
 
 class MainWindow : public QMainWindow
@@ -101,6 +118,7 @@ private:
 
     // 输入控件
     QComboBox* m_professionCombo;
+    QComboBox* m_fantasyCombo;  // 新增幻想配置下拉框
     QLineEdit* m_primaryAttrEdit;
     QLineEdit* m_critEdit;
     QLineEdit* m_quicknessEdit;

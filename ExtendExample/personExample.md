@@ -67,7 +67,7 @@ public:
               const int atk, const int refindatk, const int elementatk, 
               const double attackSpeed, const double castingSpeed,
               const double critialdamage_set, const double increasedamage_set, 
-              const double elementdamage_set, const int totalTime);
+              const double elementdamage_set, const int totalTime, int fantasyConfig);
 };
 ```
 
@@ -80,7 +80,7 @@ NewPerson::NewPerson(const double attributes, const double critical, const doubl
                    const int atk, const int refindatk, const int elementatk,
                    const double attackSpeed, const double castingSpeed,
                    const double critialdamage_set, const double increasedamage_set,
-                   const double elementdamage_set, const int totalTime)
+                   const double elementdamage_set, const int totalTime, int fantasyConfig)
     : Person(attributes, critical, quickness, lucky, Proficient, almighty,
              atk, refindatk, elementatk, attackSpeed, castingSpeed,
              critialdamage_set, increasedamage_set, elementdamage_set, totalTime)
@@ -100,6 +100,7 @@ NewPerson::NewPerson(const double attributes, const double critical, const doubl
     setATK();
     
     // 3. 创建职业特有的AutoAttack控制器（必须）
+    // 如果有多中配置使用fantasyConfig创建
     this->autoAttackPtr = std::make_unique<AutoAttack_NewPerson>(this);
     
     // 4. 初始化乘区
@@ -112,11 +113,7 @@ NewPerson::NewPerson(const double attributes, const double critical, const doubl
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.1);
     
-    // 6. 因子效果/装备加成（可选）
-    this->changeAttributesByCount(70);          // 基础属性加成
-    this->changeAttributesByPersent(0.0184);    // 属性百分比加成
-    
-    // 7. 其他职业特有初始化
+    // 6. 其他职业特有初始化
     // ...
 }
 
@@ -189,3 +186,12 @@ double Mage_Icicle::changeLuckyPersent(double persent)
     return this->Lucky;
 }
 ```
+
+### 5.注册新的幻想配置
+
+如果需要添加新的幻想配置（例如未来新增的幻想组合），只需：
+1.在对应职业的枚举中添加新值。
+2.在 onProfessionChanged 中为对应职业的下拉框添加新选项。
+3.在 Person 构造函数中添加对应的 case 分支。
+4.在 Initializer 的 equipSkills() 中添加对应的装备逻辑。
+5.如果需要新的自动攻击类，请实现它并在 Person 中创建。

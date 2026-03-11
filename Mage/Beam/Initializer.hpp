@@ -17,9 +17,14 @@ class Initializer_Mage_Beam : public Initializer
         equipCertainSkill(Flood_Beam::name);
         equipCertainSkill(Ultimate_Beam::name);
         equipCertainSkill(MukuChief::name);
-        //equipCertainSkill(MukuScout::name);
-        //equipCertainSkill(YGLWS::name);
-        equipCertainSkill(SXMQ::name);
+        // 根据幻想配置装备第二个幻想技能
+        if (m_fantasyConfig == 0) {
+            equipCertainSkill(MukuScout::name);   // 姆头+尖兵
+        } else if (m_fantasyConfig == 1) {
+            equipCertainSkill(YGLWS::name);       // 姆头+伊戈雷乌斯
+        } else {
+            equipCertainSkill(SXMQ::name);        // 姆头+嗜血毛球
+        }
     }
 
     void registerSkills() override
@@ -76,5 +81,5 @@ class Initializer_Mage_Beam : public Initializer
     }
 
 public:
-    Initializer_Mage_Beam(Person* p, double deltaTime) : Initializer(p,deltaTime){}
+    Initializer_Mage_Beam(Person* p, double deltaTime, int fantasyConfig) : Initializer(p,deltaTime,fantasyConfig){}
 };

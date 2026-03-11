@@ -77,7 +77,8 @@ std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
     /*爆伤额外值*/ 0.x,/*例如0.2*/
     /*增伤额外值*/ 0.x,
     /*元素增伤额外值*/ 0.x,
-    /*程序运行总tick*/ maxTime
+    /*程序运行总tick*/ maxTime,
+    /*幻想配置*/ 0
 );
 ```
 
@@ -102,8 +103,9 @@ std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
 
 #### 幻想
 
-- 5阶姆克头目
-- 5阶姆克尖兵
+- 姆头+尖兵
+- 姆头+博伊斯
+- 姆头+风龙
 
 ## 输出说明
 

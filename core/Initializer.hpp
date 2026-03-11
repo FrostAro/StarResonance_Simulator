@@ -32,6 +32,7 @@ class Initializer
 {
 protected:
     double deltaTime = 0;
+    int m_fantasyConfig = 0;          ///< 额外的幻想配置参数，供子类使用
     Person* p;                        ///< 要初始化的角色指针
     std::vector<std::string> equippedSkills{};      ///< 已装备技能名称列表
     std::vector<std::string> inherentBuffs{};       ///< 固有Buff名称列表
@@ -216,8 +217,8 @@ public:
      * @brief 构造函数
      * @param p 要初始化的角色指针
      */
-    Initializer(Person* p, double deltaTime)
-                : p(p),deltaTime(deltaTime){}
+    Initializer(Person* p, double deltaTime, int fantasyConfig)
+                : p(p),deltaTime(deltaTime), m_fantasyConfig(fantasyConfig){}
 
     virtual ~Initializer() = default;
 };

@@ -5,7 +5,8 @@
 
 Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                          const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
-                         const double critialdamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime)
+                         const double critialdamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
+                         const int fantasyConfig)
     : Person(PrimaryAttributes, critical, quickness, lucky, Proficient, almighty,
              atk, refindatk, elementatk, attackSpeed, castingSpeed,
              critialdamage_set, increasedamage_set, elementdamage_set, totalTime)
@@ -22,9 +23,21 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
     this->coolDownReduce = 0.1;
     this->max_energy = 125;
 
-    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_MukuScout>(this);
-    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_BYS>(this);
-    //this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_YGLWS>(this);
+        // 根据幻想配置选择对应的自动战斗逻辑
+    switch (fantasyConfig) {
+        case 0:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_MukuScout>(this);
+            break;
+        case 1:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_BYS>(this);
+            break;
+        case 2:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_YGLWS>(this);
+            break;
+        default:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Icicle_MukuScout>(this);
+            break;
+    }
 
     setATK(atk);
 
