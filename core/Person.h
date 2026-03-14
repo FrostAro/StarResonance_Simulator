@@ -228,40 +228,40 @@ public:
 	void addAttackSpeed(double persent);   // 增加攻击速度百分比
 
 	// ==== 乘区初始化与修改 ====
-	void initializeIncrease();					  	  // 初始化乘区
-	double changePrimaryAttributesByCount(double PrimaryAttributesCount);					// 通过属性点数修改主属性
-	double changePrimaryAttributesByPersent(double PrimaryAttributesPersent);				// 通过百分比修改主属性
-	double setATK(double atk);                        // 设置基础攻击力
-	double resetATK();								  // 重新计算攻击力（基于主属性）
-	double changeATKCount(double count);			  // 修改攻击力数值
-	double changeRefineATKCount(double n);				  // 修改精炼攻击
+	void initializeIncrease();					  	  				// 初始化乘区
+	virtual double changePrimaryAttributesByCount(double PrimaryAttributesCount);					// 通过属性点数修改主属性
+	virtual double changePrimaryAttributesByPersent(double PrimaryAttributesPersent);				// 通过百分比修改主属性
+	virtual double setATK(double atk);                        						// 设置基础攻击力
+	virtual double resetATK();								  						// 重新计算攻击力（基于主属性）
+	virtual double changeATKCount(double count);			  		// 修改攻击力数值
+	virtual double changeRefineATKCount(double n);				  	// 修改精炼攻击
 
-	double setAattackIncrease();											// 初始化攻击增加乘区
-	double changeAattackIncrease(double attackIncrease); 					// 修改攻击增加乘区
+	virtual double setAattackIncrease();													// 初始化攻击增加乘区
+	virtual double changeAattackIncrease(double attackIncrease); 					// 修改攻击增加乘区
 
-	double setElementIncrease();											// 初始化元素增伤乘区
-	double changeElementIncreaseByProficient(double proficient);			// 通过精通修改元素增伤
-	double changeElementIncreaseByElementIncrease(double elementIncrease); 	// 直接修改元素增伤
+	virtual double setElementIncrease();													// 初始化元素增伤乘区
+	virtual double changeElementIncreaseByProficient(double proficient);			// 通过精通修改元素增伤
+	virtual double changeElementIncreaseByElementIncrease(double elementIncrease); 	// 直接修改元素增伤
 
-	double setAlmightyIncrease();											// 初始化全能增伤乘区
-	double changeAlmightyIncrease(double almighty); 						// 修改全能增伤乘区
+	virtual double setAlmightyIncrease();													// 初始化全能增伤乘区
+	virtual double changeAlmightyIncrease(double almighty); 						// 修改全能增伤乘区
 
-	double setDamageIncrease();					   							// 初始化通用增伤乘区
-	double changeDamageIncrease(double increase); 							// 修改通用增伤乘区
+	virtual double setDamageIncrease();					   									// 初始化通用增伤乘区
+	virtual double changeDamageIncrease(double increase); 							// 修改通用增伤乘区
 
-	double setCriticalDamage();						   						// 初始化暴击伤害乘区
-	double changeCriticalDamage(double criticalDamage); 					// 修改暴击伤害乘区
+	virtual double setCriticalDamage();						   								// 初始化暴击伤害乘区
+	virtual double changeCriticalDamage(double criticalDamage); 					// 修改暴击伤害乘区
 
-	double setLuckyMultiplying();								   			// 初始化幸运倍率
-	double changeLuckyMultiplyingByAddMultiplying(double addMultiplying); 	// 修改幸运倍率
+	virtual double setLuckyMultiplying();								   					// 初始化幸运倍率
+	virtual double changeLuckyMultiplyingByAddMultiplying(double addMultiplying); 	// 修改幸运倍率
 
-	double setDreamIncrease();						   						// 初始化梦境增伤乘区
-	double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
+	virtual double setDreamIncrease();						   								// 初始化梦境增伤乘区
+	virtual double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
 
-	double changeCastingSpeeaByPersent(const double castingSpeedPersent);	// 修改施法速度
-	double changeAttackSpeeaByPersent(const double attackSpeedPersent);		// 修改攻击速度
+	virtual double changeCastingSpeeaByPersent(const double castingSpeedPersent);			// 修改施法速度
+	virtual double changeAttackSpeeaByPersent(const double attackSpeedPersent);		// 修改攻击速度
 
-	double chanageDamageReduce(const double n);								// 修改减伤区
+	virtual double chanageDamageReduce(const double n);								// 修改减伤区
 
 	// ==== 技能管理 ====
 	void createSkill(std::unique_ptr<Skill> newSkill);				// 创建并开始释放一个技能

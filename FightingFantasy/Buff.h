@@ -106,3 +106,20 @@ public:
     SXMQBuff_Passive(Person *p, double n);
     ~SXMQBuff_Passive() override;
 };
+
+class HYXZBuff : public Buff
+{
+public:
+    // 幻妖蟹蛛
+    static std::string name;
+    bool inCallback = false;
+
+public:
+    void listenerCallback(Skill *const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    HYXZBuff(Person *p, double n);
+    ~HYXZBuff() override;
+};

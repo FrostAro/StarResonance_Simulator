@@ -14,7 +14,8 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
 {
     // 覆盖基类中的默认值
     this->primaryAttributeRatio = 0.6;
-    this->proficientRatio = 0.4;
+    this->proficientRatio = 0.2;
+    this->proficientEnhanceRatio = 0.03;
     this->almightyRatio = 0.35;
     this->maxResourceNum = 3;
     this->castingSpeedRatio = 2;
@@ -36,6 +37,12 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
         case 2:
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_SXMQ>(this);
             break;
+        case 3:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_HYXZ>(this);
+            break;
+        case 4:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_JBMQ>(this);
+            break;
         default:
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
             break;
@@ -55,4 +62,21 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     initializeIncrease();
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.1);
+}
+
+double Mage_Beam::changeElementIncreaseByProficient(double proficient)
+{
+    // 注意：proficient 是小数（如0.1代表10%），增效应乘以100转换为百分比数值
+    double tempRatioLast = this->proficientRatio * (1 + this->proficientEnhanceRatio * this->getProficient() * 100);
+    double tempRatioNew = this->proficientRatio * (1 + this->proficientEnhanceRatio * proficient * 100);
+    this->elementIncrease -= this->getProficient() * tempRatioLast;
+    this->elementIncrease += proficient * tempRatioNew;
+    return this->elementIncrease;
+}
+
+double Mage_Beam::setElementIncrease()
+{
+    this->elementIncrease = this->Proficient * this->proficientRatio 
+                          * (1 + this->proficientEnhanceRatio * this->Proficient * 100);
+    return this->elementIncrease;
 }

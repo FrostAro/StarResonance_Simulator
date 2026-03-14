@@ -106,7 +106,18 @@ YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
 }
 
 void YGLWSBuff::listenerCallback(const DamageInfo &) {}
-void YGLWSBuff::update(const double) {}
+void YGLWSBuff::update(const double) 
+{
+    static double lastCritical = 0;
+    lastCritical = this->p->getCritical();
+    if(this->p->getCritical() > 0.6)
+    {
+        double lastAdd = (lastCritical - 0.6) * 0.3;
+        this->p->triggerAction<CriticalPercentModifyAction>(-lastAdd);
+        double add = (this->p->getCritical() - 0.6) * 0.3; 
+        this->p->triggerAction<CriticalPercentModifyAction>(add);
+    }
+}
 bool YGLWSBuff::shouldBeRemoved() { return this->duration < 0; }
 std::string YGLWSBuff::getBuffName() const { return YGLWSBuff::name; }
 
@@ -121,7 +132,7 @@ std::string SXMQBuff::name = "SXMQBuff";
 
 SXMQBuff::SXMQBuff(Person *p, double) : Buff(p)
 {
-    this->number = 0.6; // 用作主动倍率
+    this->number = 0.78; // 用作主动倍率
     this->duration = 2000;
     this->maxDuration = this->duration;
 
@@ -133,7 +144,18 @@ SXMQBuff::SXMQBuff(Person *p, double) : Buff(p)
 
 void SXMQBuff::listenerCallback(Skill *const skill) 
 {
-    skill->multiplying += this->number;
+    bool a = false;
+    for(auto i : skill->getSkillType())
+    {
+        if(i == Skill::skillTypeEnum::PARTICULAR || i == Skill::skillTypeEnum::SPECIALIZED)
+        {
+            a = true;
+        }
+    }
+    if(a)
+    {
+        skill->fixedValue += this->number * this->p->getATK();
+    }
 }
 
 void SXMQBuff::update(const double) {}
@@ -197,4 +219,27 @@ std::string SXMQBuff_Passive::getBuffName() const { return SXMQBuff_Passive::nam
 SXMQBuff_Passive::~SXMQBuff_Passive() 
 {
     AttackAction::deleteListener(this->getBuffID());
+}
+
+
+// 幻妖蟹蛛
+std::string HYXZBuff::name = "HYXZBuff";
+
+HYXZBuff::HYXZBuff(Person *p, double) : Buff(p)
+{
+    this->number = 0.6; // 用作主动倍率
+    this->duration = 2000;
+    this->maxDuration = this->duration;
+
+    p->triggerAction<ProficientPercentModifyAction>(0.2);
+}
+
+void HYXZBuff::listenerCallback(Skill *const skill) {}
+
+void HYXZBuff::update(const double) {}
+bool HYXZBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string HYXZBuff::getBuffName() const { return HYXZBuff::name; }
+HYXZBuff::~HYXZBuff() 
+{
+    this->p->triggerAction<ProficientPercentModifyAction>(-0.2);
 }

@@ -157,7 +157,7 @@ YGLWS::YGLWS(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
+    this->MaxCD = 6000;
     this->MaxchargeCD = 100;
     this->CD = 0;
     this->chargeCD = 0;
@@ -184,12 +184,12 @@ std::string YGLWS::getSkillName() const
 
 void YGLWS::setPassiveEffect(Person *p)
 {
-    p->triggerAction<AttackIncreaseModifyAction>(0.2);
+    p->triggerAction<CriticalDamageModifyAction>(0.35);
 }
 
 void YGLWS::removePassiveEffect(Person *p)
 {
-    p->triggerAction<AttackIncreaseModifyAction>(-0.2);
+    p->triggerAction<CriticalDamageModifyAction>(-0.35);
 }
 
 // 嗜血毛球
@@ -231,3 +231,51 @@ std::string SXMQ::getSkillName() const
 
 void SXMQ::setPassiveEffect(Person *p) {}
 void SXMQ::removePassiveEffect(Person *p) {}
+
+
+// 幻妖蟹蛛
+std::string HYXZ::name = "HYXZ";
+
+HYXZ::HYXZ(Person *p) : FightingFantasy(), InstantSkill()
+{
+
+    this->maxStack = 1;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->HYXZ::setSkillType();
+}
+
+void HYXZ::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void HYXZ::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, HYXZBuff::name);
+}
+
+std::string HYXZ::getSkillName() const
+{
+    return HYXZ::name;
+}
+
+void HYXZ::setPassiveEffect(Person *p)
+{
+    p->triggerAction<ProficientCountModifyAction>(8960);
+}
+
+void HYXZ::removePassiveEffect(Person *p)
+{
+    p->triggerAction<ProficientCountModifyAction>(-8960);
+}

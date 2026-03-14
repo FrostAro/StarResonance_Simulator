@@ -49,23 +49,27 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 创建射线法师角色对象，并设置基础属性
         // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
+
+        int fantasyConfig = 2; // 幻想配置参数（0-3），控制装备的幻想技能组合
+
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
         /*三维属性*/ 4593,
-        /*暴击(%)*/ 40.00,/*例如51.63*/
-        /*急速(%)*/ 30.0,
+        /*暴击(%)*/ 38.94,/*例如51.63*/
+        /*急速(%)*/ 44.77,
         /*幸运(%)*/ 05.00,
-        /*精通(%)*/ 30.00,
-        /*全能(%)*/ 30.00,
+        /*精通(%)*/ 42.51,
+        /*全能(%)*/ 36.54,
         /*攻击(物理攻击/魔法攻击)*/ 3111,
         /*精炼攻击*/ 820,
         /*元素攻击*/ 35,
         /*攻击速度(%)*/ 10.00,
-        /*施法速度(%)*/ 60.00,
+        /*施法速度(%)*/ 104.54,
         /*爆伤额外值*/ 0,/*例如0.2*/
         /*增伤额外值*/ 0,
         /*元素增伤额外值*/ 0,
         /*程序运行总tick*/ maxTime,
-        /*幻想配置*/ 0);
+        /*幻想配置*/ fantasyConfig
+        );
         
         // 设置随机种子
         if (isRandomSeed) {
@@ -77,7 +81,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         }
         
         // 初始化角色（装备技能、设置buff等）
-        auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime,0);
+        auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime,fantasyConfig);
         Initializer->Initialize();
         
         // 开始模拟运行

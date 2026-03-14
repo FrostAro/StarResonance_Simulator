@@ -268,62 +268,134 @@ QWidget *MainWindow::createInputPanel()
     groupBox->setStyleSheet("QGroupBox { font-weight: bold; }");
 
     QGridLayout *layout = new QGridLayout(groupBox);
+    int row = 0; // 当前行计数器
 
-    // 职业选择
-    int row = 0;
-    layout->addWidget(new QLabel("职业 *"), 0, 0);
+    // 设置列拉伸：第0列固定大小（标签），第1列自动拉伸
+    layout->setColumnStretch(0, 0);
+    layout->setColumnStretch(1, 1);
+
+    // 0: 职业选择
+    layout->addWidget(new QLabel("职业 *"), row, 0);
     m_professionCombo = new QComboBox;
     m_professionCombo->addItem("冰矛 · Icicle");
     m_professionCombo->addItem("射线 · Beam");
     layout->addWidget(m_professionCombo, row++, 1);
 
-    // 幻想配置下拉框
+    // 1: 幻想配置
     layout->addWidget(new QLabel("幻想配置"), row, 0);
     m_fantasyCombo = new QComboBox;
-    // 初始默认填充冰矛的选项
+    // 初始填充冰矛的选项（将在 onProfessionChanged 中动态更新）
     m_fantasyCombo->addItem("姆头 + 尖兵");
-    m_fantasyCombo->addItem("姆头 + 博伊斯");
-    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+    m_fantasyCombo->addItem("姆头 + 博伊斯(仅三次释放)");
+    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯(仅三次释放)");
     layout->addWidget(m_fantasyCombo, row++, 1);
 
-    // 创建输入控件
-    auto createRow = [&](int row, const QString &label, QLineEdit *&edit, const QString &defaultVal)
-    {
-        layout->addWidget(new QLabel(label), row, 0);
-        edit = new QLineEdit(defaultVal);
-        layout->addWidget(edit, row, 1);
-    };
+    // 2: 三维属性
+    layout->addWidget(new QLabel("三维属性"), row, 0);
+    m_primaryAttrEdit = new QLineEdit("4593");
+    layout->addWidget(m_primaryAttrEdit, row++, 1);
 
-    createRow(1, "三维属性", m_primaryAttrEdit, "4593");
-    createRow(2, "暴击 (%)", m_critEdit, "36.00");
-    createRow(3, "急速 (%)", m_quicknessEdit, "1.05");
-    createRow(4, "幸运 (%)", m_luckyEdit, "51.70");
-    createRow(5, "精通 (%)", m_proficientEdit, "6.00");
-    createRow(6, "全能 (%)", m_almightyEdit, "17.58");
-    createRow(7, "攻击", m_atkEdit, "3111");
-    createRow(8, "精炼攻击", m_refineAtkEdit, "820");
-    createRow(9, "元素攻击", m_elementAtkEdit, "35");
-    createRow(10, "攻击速度 (%)", m_attackSpeedEdit, "10.00");
-    createRow(11, "施法速度 (%)", m_castingSpeedEdit, "0.00");
-    createRow(12, "爆伤额外值", m_critDmgSetEdit, "0");
-    createRow(13, "增伤额外值", m_incSetEdit, "0");
-    createRow(14, "元素增伤额外值", m_eleIncSetEdit, "0");
-    createRow(15, "模拟循环次数", m_timesEdit, "1");
-    createRow(16, "最大运行时间 (0.01s)", m_maxTimeEdit, "18000");
-    createRow(17, "deltaTime (0.01s)", m_deltaTimeEdit, "1");
+    // 3: 暴击 (%)
+    layout->addWidget(new QLabel("暴击 (%)"), row, 0);
+    m_critEdit = new QLineEdit("36.00");
+    layout->addWidget(m_critEdit, row++, 1);
 
-    // 随机种子选项
+    // 4: 急速 (%)
+    layout->addWidget(new QLabel("急速 (%)"), row, 0);
+    m_quicknessEdit = new QLineEdit("1.05");
+    layout->addWidget(m_quicknessEdit, row++, 1);
+
+    // 5: 幸运 (%)
+    layout->addWidget(new QLabel("幸运 (%)"), row, 0);
+    m_luckyEdit = new QLineEdit("51.70");
+    layout->addWidget(m_luckyEdit, row++, 1);
+
+    // 6: 精通 (%)
+    layout->addWidget(new QLabel("精通 (%)"), row, 0);
+    m_proficientEdit = new QLineEdit("6.00");
+    layout->addWidget(m_proficientEdit, row++, 1);
+
+    // 7: 全能 (%)
+    layout->addWidget(new QLabel("全能 (%)"), row, 0);
+    m_almightyEdit = new QLineEdit("17.58");
+    layout->addWidget(m_almightyEdit, row++, 1);
+
+    // 8: 攻击
+    layout->addWidget(new QLabel("攻击"), row, 0);
+    m_atkEdit = new QLineEdit("3111");
+    layout->addWidget(m_atkEdit, row++, 1);
+
+    // 9: 精炼攻击
+    layout->addWidget(new QLabel("精炼攻击"), row, 0);
+    m_refineAtkEdit = new QLineEdit("820");
+    layout->addWidget(m_refineAtkEdit, row++, 1);
+
+    // 10: 元素攻击
+    layout->addWidget(new QLabel("元素攻击"), row, 0);
+    m_elementAtkEdit = new QLineEdit("35");
+    layout->addWidget(m_elementAtkEdit, row++, 1);
+
+    // 11: 攻击速度 (%)
+    layout->addWidget(new QLabel("攻击速度 (%)"), row, 0);
+    m_attackSpeedEdit = new QLineEdit("10.00");
+    layout->addWidget(m_attackSpeedEdit, row++, 1);
+
+    // 12: 施法速度 (%)
+    layout->addWidget(new QLabel("施法速度 (%)"), row, 0);
+    m_castingSpeedEdit = new QLineEdit("0.00");
+    layout->addWidget(m_castingSpeedEdit, row++, 1);
+
+    // 13: 爆伤额外值
+    layout->addWidget(new QLabel("爆伤额外值"), row, 0);
+    m_critDmgSetEdit = new QLineEdit("0");
+    layout->addWidget(m_critDmgSetEdit, row++, 1);
+
+    // 14: 增伤额外值
+    layout->addWidget(new QLabel("增伤额外值"), row, 0);
+    m_incSetEdit = new QLineEdit("0");
+    layout->addWidget(m_incSetEdit, row++, 1);
+
+    // 15: 元素增伤额外值
+    layout->addWidget(new QLabel("元素增伤额外值"), row, 0);
+    m_eleIncSetEdit = new QLineEdit("0");
+    layout->addWidget(m_eleIncSetEdit, row++, 1);
+
+    // 16: 模拟循环次数
+    layout->addWidget(new QLabel("模拟循环次数"), row, 0);
+    m_timesEdit = new QLineEdit("1");
+    layout->addWidget(m_timesEdit, row++, 1);
+
+    // 17: 最大运行时间 (0.01s)
+    layout->addWidget(new QLabel("最大运行时间 (0.01s)"), row, 0);
+    m_maxTimeEdit = new QLineEdit("18000");
+    layout->addWidget(m_maxTimeEdit, row++, 1);
+
+    // 18: deltaTime (0.01s)
+    layout->addWidget(new QLabel("deltaTime (0.01s)"), row, 0);
+    m_deltaTimeEdit = new QLineEdit("1");
+    layout->addWidget(m_deltaTimeEdit, row++, 1);
+
+    // 19: 随机种子选项（跨两列）
     m_randomSeedCheck = new QCheckBox("使用随机种子");
-    layout->addWidget(m_randomSeedCheck, 18, 0, 1, 2);
-    connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked)
-            { m_seedEdit->setEnabled(!checked); });
+    layout->addWidget(m_randomSeedCheck, row, 0, 1, 2); // 占两列
+    row++; // 手动递增行号
 
-    createRow(19, "固定种子", m_seedEdit, "42");
+    // 20: 固定种子
+    layout->addWidget(new QLabel("固定种子"), row, 0);
+    m_seedEdit = new QLineEdit("42");
+    m_seedEdit->setEnabled(false); // 初始禁用，因为随机种子默认未勾选
+    layout->addWidget(m_seedEdit, row++, 1);
 
-    // 运行按钮
+    // 21: 运行按钮（跨两列）
     m_runButton = new QPushButton("运行模拟");
     m_runButton->setStyleSheet("QPushButton { background-color: #1d4ed8; color: white; font-weight: bold; padding: 8px; }");
-    layout->addWidget(m_runButton, 20, 0, 1, 2);
+    layout->addWidget(m_runButton, row, 0, 1, 2); // 跨两列
+    row++; // 可选，后续不再使用
+
+    // 连接随机种子复选框与种子输入框的启用状态
+    connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked){
+        m_seedEdit->setEnabled(!checked);
+    });
 
     return groupBox;
 }
@@ -371,13 +443,15 @@ void MainWindow::onProfessionChanged(int index)
     m_fantasyCombo->clear(); // 清空原有选项
     if (index == 0) { // 冰矛
         m_fantasyCombo->addItem("姆头 + 尖兵");
-        m_fantasyCombo->addItem("姆头 + 博伊斯");
-        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+        m_fantasyCombo->addItem("姆头 + 博伊斯(仅三次释放)");
+        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯(仅三次释放)");
         m_fantasyCombo->setCurrentIndex(0); // 默认姆头+尖兵
     } else { // 射线
         m_fantasyCombo->addItem("姆头 + 尖兵");
         m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
         m_fantasyCombo->addItem("姆头 + 嗜血毛球");
+        m_fantasyCombo->addItem("姆头 + 幻妖蟹蛛");
+        m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
         m_fantasyCombo->setCurrentIndex(0); // 默认尖兵（与之前保持一致）
     }
     QString prof = (index == 0) ? "icicle" : "beam";

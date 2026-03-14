@@ -24,7 +24,9 @@
 enum class FantasyBeamConfig {
     MukuChief_MukuScout = 0,
     MukuChief_YGLWS,
-    MukuChief_SXMQ
+    MukuChief_SXMQ,
+    SXMQ_HYXZ,
+    SXMQ_MukuScout
 };
 
 enum class FantasyIcicleConfig {

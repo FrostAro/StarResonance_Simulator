@@ -16,14 +16,24 @@ class Initializer_Mage_Beam : public Initializer
         equipCertainSkill(FrostWind::name);
         equipCertainSkill(Flood_Beam::name);
         equipCertainSkill(Ultimate_Beam::name);
-        equipCertainSkill(MukuChief::name);
         // 根据幻想配置装备第二个幻想技能
         if (m_fantasyConfig == 0) {
+            equipCertainSkill(MukuChief::name);
             equipCertainSkill(MukuScout::name);   // 姆头+尖兵
         } else if (m_fantasyConfig == 1) {
+            equipCertainSkill(MukuChief::name);
             equipCertainSkill(YGLWS::name);       // 姆头+伊戈雷乌斯
-        } else {
+        } else if (m_fantasyConfig == 2) {
+            equipCertainSkill(MukuChief::name);
             equipCertainSkill(SXMQ::name);        // 姆头+嗜血毛球
+        }
+        else if (m_fantasyConfig == 3) {
+            equipCertainSkill(HYXZ::name);        // 幻妖蟹蛛+嗜血毛球
+            equipCertainSkill(SXMQ::name);
+        }
+        else if (m_fantasyConfig == 4) {
+            equipCertainSkill(MukuScout::name);        // 九百魔球+嗜血毛球
+            equipCertainSkill(SXMQ::name);
         }
     }
 
@@ -43,6 +53,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<MukuScout>();
         registerCertainSkill<YGLWS>();
         registerCertainSkill<SXMQ>();
+        registerCertainSkill<HYXZ>();
     }
 
     void registerBuffs() override
@@ -69,6 +80,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<MukuScoutBuff>();
         registerCertainBuff<YGLWSBuff>();
         registerCertainBuff<SXMQBuff>();
+        registerCertainBuff<HYXZBuff>();
         registerCertainBuff<SXMQBuff_Passive>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
