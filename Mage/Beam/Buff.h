@@ -389,11 +389,16 @@ public:
     ~FloatingExtraSecondaryAttributesBuff_Beam() override;
 };
 
-// 职业专属因子
-class OccupationalDivisor_Beam : public Divisor
+// 职业因子(G4极性)
+class OccupationalFactorBuff_Beam : public Factor
 {
 public:   
     static std::string name;
+    int count = 0;              // 计数器
+    int arrowTriggerNum = 5;    // 冰箭触发所需层数
+    double timer = 0;           // 计时器
+    double beamTriggerInterval = 100; // 射线触发间隔
+
 
 public:
     void listenerCallback(Skill* const skill);
@@ -401,8 +406,8 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    OccupationalDivisor_Beam(Person *p, double n);
-    ~OccupationalDivisor_Beam() override;
+    OccupationalFactorBuff_Beam(Person *p, double n);
+    ~OccupationalFactorBuff_Beam() override;
 };
 
 // 冰令脉冲
@@ -439,4 +444,71 @@ public:
 
     InstantCooldownBuff_Beam(Person *p, double n);
     ~InstantCooldownBuff_Beam() override;
+};
+
+// 龙卷真实因子
+class WaterSpoutRealBuff : public RealFactor
+{
+public:   
+    static std::string name;
+    double triggerNum = 720;
+    bool canTrigger = false;
+
+public:
+    void listenerCallback(double n);
+    void listenerCallback2(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    WaterSpoutRealBuff(Person *p, double n);
+    ~WaterSpoutRealBuff() override;
+};
+
+// 9冰真实因子
+class IceRealBuff : public RealFactor
+{
+public:   
+    static std::string name;
+    double triggerNum = 450;
+
+public:
+    void listenerCallback(double n);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    IceRealBuff(Person *p, double n);
+    ~IceRealBuff() override;
+};
+
+// 9冰
+class NineIceBuff : public Buff
+{
+public:   
+    static std::string name;
+
+public:
+    void listenerCallback(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    NineIceBuff(Person *p, double n);
+    ~NineIceBuff() override;
+};
+
+// 无尽思维
+class InfiniteMindBuff : public Buff
+{
+public:   
+    static std::string name;
+
+public:
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    InfiniteMindBuff(Person *p, double n);
+    ~InfiniteMindBuff() override;
 };

@@ -20,8 +20,7 @@ MukuChief::MukuChief(Person *p) : FightingFantasy(), InstantSkill()
     this->chargeCD = 0;
     this->maxStack = 2;
     this->stack = this->maxStack;
-    this->releasingTime = 10;
-    this->releasingTime /= (1 + p->attackSpeed);
+    this->releasingTime = 10;;
 
     this->MukuChief::setSkillType();
 }

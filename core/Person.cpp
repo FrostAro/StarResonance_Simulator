@@ -17,8 +17,8 @@ Person::Person(){};
 Person::Person(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
                const double criticaldamage_set, const double increase_set, const double elementincrease_set, const int totalTime)
-    : propertyTransformationCoeffcient_General(19975),     // 一般属性转化系数
-      propertyTransformationCoeffcient_Almighty(11200),    // 全能属性转化系数
+    : propertyTransformationCoeffcient_General(50000),     // 一般属性转化系数
+      propertyTransformationCoeffcient_Almighty(25000),    // 全能属性转化系数
       totalTime(totalTime),                                // 总模拟时间
       proficientRatio(0),                                  // 精通转化率（子类设置）
       almightyRatio(0),                                    // 全能转化率（子类设置）
@@ -606,8 +606,8 @@ double Person::setElementIncrease()
 
 double Person::changeElementIncreaseByProficient(const double proficient)
 {
-    this->elementIncrease -= this->getProficient() * this->proficientRatio;
-    this->elementIncrease += proficient * this->proficientRatio;
+    this->elementIncrease -= this->getProficient() * this->proficientRatio * (1 + this->proficientAmplification * this->getProficient());
+    this->elementIncrease += this->getProficient() * this->proficientRatio * (1 + this->proficientAmplification * this->getProficient());
     return this->elementIncrease;
 }
 
@@ -1146,6 +1146,7 @@ double Person::getProficientRatio() const { return proficientRatio; }
 double Person::getAlmightyRatio() const { return almightyRatio; }
 double Person::getCastingSpeedRatio() const { return castingSpeedRatio; }
 double Person::getAttackSpeedRatio() const { return attackSpeedRatio; }
+double Person::getProficientAmplification() const { return proficientAmplification; }
 
 bool Person::getIsReleasingSkill() const { return isReleasingSkill; }
 

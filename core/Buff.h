@@ -183,9 +183,34 @@ public:
     static void resetID();
 };
 
-class Divisor : public Buff     // 因子效果
+class Factor : public Buff     // 因子效果
 {     
 public:  
-    Divisor(Person* p) : Buff(p) {};
-    virtual ~Divisor() = default;
+    Factor(Person* p) : Buff(p) {};
+    virtual ~Factor() = default;
+};
+
+class RealFactor : public Buff     // 真实因子效果
+{     
+    double maxEnergy = 1200;
+    double presentEnergy = 1200;
+public:  
+    void changeEnergy(double n)
+    {
+        this->presentEnergy += n;
+        if (this->presentEnergy > this->maxEnergy)
+        {
+            this->presentEnergy = this->maxEnergy;
+        }
+        if(this->presentEnergy < 0)
+        {
+            this->presentEnergy = 0;
+        }
+    }
+
+    double getMaxEnergy() const { return this->maxEnergy; }
+    double getPresentEnergy() const { return this->presentEnergy; }
+
+    RealFactor(Person* p) : Buff(p) {};
+    virtual ~RealFactor() = default;
 };

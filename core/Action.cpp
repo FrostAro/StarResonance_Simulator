@@ -547,6 +547,44 @@ void CreateBuffAction::execute(double n, Person *p)
 
 std::string CreateBuffAction::getActionName() { return CreateBuffAction::name; }
 
+// 增加因子能量
+std::string AddFactorEnergyAction::name = "AddFactorEnergyAction";
+std::vector<std::unique_ptr<FactorEnergyListener>> AddFactorEnergyAction::listeners =
+    {};
+
+void AddFactorEnergyAction::addListener(std::unique_ptr<FactorEnergyListener> info)
+{
+    listeners.push_back(std::move(info));
+}
+
+void AddFactorEnergyAction::deleteListener(int buffID)
+{
+    const auto it =
+        std::find_if(listeners.begin(), listeners.end(),
+                     [buffID](const std::unique_ptr<FactorEnergyListener> &item)
+                     {
+                         return item->buffID == buffID;
+                     });
+
+    if (it != listeners.end())
+    {
+        listeners.erase(it);
+    }
+}
+
+void AddFactorEnergyAction::execute(double n, Person *p)
+{
+    for (const auto &listener : AddFactorEnergyAction::listeners)
+    {
+        if (listener && listener->callback)
+        {
+            listener->trigger(n);
+        }
+    }
+}
+
+std::string AddFactorEnergyAction::getActionName() { return AddFactorEnergyAction::name; }
+
 // 属性更改事件
 // 暴击数值
 std::string CriticalCountModifyAction::name = "CriticalCountModifyAction";

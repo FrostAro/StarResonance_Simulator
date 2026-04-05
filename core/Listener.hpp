@@ -419,3 +419,35 @@ public:
         if (callback) callback(value);
     }
 };
+
+/**
+ * @class FactorEnergyListener
+ * @brief 因子能量监听器
+ * 
+ * 监听角色因子能量属性变化事件，包括因子能量值的增加或减少。
+ * 当获取或消耗因子能量时触发回调函数。
+ * 
+ * @note 用于角色伤害乘区系统的监听，以乘法方式影响最终伤害
+ */
+class FactorEnergyListener : public TypedListener<double> {
+public:
+    /**
+     * @brief 构造函数
+     * 
+     * @param id 关联的增益效果ID
+     * @param func 乘区属性变化回调函数，接收属性值
+     */
+    FactorEnergyListener(const int id, const std::function<void(const double)> func)
+        : TypedListener<double>(id, func) {}
+    
+    /**
+     * @brief 触发乘区属性变化事件
+     * 
+     * 调用注册的回调函数处理乘区属性值变化
+     * 
+     * @param value 当前乘区属性值或属性变化量
+     */
+    void trigger(double value) const {
+        if (callback) callback(value);
+    }
+};

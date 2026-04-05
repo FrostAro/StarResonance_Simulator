@@ -20,15 +20,14 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
                         " - before person Crit Count + 4480, persent: " +
                         std::to_string(p->Critical));
 
-    //p->changeCriticalCount(4480);
-    this->p->triggerAction<CriticalCountModifyAction>(4480);
+    p->changeCriticalCount(11200);
+    //this->p->triggerAction<CriticalCountModifyAction>(11200);
 
     Logger::debugBuff(AutoAttack::getTimer(),
                         this->getBuffName(),
                         " - after person Crit Count + 4480, persent: " +
                         std::to_string(p->Critical));
 
-    //p->changeCriticalDamage(0.4);
     this->p->triggerAction<CriticalDamageModifyAction>(0.4);
 }
 
@@ -39,9 +38,8 @@ std::string MukuChiefBuff::getBuffName() const { return MukuChiefBuff::name; }
 
 MukuChiefBuff::~MukuChiefBuff()
 {
-    //this->p->changeCriticalCount(-4480);
-    this->p->triggerAction<CriticalCountModifyAction>(-4480);
-    //this->p->changeCriticalDamage(-0.4);
+    p->changeCriticalCount(-11200);
+    //this->p->triggerAction<CriticalCountModifyAction>(-11200);
     this->p->triggerAction<CriticalDamageModifyAction>(-0.4);
 }
 
@@ -101,8 +99,8 @@ YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
     this->number = 0; // 用作增攻数值
     this->duration = 2000;
     this->maxDuration = this->duration;
-    this->p->triggerAction<CriticalCountModifyAction>(5600);
-    this->p->triggerAction<CriticalPercentModifyAction>(0.12);
+    this->p->triggerAction<CriticalCountModifyAction>(14000);
+    this->p->triggerAction<CriticalPercentModifyAction>(0.14);
 }
 
 void YGLWSBuff::listenerCallback(const DamageInfo &) {}
@@ -123,8 +121,8 @@ std::string YGLWSBuff::getBuffName() const { return YGLWSBuff::name; }
 
 YGLWSBuff::~YGLWSBuff()
 {
-    this->p->triggerAction<CriticalCountModifyAction>(-5600);
-    this->p->triggerAction<CriticalPercentModifyAction>(-0.12);
+    this->p->triggerAction<CriticalCountModifyAction>(-14000);
+    this->p->triggerAction<CriticalPercentModifyAction>(-0.14);
 }
 
 // 嗜血毛球

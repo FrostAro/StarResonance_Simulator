@@ -340,6 +340,34 @@ public:
     std::string getActionName() override;
 };
 
+/**
+ * @class AddFactorEnergyAction
+ * @brief 增加角色的因子能量值
+ */
+class AddFactorEnergyAction : public Action
+{
+private:
+    static std::string name;  ///< 动作名称："AddFactorEnergyAction"
+    static std::vector<std::unique_ptr<FactorEnergyListener>> listeners;  ///< Buff创建监听器列表
+
+public:
+    /**
+     * @brief 构造函数
+     */
+    explicit AddFactorEnergyAction() : Action() {};
+    
+    /**
+     * @brief 执行Buff创建
+     * @param n 对于可叠层Buff作为叠层数，其他情况未使用
+     * @param p 执行动作的角色
+     */
+    virtual void execute(double n, Person *p) override;
+    static void addListener(std::unique_ptr<FactorEnergyListener> info);
+    static void deleteListener(int buffID);
+    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
+    std::string getActionName() override;
+};
+
 /* ============================================================================
  * 属性修改动作类
  * 每个属性都有数值修改和百分比修改两种方式

@@ -50,7 +50,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
 
-        int fantasyConfig = 2; // 幻想配置参数（0-3），控制装备的幻想技能组合
+        int fantasyConfig = 2; // 幻想配置参数（0-4），控制装备的幻想技能组合
 
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
         /*三维属性*/ 4593,
@@ -124,7 +124,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
 int main()
 {
     // 1. 初始化日志系统，设置日志级别为DEBUG
-    Logger::initialize(Logger::Level::INFO);
+    Logger::initialize(Logger::Level::DEBUG);
     
     // 2. 伤害统计结果列表（用于存储多次模拟的结果）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;

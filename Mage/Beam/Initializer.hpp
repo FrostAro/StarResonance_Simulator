@@ -32,7 +32,7 @@ class Initializer_Mage_Beam : public Initializer
             equipCertainSkill(SXMQ::name);
         }
         else if (m_fantasyConfig == 4) {
-            equipCertainSkill(MukuScout::name);        // 九百魔球+嗜血毛球
+            equipCertainSkill(MukuScout::name);   // 姆克尖兵+嗜血毛球
             equipCertainSkill(SXMQ::name);
         }
     }
@@ -86,10 +86,14 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<InstantCooldownBuff_Beam>();
 
         // //心相仪与装备套装效果
-        registerCertainBuff<EquipmentSetEffectBuff_Beam>();
-        registerCertainBuff<IllusoryDreamBuff>();
-        registerCertainBuff<ATKIncreaseBuff_IllusoryDream>();
+        //registerCertainBuff<EquipmentSetEffectBuff_Beam>();
+        //registerCertainBuff<IllusoryDreamBuff>();
+        //registerCertainBuff<ATKIncreaseBuff_IllusoryDream>();
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
+        // registerCertainBuff<IceRealBuff>();
+        // registerCertainBuff<WaterSpoutRealBuff>();
+        // registerCertainBuff<NineIceBuff>();
+        // registerCertainBuff<InfiniteMindBuff>();
     }
 
 public:

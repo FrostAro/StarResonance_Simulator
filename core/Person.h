@@ -73,6 +73,7 @@ protected:
     double attackSpeedRatio = 0;		// 攻击速度转化率：急速 → 攻击速度
 	double primaryAttributeRatio = 0;	// 主属性转化率：主属性 → 攻击力
 	double coolDownReduce = 0;			// 冷却缩减
+	double proficientAmplification = 0;	// 精通增效
 	
 public:
 	friend class Initializer;
@@ -367,6 +368,7 @@ public:
     double getAlmightyRatio() const;
     double getCastingSpeedRatio() const;
     double getAttackSpeedRatio() const;
+	double getProficientAmplification() const;
     
     bool getIsReleasingSkill() const;
     

@@ -163,6 +163,8 @@ void FrostWind::setSkillType()
 
 void FrostWind::trigger(Person* p)
 {
+    p->triggerAction<EnergyRevertAction_Beam>(5 * p->getMaxResourceNum());
+
     p->triggerAction<AttackAction>(0,this);
     p->triggerAction<ResourceConsumeAction>(6);
     // 触发涌能法则

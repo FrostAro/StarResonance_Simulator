@@ -704,7 +704,7 @@ void FantasyImpactBuff::listenerCallback(DamageInfo &info)
         // 极运相关逻辑
         if (static_cast<int>(this->stack) % this->extremeLuckTriggerStack == 0)
         {
-            this->p->triggerAction<CreateBuffAction>(0, ExtremeLuckDivisor::name);
+            this->p->triggerAction<CreateBuffAction>(0, ExtremeLuckFactor::name);
         }
     }
 }
@@ -723,9 +723,9 @@ FantasyImpactBuff::~FantasyImpactBuff()
 }
 
 // 极运
-std::string ExtremeLuckDivisor::name = "ExtremeLuckDivisor";
+std::string ExtremeLuckFactor::name = "ExtremeLuckFactor";
 
-ExtremeLuckDivisor::ExtremeLuckDivisor(Person *p, double) : Divisor(p)
+ExtremeLuckFactor::ExtremeLuckFactor(Person *p, double) : Factor(p)
 {
     this->number = 0.1; // 用作增加属性值
     this->stack = 0;
@@ -735,21 +735,21 @@ ExtremeLuckDivisor::ExtremeLuckDivisor(Person *p, double) : Divisor(p)
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(this->number);
 }
 
-void ExtremeLuckDivisor::listenerCallback(DamageInfo&) {}
-void ExtremeLuckDivisor::update(double) {}
-bool ExtremeLuckDivisor::shouldBeRemoved() { return this->duration < 0; }
-std::string ExtremeLuckDivisor::getBuffName() const { return ExtremeLuckDivisor::name; }
+void ExtremeLuckFactor::listenerCallback(DamageInfo&) {}
+void ExtremeLuckFactor::update(double) {}
+bool ExtremeLuckFactor::shouldBeRemoved() { return this->duration < 0; }
+std::string ExtremeLuckFactor::getBuffName() const { return ExtremeLuckFactor::name; }
 
-ExtremeLuckDivisor::~ExtremeLuckDivisor()
+ExtremeLuckFactor::~ExtremeLuckFactor()
 {
     // this->p->changePrimaryAttributesByPersent(-this->number);
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-this->number);
 }
 
 // 职业因子（数值部分）
-std::string OccupationalDivisor_Icicle::name = "OccupationalDivisor_Icicle";
+std::string OccupationalFactor_Icicle::name = "OccupationalFactor_Icicle";
 
-OccupationalDivisor_Icicle::OccupationalDivisor_Icicle(Person *p, double) : Divisor(p)
+OccupationalFactor_Icicle::OccupationalFactor_Icicle(Person *p, double) : Factor(p)
 {
     this->stack = 0;
     this->duration = 999999;
@@ -769,7 +769,7 @@ OccupationalDivisor_Icicle::OccupationalDivisor_Icicle(Person *p, double) : Divi
     CreateSkillAction::addListener(std::move(createSkillInfo));
 }
 
-void OccupationalDivisor_Icicle::listenerCallback(DamageInfo &info)
+void OccupationalFactor_Icicle::listenerCallback(DamageInfo &info)
 {
     // 检查当前是否处于灌注期
     int index = p->findBuffInBuffList(FloodBuff_Icicle::name);
@@ -780,7 +780,7 @@ void OccupationalDivisor_Icicle::listenerCallback(DamageInfo &info)
     }
 }
 
-void OccupationalDivisor_Icicle::listenerCallback2(Skill *const skill)
+void OccupationalFactor_Icicle::listenerCallback2(Skill *const skill)
 {
     if (skill->getSkillName() == FrostComet::name || skill->getSkillName() == PierceSpear::name)
     {
@@ -788,11 +788,11 @@ void OccupationalDivisor_Icicle::listenerCallback2(Skill *const skill)
     }
 }
 
-void OccupationalDivisor_Icicle::update(double) {}
-bool OccupationalDivisor_Icicle::shouldBeRemoved() { return this->duration < 0; }
-std::string OccupationalDivisor_Icicle::getBuffName() const { return OccupationalDivisor_Icicle::name; }
+void OccupationalFactor_Icicle::update(double) {}
+bool OccupationalFactor_Icicle::shouldBeRemoved() { return this->duration < 0; }
+std::string OccupationalFactor_Icicle::getBuffName() const { return OccupationalFactor_Icicle::name; }
 
-OccupationalDivisor_Icicle::~OccupationalDivisor_Icicle()
+OccupationalFactor_Icicle::~OccupationalFactor_Icicle()
 {
     AttackAction::deleteListener(this->getBuffID());
     CreateSkillAction::deleteListener(this->getBuffID());

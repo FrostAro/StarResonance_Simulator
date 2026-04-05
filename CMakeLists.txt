@@ -11,7 +11,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 if(NOT Qt6_FOUND)
     message(FATAL_ERROR "Qt6 not found. Please set CMAKE_PREFIX_PATH to Qt installation.")
 endif()
-message(STATUS "Found Qt6: ${Qt6_DIR}")
+message(STATUS "Found Qt6: $cmake --build . --config Release{Qt6_DIR}")
 
 # 头文件路径（也可改用 target_include_directories 更精细地控制）
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -40,6 +40,7 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
     }
 
     setATK(atk);
+    resetATK();
 
     // 冰矛天赋的幸运倍率加成
     changeLuckyMultiplyingByAddMultiplying(0.15 + (this->Lucky - 0.05) / 2);

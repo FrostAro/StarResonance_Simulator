@@ -68,8 +68,8 @@ class Initializer_Mage_Icicle : public Initializer
         registerCertainBuff<PierceSpearBuff>();
         registerCertainBuff<EquipmentSetEffectBuff_Icicle>();
         registerCertainBuff<FantasyImpactBuff>();
-        registerCertainBuff<ExtremeLuckDivisor>();
-        registerCertainBuff<OccupationalDivisor_Icicle>();
+        registerCertainBuff<ExtremeLuckFactor>();
+        registerCertainBuff<OccupationalFactor_Icicle>();
         registerCertainBuff<InstantCooldownBuff_Icicle>();
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Icicle>();
     }

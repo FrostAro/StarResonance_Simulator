@@ -450,7 +450,7 @@ void MainWindow::onProfessionChanged(int index)
         m_fantasyCombo->addItem("姆头 + 尖兵");
         m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
         m_fantasyCombo->addItem("姆头 + 嗜血毛球");
-        m_fantasyCombo->addItem("姆头 + 幻妖蟹蛛");
+        m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
         m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
         m_fantasyCombo->setCurrentIndex(0); // 默认尖兵（与之前保持一致）
     }

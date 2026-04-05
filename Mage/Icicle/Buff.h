@@ -262,7 +262,7 @@ public:
     ~FantasyImpactBuff() override;
 };
 
-class ExtremeLuckDivisor : public Divisor  //极运
+class ExtremeLuckFactor : public Factor  //极运
 {
 public:
     static std::string name;
@@ -273,11 +273,11 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    ExtremeLuckDivisor(Person *p, double n);
-    ~ExtremeLuckDivisor();
+    ExtremeLuckFactor(Person *p, double n);
+    ~ExtremeLuckFactor();
 };
 
-class OccupationalDivisor_Icicle : public Divisor  //职业因子（数值部分）
+class OccupationalFactor_Icicle : public Factor  //职业因子（数值部分）
 {
 public:
     static std::string name;
@@ -289,8 +289,8 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    OccupationalDivisor_Icicle(Person *p, double n);
-    ~OccupationalDivisor_Icicle();
+    OccupationalFactor_Icicle(Person *p, double n);
+    ~OccupationalFactor_Icicle();
 };
 
 // 冷却瞬息
