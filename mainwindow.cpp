@@ -220,10 +220,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_runButton, &QPushButton::clicked, this, &MainWindow::onRunClicked);
 
     // 初始化职业默认值
+    m_defaults["beam"] = {
+        {"primaryAttr", 6000}, {"crit", 5.00}, {"quickness", 32.88}, {"lucky", 5.00}, {"proficient", 34.09}, {"almighty", 16.00}, {"atk", 4000}, {"refineAtk", 800}, {"elementAtk", 40}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
     m_defaults["icicle"] = {
         {"primaryAttr", 4593}, {"crit", 36.00}, {"quickness", 1.05}, {"lucky", 51.70}, {"proficient", 6.00}, {"almighty", 17.58}, {"atk", 3111}, {"refineAtk", 820}, {"elementAtk", 35}, {"attackSpeed", 10.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
-    m_defaults["beam"] = {
-        {"primaryAttr", 4593}, {"crit", 45.00}, {"quickness", 30.00}, {"lucky", 5.00}, {"proficient", 30.00}, {"almighty", 24.00}, {"atk", 3111}, {"refineAtk", 820}, {"elementAtk", 35}, {"attackSpeed", 10.00}, {"castingSpeed", 60.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
     connect(m_professionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onProfessionChanged);
     onProfessionChanged(0); // 初始化冰矛
@@ -336,12 +336,12 @@ QWidget *MainWindow::createInputPanel()
     layout->addWidget(m_elementAtkEdit, row++, 1);
 
     // 11: 攻击速度 (%)
-    layout->addWidget(new QLabel("攻击速度 (%)"), row, 0);
+    layout->addWidget(new QLabel("额外攻击速度 (%)"), row, 0);
     m_attackSpeedEdit = new QLineEdit("10.00");
     layout->addWidget(m_attackSpeedEdit, row++, 1);
 
     // 12: 施法速度 (%)
-    layout->addWidget(new QLabel("施法速度 (%)"), row, 0);
+    layout->addWidget(new QLabel("额外施法速度 (%)"), row, 0);
     m_castingSpeedEdit = new QLineEdit("0.00");
     layout->addWidget(m_castingSpeedEdit, row++, 1);
 

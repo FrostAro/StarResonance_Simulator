@@ -106,9 +106,9 @@ WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
 {
     this->isNoReleasing = true;
 
-    this->multiplying = 1.032L;
+    this->multiplying = 1.4448L;
     this->fixedValue = 514;
-    this->damageTriggerInterval = 50;
+    this->damageTriggerInterval = 45;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
     this->MaxCD = 3000;
     this->duration = 2000;
@@ -266,7 +266,7 @@ std::string IceArrow_Beam::name = "IceArrow_Beam";
 IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
 {
     this->energyAdd = 2;
-    this->multiplying = 0.56;
+    this->multiplying = 0.28;
     this->fixedValue = 0;
     this->duration = 53;
     this->damageTriggerInterval = 53;
@@ -277,7 +277,7 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
     this->MaxchargeCD = 0;
     this->isNoReleasing = true;
 
-    this->criticalAdd = 0.5;
+    this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
     this->finalIncreaseAdd = 1;
 
@@ -295,6 +295,7 @@ void IceArrow_Beam::setSkillType()
 void IceArrow_Beam::trigger(Person *p)
 {
 
+    p->triggerAction<AttackAction>(0, this); // 冰箭本体伤害
     p->triggerAction<AttackAction>(0, this); // 冰箭本体伤害
     p->triggerAction<EnergyRevertAction_Beam>(this->energyAdd,this);  // 冰光共鸣
 }
@@ -320,7 +321,7 @@ FrostBurst::FrostBurst(Person *p) : InstantSkill()
     this->MaxchargeCD = 0;
     this->isNoReleasing = true;
 
-    this->criticalAdd = 0.5;
+    this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
 
     this->FrostBurst::setSkillType();

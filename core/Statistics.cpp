@@ -29,6 +29,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
                   << ", Lucky Damage: " << info.second.luckyDamage
                   << ", Lucky Attack count: " << info.second.luckyDamageCount
                   << ", DPS: " << (info.second.damage + info.second.luckyDamage) / (static_cast<double>(totalTime) / 100.0)
+                  << ", Released Times:" << info.second.releasedTimes
                   << std::endl;
     }
     

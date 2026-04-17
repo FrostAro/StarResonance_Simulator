@@ -311,6 +311,7 @@ int Skill::getSkillID() const { return this->skillID; }
 double Skill::getAdd() const { return this->energyAdd; }
 double Skill::getEnergyReduce() const { return this->energyReduce; }
 bool Skill::getCanTriggerLucky() const { return this->canTriggerLucky; }
+void Skill::setCanTriggerLucky(bool value) { this->canTriggerLucky = value; }
 bool Skill::getCanCharge() const { return this->canCharge; }
 bool Skill::getIsEquipped() const { return this->isEquipped; }
 bool Skill::getTriggered() const { return this->triggered; }
@@ -343,6 +344,7 @@ int Skill::getStackValue() const { return this->stack; }
 int Skill::getMaxStack() const { return this->maxStack; }
 double Skill::getMutiplying() const { return this->multiplying; }
 double Skill::getFixedValue() const { return this->fixedValue; }
+double Skill::getLuckyFiexedValue() const { return this->luckyFiexedValue; }
 double Skill::getReleasingTime() const { return this->releasingTime; }
 double Skill::getDuration() const { return this->duration; }
 double Skill::getDamageTriggerInterval() const { return this->damageTriggerInterval; }

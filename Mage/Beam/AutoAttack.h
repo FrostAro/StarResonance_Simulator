@@ -21,7 +21,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst1()
@@ -72,7 +71,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst2()
@@ -119,7 +117,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -174,7 +171,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst4()
@@ -216,7 +212,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst5()
@@ -256,10 +251,8 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
     {
         this->maniAddPriorSkillList(Vortex::name);
         this->maniAddPriorSkillList(FrostWind::name);
-        this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -268,7 +261,6 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         if (nextOutBurstSignal == 6 && !this->isOutBurst)
         {
             // 更新技能CD，buffCD，释放技能判断，爆发判断
-            int ultimateIndex = this->p->findSkillInSkillCDList(Ultimate_Beam::name);
             int floodIndex = this->p->findSkillInSkillCDList(Flood_Beam::name);
             int vortexIndex = this->p->findSkillInSkillCDList(Vortex::name);
             int frostWindIndex = this->p->findSkillInSkillCDList(FrostWind::name);
@@ -277,11 +269,10 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
             bool canLargeOutBurst = false;
 
             // 检查所有索引都有效
-            if (ultimateIndex != -1 && floodIndex != -1 && vortexIndex != -1 && frostWindIndex != -1)
+            if (floodIndex != -1 && vortexIndex != -1 && frostWindIndex != -1)
             {
                 // 检查 CD 是否为 0
-                canLargeOutBurst = (this->p->getSkillCDListRef().at(ultimateIndex)->getCurrentCD_Value() == 0)
-                    && this->p->getSkillCDListRef().at(floodIndex)->getCurrentCD_Value() == 0
+                canLargeOutBurst = this->p->getSkillCDListRef().at(floodIndex)->getCurrentCD_Value() == 0
                     && this->p->getSkillCDListRef().at(vortexIndex)->getCurrentCD_Value() == 0
                     && this->p->getSkillCDListRef().at(frostWindIndex)->getCurrentCD_Value() == 0;
             }
@@ -302,9 +293,9 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
         this->maniAddPriorSkillList(MukuScout::name);
         this->maniAddPriorSkillList(Vortex::name);
         this->maniAddPriorSkillList(FrostWind::name);
+        this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -315,6 +306,7 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
             // 更新技能CD，buffCD，释放技能判断，爆发判断
             int mukuChiefIndex = this->p->findSkillInSkillCDList(MukuChief::name);
             int mukuScoutIndex = this->p->findSkillInSkillCDList(MukuScout::name);
+            int ultimateIndex = this->p->findSkillInSkillCDList(Ultimate_Beam::name);
             int vortexIndex = this->p->findSkillInSkillCDList(Vortex::name);
             int frostWindIndex = this->p->findSkillInSkillCDList(FrostWind::name);
             int floodIndex = this->p->findSkillInSkillCDList(Flood_Beam::name);
@@ -323,10 +315,11 @@ class AutoAttack_Mage_Beam_MukuScout : public AutoAttack
             bool canLargeOutBurst = false;
 
             // 检查所有索引都有效
-            if (mukuChiefIndex != -1 && mukuScoutIndex != -1 && vortexIndex != -1 && frostWindIndex != -1 && floodIndex != -1)
+            if (ultimateIndex != -1 && mukuChiefIndex != -1 && mukuScoutIndex != -1 && vortexIndex != -1 && frostWindIndex != -1 && floodIndex != -1)
             {
                 // 检查 CD 是否为 0
                 canLargeOutBurst = (this->p->getSkillCDListRef().at(mukuChiefIndex)->getCurrentCD_Value() == 0 || this->p->getSkillCDListRef().at(mukuChiefIndex)->getStackValue() > 0)
+                    && this->p->getSkillCDListRef().at(ultimateIndex)->getCurrentCD_Value() == 0
                     && this->p->getSkillCDListRef().at(mukuScoutIndex)->getCurrentCD_Value() == 0
                     && this->p->getSkillCDListRef().at(vortexIndex)->getCurrentCD_Value() == 0
                     && this->p->getSkillCDListRef().at(frostWindIndex)->getCurrentCD_Value() == 0;
@@ -460,7 +453,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst1()
@@ -511,7 +503,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -566,7 +557,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst3()
@@ -620,7 +610,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst4()
@@ -662,7 +651,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -709,7 +697,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst6()
@@ -753,7 +740,6 @@ class AutoAttack_Mage_Beam_YGLWS : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -906,7 +892,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst1()
@@ -957,7 +942,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst2()
@@ -1004,7 +988,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1059,7 +1042,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst4()
@@ -1100,7 +1082,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1145,7 +1126,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst6()
@@ -1189,7 +1169,6 @@ class AutoAttack_Mage_Beam_SXMQ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1341,7 +1320,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst1()
@@ -1395,7 +1373,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst2()
@@ -1442,7 +1419,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1497,7 +1473,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst4()
@@ -1537,7 +1512,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1580,7 +1554,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1626,7 +1599,6 @@ class AutoAttack_Mage_Beam_HYXZ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1779,7 +1751,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst1()
@@ -1833,7 +1804,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst2()
@@ -1880,7 +1850,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -1935,7 +1904,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
         this->maniAddPriorSkillList(WaterSpout::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
     }
 
     void checkAndTriggerOutBurst4()
@@ -1975,7 +1943,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -2018,7 +1985,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(Ultimate_Beam::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 
@@ -2064,7 +2030,6 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack
         this->maniAddPriorSkillList(FrostWind::name);
         this->maniAddPriorSkillList(Flood_Beam::name);
         this->maniAddPriorSkillList(Beam::name);
-        this->maniAddPriorSkillList(WaterSpout::name);
         this->maniAddPriorSkillList(WaterSpout::name);
     }
 

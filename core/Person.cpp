@@ -37,8 +37,8 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
       primaryAttributes(PrimaryAttributes),                // 主属性数值
       resourceNum(0),                                      // 初始玄冰资源数量
       maxResourceNum(0),                                   // 最大玄冰资源数量
-      castingSpeed(castingSpeed / 100),                    // 施法速度加成
-      attackSpeed(attackSpeed / 100),                      // 攻击速度加成
+      castingSpeedExtra(castingSpeed / 100),               // 施法速度加成
+      attackSpeedExtra(attackSpeed / 100),                 // 攻击速度加成
       criticicalDamage(0.5),                               // 基础暴击伤害加成（+50%）
       damageReduce(0),                                     // 基础减伤率
       criticaldamage_set(criticaldamage_set),              // 额外暴击伤害（调试用）
@@ -58,7 +58,10 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
     // 设置幸运倍率
     setLuckyMultiplying();
 
+    
+
     // buffList.reserve(15);  // 预留buff列表空间（可选优化）
+    recalcSpeedFromQuickness();  // 根据初始急速值计算施法速度和攻击速度
 }
 
 Person::~Person()
@@ -93,7 +96,14 @@ DamageInfo Person::Damage(const Skill *skill)
             * (1 + skill->finalIncreaseAdd);
 
         // 暴击期望
-        damage = damage * this->Critical * (1 + this->criticicalDamage + skill->criticalIncreaseAdd) + damage * (1 - this->Critical);
+        double crit = 0;
+        if(this->Critical + skill->criticalAdd > 1.0)
+            crit = 1.0;
+        else if(this->Critical + skill->criticalAdd < 0.0)
+            crit = 0.0;
+        else
+            crit = this->Critical + skill->criticalAdd;
+        damage = damage * crit * (1 + this->criticicalDamage + skill->criticalIncreaseAdd) + damage * (1 - crit);
         // 实际暴击模拟
         // double isCrit = this->isSuccess(this->Critical + skill->criticalAdd);
         // if (isCrit)
@@ -104,7 +114,7 @@ DamageInfo Person::Damage(const Skill *skill)
         double luckyDamage = 0;
         if (skill->getCanTriggerLucky())
         {
-            luckyDamage = this->luckyDamage();
+            luckyDamage = this->luckyDamage(skill);
         }
 
         DamageInfo info(skill->getSkillName(), damage,
@@ -118,14 +128,14 @@ DamageInfo Person::Damage(const Skill *skill)
     return DamageInfo();  // 技能为空，返回空伤害信息
 }
 
-double Person::luckyDamage() const
+double Person::luckyDamage(const Skill *skill) const
 {
     // 幸运伤害计算公式(概率)
     //double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying)) * (1 + this->elementIncrease) * (1 + this->damageIncrease + this->luckyDamageIncrease) * (1 + this->almightyIncrease);
     // (期望)
-    double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying)) 
+    double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying) + skill->getLuckyFiexedValue()) 
                         * (1 + this->elementIncrease) 
-                        * (1 + this->damageIncrease + this->luckyDamageIncrease) 
+                        * (1 + this->damageIncrease + this->Lucky) 
                         * (1 + this->almightyIncrease)
                         * this->Lucky;
 
@@ -719,18 +729,27 @@ double Person::changeCriticalCount(const int addCount)
 
 double Person::changeQuicknessCount(const int addCount)
 {
-    this->baseCastingSpeed = this->castingSpeedRatio * this->Quickness;
-    this->baseAttackSpeed = this->attackSpeedRatio * this->Quickness;
-    this->castingSpeedExtra = this->castingSpeed - this->baseCastingSpeed;
-    this->attackSpeedExtra = this->attackSpeed - this->baseAttackSpeed;
-
-    this->QuicknessCount = this->getQuicknessCount(this->Quickness - this->QuicknessExtraPersent);
-    const double count = this->QuicknessCount + addCount;
-    this->Quickness = count / (count + this->propertyTransformationCoeffcient_General) + this->QuicknessExtraPersent;
-    this->baseCastingSpeed = this->castingSpeedRatio * this->Quickness;
-    this->baseAttackSpeed = this->attackSpeedRatio * this->Quickness;
-    this->castingSpeed = this->castingSpeedExtra + this->baseCastingSpeed;
-    this->attackSpeed = this->attackSpeedExtra + this->baseAttackSpeed;
+        // 获取当前数值部分对应的点数（剔除固定百分比）
+    double numericPercent = this->Quickness - this->QuicknessExtraPersent;
+    if (numericPercent < 0.0) numericPercent = 0.0;
+    
+    double currentCount = this->getQuicknessCount(numericPercent);
+    double newCount = currentCount + addCount;
+    if (newCount < 0.0) newCount = 0.0;
+    
+    // 数值部分转换的百分比
+    double convertedPercent = 0.0;
+    if (newCount > 0.0) {
+        convertedPercent = newCount / (newCount + this->propertyTransformationCoeffcient_General);
+    }
+    
+    // 更新数值点数与面板百分比
+    this->QuicknessCount = newCount;
+    this->Quickness = convertedPercent + this->QuicknessExtraPersent;
+    
+    // 重新计算施法速度和攻击速度
+    recalcSpeedFromQuickness();
+    
     return this->Quickness;
 }
 
@@ -861,10 +880,23 @@ double Person::changeCritialPersent(const double persent)
 
 double Person::changeQuicknessPersent(const double persent)
 {
-    this->QuicknessExtraPersent = persent;
-    this->Quickness += this->QuicknessExtraPersent;
-    this->castingSpeed = this->castingSpeedRatio * this->Quickness + this->castingSpeedExtra;
-    this->attackSpeed = this->attackSpeedRatio * this->Quickness + this->attackSpeedExtra;
+        // 更新固定百分比
+    this->QuicknessExtraPersent += persent;
+    // 确保固定部分不为负（但可正可负）
+    
+    // 重新计算面板百分比（数值部分不变，仅固定部分变化）
+    double numericPercent = this->Quickness - (this->QuicknessExtraPersent - persent); // 旧数值部分
+    if (numericPercent < 0.0) numericPercent = 0.0;
+    double numericCount = this->getQuicknessCount(numericPercent);
+    double convertedPercent = 0.0;
+    if (numericCount > 0.0) {
+        convertedPercent = numericCount / (numericCount + this->propertyTransformationCoeffcient_General);
+    }
+    this->Quickness = convertedPercent + this->QuicknessExtraPersent;
+    
+    // 重新计算速度
+    recalcSpeedFromQuickness();
+    
     return this->Quickness;
 }
 
@@ -937,13 +969,15 @@ double Person::changeAlmightyPersent(const double persent)
 void Person::addCastingSpeed(double persent)
 {
     this->castingSpeedExtra += persent;
-    this->castingSpeed += persent;
+    // 重新计算最终施法速度（基础部分不变）
+    this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
 }
 
 void Person::addAttackSpeed(double persent)
 {
     this->attackSpeedExtra += persent;
-    this->attackSpeed += persent;
+    // 重新计算最终攻击速度（基础部分不变）
+    this->attackSpeed = this->baseAttackSpeed + this->attackSpeedExtra;
 }
 
 double Person::changePrimaryAttributesByCount(const double primaryAttributesCount)
@@ -963,10 +997,10 @@ double Person::changePrimaryAttributesByPersent(const double primaryAttributesPe
     return this->primaryAttributesIncrease;
 }
 
-double Person::changeCastingSpeeaByPersent(const double castingSpeedPersent)
+double Person::changeCastingSpeedByPersent(const double castingSpeedPersent)
 {
     this->castingSpeedExtra += castingSpeedPersent;
-    this->castingSpeed += castingSpeedPersent;
+    this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
     return this->castingSpeedExtra;
 }
 
@@ -998,10 +1032,10 @@ double Person::changeRefineATKCount(double n)
     return this->refineATK;
 }
 
-double Person::changeAttackSpeeaByPersent(const double attackSpeedPersent)
+double Person::changeAttackSpeedByPersent(const double attackSpeedPersent)
 {
     this->attackSpeedExtra += attackSpeedPersent;
-    this->attackSpeed += attackSpeedPersent;
+    this->attackSpeed = this->baseAttackSpeed + this->attackSpeedExtra;
     return this->attackSpeedExtra;
 }
 
@@ -1054,6 +1088,24 @@ auto Person::calculateDamageStatistics() -> decltype(this->damageStatsMap)
             damageStatsMap[info.skillName] = newStats;
         }
     }
+
+    // 计算技能释放次数
+    auto buff = this->findBuffInBuffList(SkillReleasedTimesStatistics::name);
+    if (buff != -1)
+    {
+        auto *statisticsBuff = dynamic_cast<SkillReleasedTimesStatistics *>(this->buffList.at(buff).get());
+        if (statisticsBuff)
+        {
+            for (const auto &i : statisticsBuff->skillReleasedTimesMap)
+            {
+                const std::string &skillName = i.first;
+                int releaseTimes = statisticsBuff->skillReleasedTimesMap[skillName];
+                damageStatsMap[skillName].releasedTimes = releaseTimes;
+            }
+        }
+    }
+
+
     return damageStatsMap;
 }
 
@@ -1156,6 +1208,7 @@ double Person::getEnergyReduceDOWN() const { return energyReduceDOWN; }
 
 const AutoAttack *Person::getAutoAttack() const { return this->autoAttackPtr.get(); }
 Skill* const Person::getNowReleasingSkill() const { return this->nowReleasingSkill.get(); }
+void Person::clearNowReleasingSkill() { this->nowReleasingSkill.reset(); }
 
 const Skill* Person::getCurtainPointerForAction(std::string skillName) const 
 {
@@ -1167,4 +1220,15 @@ const Skill* Person::getCurtainPointerForAction(std::string skillName) const
         }
     }
     return nullptr;
+}
+
+void Person::recalcSpeedFromQuickness()
+{
+    // 基础施法速度 = 急速面板 × 转化系数
+    this->baseCastingSpeed = this->castingSpeedRatio * this->Quickness;
+    this->baseAttackSpeed  = this->attackSpeedRatio * this->Quickness;
+    
+    // 最终施法速度 = 基础 + 固定加成
+    this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
+    this->attackSpeed  = this->baseAttackSpeed  + this->attackSpeedExtra;
 }

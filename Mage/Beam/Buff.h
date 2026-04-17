@@ -389,27 +389,6 @@ public:
     ~FloatingExtraSecondaryAttributesBuff_Beam() override;
 };
 
-// 职业因子(G4极性)
-class OccupationalFactorBuff_Beam : public Factor
-{
-public:   
-    static std::string name;
-    int count = 0;              // 计数器
-    int arrowTriggerNum = 5;    // 冰箭触发所需层数
-    double timer = 0;           // 计时器
-    double beamTriggerInterval = 100; // 射线触发间隔
-
-
-public:
-    void listenerCallback(Skill* const skill);
-    void update(double deltaTime) override;
-    bool shouldBeRemoved() override;
-    std::string getBuffName() const override;
-
-    OccupationalFactorBuff_Beam(Person *p, double n);
-    ~OccupationalFactorBuff_Beam() override;
-};
-
 // 冰令脉冲
 class FrostDecreePulseBuff : public Buff
 {
@@ -498,6 +477,23 @@ public:
     ~NineIceBuff() override;
 };
 
+// 冰箭幸运
+class IceArrowLuckyRealBuff : public RealFactor
+{
+public:   
+    static std::string name;
+
+public:
+    void listenerCallback(DamageInfo& info);
+    void listenerCallback2(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    IceArrowLuckyRealBuff(Person *p, double n);
+    ~IceArrowLuckyRealBuff() override;
+};
+
 // 无尽思维
 class InfiniteMindBuff : public Buff
 {
@@ -511,4 +507,25 @@ public:
 
     InfiniteMindBuff(Person *p, double n);
     ~InfiniteMindBuff() override;
+};
+
+// 职业因子(G4极性)
+class OccupationalFactorBuff_Beam : public Factor
+{
+public:   
+    static std::string name;
+    int count = 0;              // 计数器
+    int arrowTriggerNum = 5;    // 冰箭触发所需层数
+    double timer = 0;           // 计时器
+    double beamTriggerInterval = 100; // 射线触发间隔
+
+
+public:
+    void listenerCallback(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    OccupationalFactorBuff_Beam(Person *p, double n);
+    ~OccupationalFactorBuff_Beam() override;
 };

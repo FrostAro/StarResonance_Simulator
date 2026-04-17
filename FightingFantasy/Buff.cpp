@@ -20,8 +20,8 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
                         " - before person Crit Count + 4480, persent: " +
                         std::to_string(p->Critical));
 
-    p->changeCriticalCount(11200);
-    //this->p->triggerAction<CriticalCountModifyAction>(11200);
+    //p->changeCriticalCount(11200);
+    this->p->triggerAction<CriticalCountModifyAction>(11200);
 
     Logger::debugBuff(AutoAttack::getTimer(),
                         this->getBuffName(),
@@ -38,8 +38,8 @@ std::string MukuChiefBuff::getBuffName() const { return MukuChiefBuff::name; }
 
 MukuChiefBuff::~MukuChiefBuff()
 {
-    p->changeCriticalCount(-11200);
-    //this->p->triggerAction<CriticalCountModifyAction>(-11200);
+    //p->changeCriticalCount(-11200);
+    this->p->triggerAction<CriticalCountModifyAction>(-11200);
     this->p->triggerAction<CriticalDamageModifyAction>(-0.4);
 }
 
@@ -153,6 +153,10 @@ void SXMQBuff::listenerCallback(Skill *const skill)
     if(a)
     {
         skill->fixedValue += this->number * this->p->getATK();
+    }
+    if(skill->getCanTriggerLucky())
+    {
+        skill->luckyFiexedValue += this->number * this->p->getATK();
     }
 }
 

@@ -377,6 +377,10 @@ CreateSkillAction::CreateSkillAction(std::string skillName)
 void CreateSkillAction::addListener(std::unique_ptr<CreateSkillListener> info)
 {
     listeners.push_back(std::move(info));
+    if(listeners.size() + 5 > listeners.capacity())
+    {
+        listeners.reserve(listeners.capacity() * 2); // 扩容，减少频繁分配
+    }
 }
 
 void CreateSkillAction::deleteListener(int buffID)
@@ -452,6 +456,10 @@ CreateBuffAction::CreateBuffAction(std::string buffName)
 void CreateBuffAction::addListener(std::unique_ptr<CreateBuffListener> info)
 {
     listeners.push_back(std::move(info));
+    if(listeners.size() + 5 > listeners.capacity())
+    {
+        listeners.reserve(listeners.capacity() * 2); // 扩容，减少频繁分配
+    }
 }
 
 void CreateBuffAction::deleteListener(int buffID)

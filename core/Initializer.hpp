@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "Person.h"
 #include "Skill.h"
+#include "Buff.h"
 #include "AutoAttack.h"
 #include "Creators.hpp"
 #include <memory>
@@ -206,6 +207,7 @@ public:
      */
     void Initialize()
     {
+        registerCertainBuff<SkillReleasedTimesStatistics>();
         this->registerSkills();
         this->registerBuffs();
         this->equipSkills();

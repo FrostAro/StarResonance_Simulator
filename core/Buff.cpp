@@ -1,5 +1,7 @@
 #include "Buff.h"
 #include <string>
+#include "Skill.h"
+#include "Action.h"
 
 // 静态成员初始化
 int Buff::ID = 0;
@@ -70,3 +72,44 @@ void Buff::resetID() { Buff::ID = 0; }
 
 // buff何时应该被移除，默认为持续时间结束
 bool Buff::shouldBeRemoved() { return this->duration < 0; }
+
+
+
+
+
+
+std::string SkillReleasedTimesStatistics::name = "SkillReleasedTimeStatistics";
+
+SkillReleasedTimesStatistics::SkillReleasedTimesStatistics(Person *p, double) : Buff(p)
+{
+    this->duration = 999999;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    auto info2 = std::make_unique<CreateSkillListener>(
+        this->getBuffID(), [this](Skill *const skill)
+        { this->listenerCallback(skill); });
+    CreateSkillAction::addListener(std::move(info2));
+}
+
+void SkillReleasedTimesStatistics::listenerCallback(Skill *const skill) 
+{
+    if(this->skillReleasedTimesMap.find(skill->getSkillName()) == this->skillReleasedTimesMap.end())
+    {
+        this->skillReleasedTimesMap[skill->getSkillName()] = 1;
+    }
+    else
+    {
+        this->skillReleasedTimesMap[skill->getSkillName()] += 1;
+    }
+}
+
+void SkillReleasedTimesStatistics::update(const double) {}
+bool SkillReleasedTimesStatistics::shouldBeRemoved() { return this->duration < 0; }
+std::string SkillReleasedTimesStatistics::getBuffName() const { return SkillReleasedTimesStatistics::name; }
+
+SkillReleasedTimesStatistics::~SkillReleasedTimesStatistics()
+{
+    this->skillReleasedTimesMap.clear();
+    CreateSkillAction::deleteListener(this->getBuffID());
+}

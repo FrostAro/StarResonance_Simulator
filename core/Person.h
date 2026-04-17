@@ -59,6 +59,9 @@ private:
 	mutable std::mt19937 randomEngine;                              // 随机数引擎（线程安全）
 	mutable std::uniform_int_distribution<int> intDist{0, 9999};    
 
+	// 根据当前急速面板重新计算施法速度和攻击速度
+    void recalcSpeedFromQuickness();
+
 protected:
     // ==== 受保护成员：子类可以访问 ====
     std::vector<std::unique_ptr<Buff>> buffList{};                  // 生效中的buff列表
@@ -155,8 +158,8 @@ public:
 	 * @param atk 攻击力
 	 * @param refineatk 精炼攻击力
 	 * @param elementatk 元素攻击力
-	 * @param attackSpeed 攻击速度加成（0-1）
-	 * @param castingSpeed 施法速度加成（0-1）
+	 * @param attackSpeed 额外攻击速度加成
+	 * @param castingSpeed 额外施法速度加成
 	 * @param critialdamage_set 额外爆伤（调试用）
 	 * @param increasedamage_set 额外增伤（调试用）
 	 * @param elementdamage_set 额外元素增伤（调试用）
@@ -207,9 +210,10 @@ public:
 	
 	/**
 	 * @brief 计算幸运伤害（独立伤害机制）
+	 * @param skill 要计算的技能指针
 	 * @return 幸运伤害值
 	 */
-	double luckyDamage() const;
+	double luckyDamage(const Skill *skill) const;
 
 	// ==== 属性值设置 ====
 	
@@ -259,8 +263,8 @@ public:
 	virtual double setDreamIncrease();						   								// 初始化梦境增伤乘区
 	virtual double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
 
-	virtual double changeCastingSpeeaByPersent(const double castingSpeedPersent);			// 修改施法速度
-	virtual double changeAttackSpeeaByPersent(const double attackSpeedPersent);		// 修改攻击速度
+	virtual double changeCastingSpeedByPersent(const double castingSpeedPersent);			// 修改施法速度
+	virtual double changeAttackSpeedByPersent(const double attackSpeedPersent);		// 修改攻击速度
 
 	virtual double chanageDamageReduce(const double n);								// 修改减伤区
 
@@ -378,6 +382,7 @@ public:
     
     const AutoAttack* getAutoAttack() const;
     Skill* const getNowReleasingSkill() const;
+	void clearNowReleasingSkill();
 
 	const Skill* getCurtainPointerForAction(std::string skillName) const;
 };

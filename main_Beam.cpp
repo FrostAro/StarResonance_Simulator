@@ -53,17 +53,17 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         int fantasyConfig = 2; // 幻想配置参数（0-4），控制装备的幻想技能组合
 
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
-        /*三维属性*/ 4593,
-        /*暴击(%)*/ 38.94,/*例如51.63*/
-        /*急速(%)*/ 44.77,
-        /*幸运(%)*/ 05.00,
-        /*精通(%)*/ 42.51,
-        /*全能(%)*/ 36.54,
-        /*攻击(物理攻击/魔法攻击)*/ 3111,
-        /*精炼攻击*/ 820,
-        /*元素攻击*/ 35,
-        /*攻击速度(%)*/ 10.00,
-        /*施法速度(%)*/ 104.54,
+        /*三维属性*/ 6000,
+        /*暴击(%)*/ 5.00,/*例如51.63*/
+        /*急速(%)*/ 72  .88, // 24488
+        /*幸运(%)*/ 5.00,
+        /*精通(%)*/ 34.09, // 25866
+        /*全能(%)*/ 16,
+        /*攻击(物理攻击/魔法攻击)*/ 4000,
+        /*精炼攻击*/ 800,
+        /*元素攻击*/ 40,
+        /*额外攻击速度(%)*/ 0,
+        /*额外施法速度(%)*/ 23,
         /*爆伤额外值*/ 0,/*例如0.2*/
         /*增伤额外值*/ 0,
         /*元素增伤额外值*/ 0,
@@ -124,7 +124,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
 int main()
 {
     // 1. 初始化日志系统，设置日志级别为DEBUG
-    Logger::initialize(Logger::Level::DEBUG);
+    Logger::initialize(Logger::Level::INFO);
     
     // 2. 伤害统计结果列表（用于存储多次模拟的结果）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
@@ -141,7 +141,7 @@ int main()
     // - deltaTime: 时间增量
     // - true: 使用随机种子（每次运行结果不同）
     // - 42: 种子值（当 isRandomSeed=false 时有效，此处未使用）
-    executeSimulation_Beam(damageStatisticsList, 1, maxTime, deltaTime, true, 42);
+    executeSimulation_Beam(damageStatisticsList, 20, maxTime, deltaTime, true, 42);
     
     // 5. 汇总输出（如果有多次循环，进行汇总）
     summaryCirculationPrint(damageStatisticsList, maxTime);

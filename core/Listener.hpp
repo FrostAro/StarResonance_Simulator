@@ -229,7 +229,7 @@ public:
  * 
  * @note 用于技能创建的监听
  */
-class CreateSkillListener : public TypedListener<Skill*> {
+class CreateSkillListener : public TypedListener<Skill* const> {
 public:
     /**
      * @brief 构造函数
@@ -238,7 +238,7 @@ public:
      * @param func 技能创建回调函数，接收Skill*指针
      */
     CreateSkillListener(const int id, std::function<void(Skill* const)> func)
-        : TypedListener<Skill*>(id, func) {}
+        : TypedListener<Skill* const>(id, func) {}
     
     /**
      * @brief 触发技能创建事件
@@ -249,7 +249,7 @@ public:
      * 
      * @note 回调函数应负责技能对象的生命周期管理
      */
-    void trigger(Skill* skill) const {
+    void trigger(Skill* const skill) const {
         if (callback) callback(skill);
     }
 };

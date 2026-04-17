@@ -1,10 +1,12 @@
 #pragma once
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <stdexcept>
 
 class DamageInfo;
 class Person;
+class Skill;
 
 // ============================================================================
 // Buff 类声明
@@ -191,7 +193,8 @@ public:
 };
 
 class RealFactor : public Buff     // 真实因子效果
-{     
+{   
+protected:  
     double maxEnergy = 1200;
     double presentEnergy = 1200;
 public:  
@@ -213,4 +216,27 @@ public:
 
     RealFactor(Person* p) : Buff(p) {};
     virtual ~RealFactor() = default;
+};
+
+
+
+
+
+
+
+
+class SkillReleasedTimesStatistics : public Buff
+{
+public:
+    static std::string name;
+    std::unordered_map<std::string, double> skillReleasedTimesMap{}; // 技能释放时间记录表，键为技能名称，值为次数（毫秒）
+
+public:
+    void listenerCallback(Skill *const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    SkillReleasedTimesStatistics(Person *p, double n);
+    ~SkillReleasedTimesStatistics() override;
 };

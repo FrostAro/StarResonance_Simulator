@@ -87,6 +87,7 @@ public:
     // 伤害计算
     double multiplying = 0;         // 基础倍率（百分比加成）
     double fixedValue = 0;          // 基础固定值（固定伤害）
+    double luckyFiexedValue = 0;    // 幸运伤害固定值（固定幸运伤害）
     
     // 时间系统
     double duration = 0;                // 持续时间（毫秒）
@@ -283,6 +284,7 @@ public:
     double getAdd() const;
     double getEnergyReduce() const;
     bool getCanTriggerLucky() const;
+    void setCanTriggerLucky(bool value);
     bool getCanCharge() const;
     bool getIsEquipped() const;
     bool getTriggered() const;
@@ -315,6 +317,7 @@ public:
     int getMaxStack() const;
     double getMutiplying() const;
     double getFixedValue() const;
+    double getLuckyFiexedValue() const;
     double getReleasingTime() const;
     double getDuration() const;
     double getDamageTriggerInterval() const;

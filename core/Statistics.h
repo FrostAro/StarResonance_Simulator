@@ -35,6 +35,7 @@ public:
     double luckyDamageCount;       ///< 幸运伤害次数
     double luckyDamage;            ///< 幸运伤害总值
     double CritDamageCount;        ///< 暴击次数
+    int releasedTimes = 0;            ///< 技能释放次数
 
     DamageStatistics();
     DamageStatistics(double totalTime);
@@ -77,3 +78,4 @@ void summaryCirculationPrint(const std::vector<std::unordered_map<std::string, D
                            std::function<void(
                             const std::vector<std::unordered_map<std::string, DamageStatistics>>&,
                             int)> specialSummaryFunction);
+
