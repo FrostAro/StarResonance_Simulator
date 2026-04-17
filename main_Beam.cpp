@@ -55,7 +55,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
         /*三维属性*/ 6000,
         /*暴击(%)*/ 5.00,/*例如51.63*/
-        /*急速(%)*/ 72  .88, // 24488
+        /*急速(%)*/ 72.88, // 24488
         /*幸运(%)*/ 5.00,
         /*精通(%)*/ 34.09, // 25866
         /*全能(%)*/ 16,
