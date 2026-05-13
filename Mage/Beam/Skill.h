@@ -138,3 +138,16 @@ public:
 
 	explicit Ultimate_Beam(Person *p);
 };
+
+class FantasyImpact_Beam : public InstantSkill
+{ // 幻想冲击
+public:
+	
+	static std::string name;
+
+	void setSkillType() override;
+	void trigger(Person *p) override;
+	std::string getSkillName() const override;
+
+	explicit FantasyImpact_Beam(Person *p);
+};

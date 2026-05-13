@@ -134,6 +134,7 @@ public:
 	// ==== 幸运相关 ====
     double luckyDamageIncrease = 0;          // 幸运伤害增加百分比 (1 + 百分比)
     double luckyMultiplying = 0;             // 幸运伤害倍率（基础41.25%，每1%幸运+0.75%）
+	double luckyMultiplyingExtra = 0;        // 额外幸运伤害倍率（来自buff等）
 
 	// ==== 能量系统 ====
     double energyAddIncrease = 0;            // 能量回复增加

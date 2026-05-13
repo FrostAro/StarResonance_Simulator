@@ -48,11 +48,16 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
         this->count++;
         if (this->count >= this->triggerNum)
         {
-            this->p->triggerAction<CDReduceAction>(1, Flood_Beam::name);
+            this->p->triggerAction<CDReduceAction>(100, Flood_Beam::name);
             Logger::debugBuff(AutoAttack::getTimer(),
                               this->getBuffName(),
                               "ReduceCD triggered ");
         }
+    }
+
+    if(info.skillName == IceArrow_Beam::name && info.isCritical)
+    {
+        this->p->triggerAction<CreateSkillAction>(0,FrostBurst::name);
     }
 }
 
@@ -1249,6 +1254,54 @@ InstantCooldownBuff_Beam::~InstantCooldownBuff_Beam()
     EnergyRevertAction::deleteListener(this->getBuffID());
 }
 
+// 广域冰箭
+std::string ExtensiveArrow::name = "ExtensiveArrow";
+
+ExtensiveArrow::ExtensiveArrow(Person *p, double n) : Buff(p)
+{
+    this->duration = 999999;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+    this->triggerNum = 10;       // 专精技能10次伤害触发1次冰箭
+    this->triggerInterval = 50; // 0.5s冷却，防止高频触发
+
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo& info)
+        { this->listenerCallback(info); });
+    AttackAction::addListener(std::move(info));
+}
+
+void ExtensiveArrow::listenerCallback(DamageInfo& info)
+{
+    if(info.skillName == WaterSpout::name 
+        || info.skillName == FrostWind::name || info.skillName == Vortex::name)
+    {
+        this->count += 1;
+    }
+    if(this->count >= this->triggerNum && this->timer >= this->triggerInterval)
+    {
+        this->count -= this->triggerNum;
+        this->timer = 0;
+        this->p->triggerAction<CreateSkillAction>(0,IceArrow_Beam::name);
+        Logger::debugBuff(AutoAttack::getTimer(),
+                          this->getBuffName(),
+                          "ice arrow triggered by ExtensiveArrow");
+    }
+}
+
+void ExtensiveArrow::update(const double deltaTime)
+{
+    this->timer += deltaTime;
+}
+
+bool ExtensiveArrow::shouldBeRemoved() { return this->duration < 0; }
+std::string ExtensiveArrow::getBuffName() const { return ExtensiveArrow::name; }
+
+ExtensiveArrow::~ExtensiveArrow()
+{
+    AttackAction::deleteListener(this->getBuffID());
+}
+
 // 龙卷真实因子
 std::string WaterSpoutRealBuff::name = "WaterSpoutRealBuff";
 
@@ -1403,11 +1456,14 @@ void IceArrowLuckyRealBuff::listenerCallback(DamageInfo& info)
     // 灌注期伤害增加+幸运最终伤害增加
     // 默认灌注期全程触发
     double floodIncrease = 0.2316;
-    double finalIncrease = 0.37;
+    double finalIncrease = 0.505;
+
+    info.luckyNum *= (1 + finalIncrease);
+
     if(this->p->findBuffInBuffList(FloodBuff_Beam::name) == -1)
         return;
     
-    info.luckyNum = info.luckyNum * (1 + floodIncrease) * (1 + finalIncrease);
+    info.luckyNum *= (1 + floodIncrease);
 }
 
 void IceArrowLuckyRealBuff::listenerCallback2(Skill *const skill)
@@ -1481,8 +1537,8 @@ InfiniteMindBuff::~InfiniteMindBuff()
     this->p->triggerAction<PrimaryAttributesCountModifyAction>(-150);
 }
 
-// 职业专属因子（G4）
-// 极性：智力、射线
+// 职业专属因子（G7）
+// 极性：智力、
 // 灵感：射线、灌注、冰箭
 std::string OccupationalFactorBuff_Beam::name = "OccupationalFactorBuff_Beam";
 
@@ -1492,8 +1548,8 @@ OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Fa
     this->maxDuration = this->duration;
     this->isInherent = true;
 
-    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.0106);
-    this->p->triggerAction<PrimaryAttributesCountModifyAction>(63);
+    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.0153);
+    this->p->triggerAction<PrimaryAttributesCountModifyAction>(84);
 
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
@@ -1503,8 +1559,8 @@ OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Fa
 
 void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
 {
-    double iceArrowIncrease = 0.1568;
-    double beamIncrease = 0.0466 + 0.0726;
+    double iceArrowIncrease = 0.211;
+    double beamIncrease = 0.0726;
     if (skill->getSkillName() == IceArrow_Beam::name)
     {
         if(this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
@@ -1527,7 +1583,7 @@ void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
     }
     if(skill->getSkillName() == FrostBurst::name)
     {
-        //skill->damageIncreaseAdd += 0.211;
+        skill->damageIncreaseAdd += iceArrowIncrease;
     }
     // if (skill->getSkillName() == WaterSpout::name)
     // {
@@ -1569,4 +1625,91 @@ OccupationalFactorBuff_Beam::~OccupationalFactorBuff_Beam()
     CreateSkillAction::deleteListener(this->getBuffID());
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.0106);
     this->p->triggerAction<PrimaryAttributesCountModifyAction>(-63);
+}
+
+// 幻想冲击
+std::string FantasyImpactBuff_Beam::name = "FantasyImpactBuff_Beam";
+
+FantasyImpactBuff_Beam::FantasyImpactBuff_Beam(Person *p, double)
+    : Buff(p),
+      triggerTimer(0),
+      triggerInterval(1000),
+      triggerStack(20),
+      extremeLuckTriggerStack(10)
+{
+    this->stack = 0;
+    this->duration = 99999;
+    this->maxDuration = this->duration;
+
+    this->triggerStack += 10;
+    this->isInherent = true;
+
+    p->LuckyExtraPersent += 0.01;
+
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo &damageInfo)
+        { this->listenerCallback(damageInfo); });
+    AttackAction::addListener(std::move(info));
+}
+
+void FantasyImpactBuff_Beam::listenerCallback(DamageInfo &info)
+{
+    if (info.isLucky && info.skillName != FantasyImpact_Beam::name)
+    { // 如果触发幸运
+        this->stack += 1;
+        if (this->triggerTimer < this->triggerInterval)
+        { // 如果计时器未达到触发间隔
+            this->triggerTimer += 30 * AutoAttack::getDeltaTime();
+        }
+        if (static_cast<int>(this->stack) % this->triggerStack == 0 &&
+            this->triggerTimer >= this->triggerInterval)
+        {
+            this->p->triggerAction<CreateSkillAction>(0, FantasyImpact_Beam::name);
+            // 触发幻想冲击
+            // 时阶加伤效果写在对应skill中
+            this->triggerTimer -= this->triggerInterval;
+        }
+        // 极运相关逻辑
+        if (static_cast<int>(this->stack) % this->extremeLuckTriggerStack == 0)
+        {
+            this->p->triggerAction<CreateBuffAction>(0, ExtremeLuckBuff_Beam::name);
+        }
+    }
+}
+
+void FantasyImpactBuff_Beam::update(const double deltaTime)
+{
+        this->triggerTimer += deltaTime;
+}
+
+bool FantasyImpactBuff_Beam::shouldBeRemoved() { return this->duration < 0; }
+std::string FantasyImpactBuff_Beam::getBuffName() const { return FantasyImpactBuff_Beam::name; }
+
+FantasyImpactBuff_Beam::~FantasyImpactBuff_Beam()
+{
+    AttackAction::deleteListener(this->getBuffID());
+}
+
+// 极运
+std::string ExtremeLuckBuff_Beam::name = "ExtremeLuckBuff_Beam";
+
+ExtremeLuckBuff_Beam::ExtremeLuckBuff_Beam(Person *p, double) : Buff(p)
+{
+    this->number = 0.1; // 用作增加属性值
+    this->stack = 0;
+    this->duration = 500;
+    this->maxDuration = this->duration;
+
+    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(this->number);
+}
+
+void ExtremeLuckBuff_Beam::listenerCallback(DamageInfo&) {}
+void ExtremeLuckBuff_Beam::update(double) {}
+bool ExtremeLuckBuff_Beam::shouldBeRemoved() { return this->duration < 0; }
+std::string ExtremeLuckBuff_Beam::getBuffName() const { return ExtremeLuckBuff_Beam::name; }
+
+ExtremeLuckBuff_Beam::~ExtremeLuckBuff_Beam()
+{
+    // this->p->changePrimaryAttributesByPersent(-this->number);
+    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-this->number);
 }

@@ -112,13 +112,18 @@ DamageInfo Person::Damage(const Skill *skill)
         // }
 
         double luckyDamage = 0;
+        DamageInfo info;
         if (skill->getCanTriggerLucky())
         {
             luckyDamage = this->luckyDamage(skill);
-        }
-
-        DamageInfo info(skill->getSkillName(), damage,
+            info = DamageInfo(skill->getSkillName(), damage,
                         luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), this->isSuccess(this->Lucky));
+        }
+        else
+        {
+            info = DamageInfo(skill->getSkillName(), damage,
+                            luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), false);
+        }
         // if(info.skillName == Spear::name)
         // {
         //     std::cout << "[DEBUG,timer=" << AutoAttack::getTimer() << "]: Damage - skill: " << info.skillName << " damaged" << std::endl;
@@ -133,7 +138,7 @@ double Person::luckyDamage(const Skill *skill) const
     // 幸运伤害计算公式(概率)
     //double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying)) * (1 + this->elementIncrease) * (1 + this->damageIncrease + this->luckyDamageIncrease) * (1 + this->almightyIncrease);
     // (期望)
-    double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying) + skill->getLuckyFiexedValue()) 
+    double damage = ((this->ATK * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
                         * (1 + this->elementIncrease) 
                         * (1 + this->damageIncrease + this->Lucky) 
                         * (1 + this->almightyIncrease)
@@ -666,7 +671,7 @@ double Person::changeCriticalDamage(const double criticalDamage)
 double Person::setLuckyMultiplying()
 {
     // 41.25为基础倍率，0.75为幸运每增加1%增加的倍率
-    this->luckyMultiplying = (41.25 + (this->Lucky - 0.05) * 100 * 0.75) / 100;
+    this->luckyMultiplying = (41.25 + (this->Lucky - 0.05) * 100 * 0.25) / 100;
     return this->luckyMultiplying;
 }
 
@@ -1222,7 +1227,7 @@ const Skill* Person::getCurtainPointerForAction(std::string skillName) const
     return nullptr;
 }
 
-void Person::recalcSpeedFromQuickness()
+void Person::recalcSpeedFromQuickness() 
 {
     // 基础施法速度 = 急速面板 × 转化系数
     this->baseCastingSpeed = this->castingSpeedRatio * this->Quickness;

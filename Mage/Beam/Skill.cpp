@@ -23,6 +23,7 @@ Beam::Beam(Person* p)
     this->MaxCD = 0;
     this->CD = 0;
     this->releasingTime = 85;
+    this->releasingTime = this->releasingTime / (1 + p->castingSpeed);
 
     this->damageIncreaseAdd = 0.16; 
 
@@ -110,7 +111,7 @@ WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
     this->fixedValue = 514;
     this->damageTriggerInterval = 45;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
-    this->MaxCD = 3000;
+    this->MaxCD = 1000;
     this->duration = 2000;
 
     this->setSkillType();
@@ -282,7 +283,6 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
     this->finalIncreaseAdd = 1;
 
     this->IceArrow_Beam::setSkillType();
-    p->triggerAction<CreateSkillAction>(0,FrostBurst::name);
     p->triggerAction<ResourceRevertAction>(1);
 }
 
@@ -310,19 +310,21 @@ std::string FrostBurst::name = "FrostBurst";
 
 FrostBurst::FrostBurst(Person *p) : InstantSkill()
 {
-    this->multiplying = 0.56;
+    this->multiplying = 0.28;
     this->fixedValue = 0;
-    this->duration = 53;
-    this->damageTriggerInterval = 53;
+    this->duration = 1;
+    this->damageTriggerInterval = 1;
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
     this->chargeCD = 0;
     this->MaxchargeCD = 0;
     this->isNoReleasing = true;
+    this->canTriggerLucky = true;
 
     this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
+    this->finalIncreaseAdd = 1;
 
     this->FrostBurst::setSkillType();
 }
@@ -378,4 +380,43 @@ std::string Ultimate_Beam::getSkillName() const
     return Ultimate_Beam::name;
 }
 
+// 幻想冲击
+std::string FantasyImpact_Beam::name = "FantasyImpact_Beam";
 
+FantasyImpact_Beam::FantasyImpact_Beam(Person *p) : InstantSkill()
+{
+    this->duration = 20;
+    this->damageTriggerInterval = 20;
+    this->damageTriggerTimer = 0;
+
+    this->multiplying = 12.5L;
+    this->fixedValue = 0;
+
+    this->damageIncreaseAdd = p->luckyDamageIncrease;
+    this->dreamIncreaseAdd = 1.0;  
+    this->damageIncreaseAdd = 0.15; 
+
+    this->isNoReleasing = true;
+
+    this->setSkillType();
+}
+
+void FantasyImpact_Beam::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+    this->skillTypeList.push_back(skillTypeEnum::WITCHCRAFT);
+}
+
+void FantasyImpact_Beam::trigger(Person *p)
+{
+    p->triggerAction<AttackAction>(0, this);
+    // 二重：幻想冲击有50%几率再触发一次
+    // if (p->isSuccess(0.5) ) {
+    //     p->triggerAction<AttackAction>(0, this);
+    // }
+}
+
+std::string FantasyImpact_Beam::getSkillName() const
+{
+    return FantasyImpact_Beam::name;
+}

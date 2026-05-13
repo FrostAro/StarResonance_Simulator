@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../core/AutoAttack.h"
 #include "Skill.h"
 #include "../../FightingFantasy/Skill.h"

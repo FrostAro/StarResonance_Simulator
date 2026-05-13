@@ -425,6 +425,26 @@ public:
     ~InstantCooldownBuff_Beam() override;
 };
 
+// 广域冰箭
+class ExtensiveArrow : public Buff
+{
+public:   
+    static std::string name;
+    double triggerNum = 10;
+    double count = 0;
+    double timer = 0;
+    double triggerInterval = 0.5; // 触发间隔，防止一次伤害触发多次
+
+public:
+    void listenerCallback(DamageInfo& info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    ExtensiveArrow(Person *p, double n);
+    ~ExtensiveArrow() override;
+};
+
 // 龙卷真实因子
 class WaterSpoutRealBuff : public RealFactor
 {
@@ -509,7 +529,7 @@ public:
     ~InfiniteMindBuff() override;
 };
 
-// 职业因子(G4极性)
+// 职业因子(G7)
 class OccupationalFactorBuff_Beam : public Factor
 {
 public:   
@@ -528,4 +548,39 @@ public:
 
     OccupationalFactorBuff_Beam(Person *p, double n);
     ~OccupationalFactorBuff_Beam() override;
+};
+
+class FantasyImpactBuff_Beam : public Buff
+{
+public:
+    // 幻想冲击 
+    static std::string name;
+    double triggerTimer = 0;            //计时器
+    int triggerInterval = 0;            //触发间隔
+    int triggerStack = 0;               //触发所需层数
+    int extremeLuckTriggerStack = 0;   //极运触发所需层数
+
+public:
+    void listenerCallback(DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    FantasyImpactBuff_Beam(Person *p, double n);
+    ~FantasyImpactBuff_Beam() override;
+};
+
+class ExtremeLuckBuff_Beam : public Buff  //极运
+{
+public:
+    static std::string name;
+
+public:
+    void listenerCallback(DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    ExtremeLuckBuff_Beam(Person *p, double n);
+    ~ExtremeLuckBuff_Beam();
 };

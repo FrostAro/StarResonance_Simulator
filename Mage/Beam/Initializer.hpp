@@ -49,6 +49,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<CrystalsHail>();
         registerCertainSkill<FrostDecreePulse>();
         registerCertainSkill<FrostBurst>();
+        registerCertainSkill<FantasyImpact_Beam>();
         registerCertainSkill<MukuChief>();
         registerCertainSkill<MukuScout>();
         registerCertainSkill<YGLWS>();
@@ -84,18 +85,21 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<SXMQBuff_Passive>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
+        registerCertainBuff<ExtensiveArrow>();
 
         // //心相仪与装备套装效果
         registerCertainBuff<EquipmentSetEffectBuff_Beam>();
         //registerCertainBuff<IllusoryDreamBuff>();
         //registerCertainBuff<ATKIncreaseBuff_IllusoryDream>();
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
-        registerCertainBuff<IceRealBuff>();
+        //registerCertainBuff<IceRealBuff>();
         registerCertainBuff<WaterSpoutRealBuff>();
-        registerCertainBuff<NineIceBuff>();
+        //registerCertainBuff<NineIceBuff>();
         registerCertainBuff<IceArrowLuckyRealBuff>();
-        registerCertainBuff<InfiniteMindBuff>();
+        //registerCertainBuff<InfiniteMindBuff>();
         registerCertainBuff<OccupationalFactorBuff_Beam>();
+        registerCertainBuff<FantasyImpactBuff_Beam>();
+        registerCertainBuff<ExtremeLuckBuff_Beam>();
     }
 
 public:

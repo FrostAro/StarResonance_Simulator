@@ -53,13 +53,13 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         int fantasyConfig = 2; // 幻想配置参数（0-4），控制装备的幻想技能组合
 
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
-        /*三维属性*/ 6000,
-        /*暴击(%)*/ 5.00,/*例如51.63*/
-        /*急速(%)*/ 72.88, // 24488
-        /*幸运(%)*/ 5.00,
-        /*精通(%)*/ 34.09, // 25866
+        /*三维属性*/ 9000,
+        /*暴击(%)*/ 18.00,/*例如51.63*/
+        /*急速(%)*/ 40.88, // 24488
+        /*幸运(%)*/ 45.00,
+        /*精通(%)*/ 38.09, // 25866
         /*全能(%)*/ 16,
-        /*攻击(物理攻击/魔法攻击)*/ 4000,
+        /*攻击(物理攻击/魔法攻击)*/ 5000,
         /*精炼攻击*/ 800,
         /*元素攻击*/ 40,
         /*额外攻击速度(%)*/ 0,
@@ -141,7 +141,7 @@ int main()
     // - deltaTime: 时间增量
     // - true: 使用随机种子（每次运行结果不同）
     // - 42: 种子值（当 isRandomSeed=false 时有效，此处未使用）
-    executeSimulation_Beam(damageStatisticsList, 20, maxTime, deltaTime, true, 42);
+    executeSimulation_Beam(damageStatisticsList, 1, maxTime, deltaTime, true, 42);
     
     // 5. 汇总输出（如果有多次循环，进行汇总）
     summaryCirculationPrint(damageStatisticsList, maxTime);

@@ -107,6 +107,10 @@ std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
 - 姆头+博伊斯
 - 姆头+风龙
 
+### 射线
+
+详见260攻略给出的配置
+
 ## 输出说明
 
 程序运行时会输出以下信息：
