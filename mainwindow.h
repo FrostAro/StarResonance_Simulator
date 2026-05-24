@@ -29,12 +29,6 @@ enum class FantasyBeamConfig {
     SXMQ_MukuScout
 };
 
-enum class FantasyIcicleConfig {
-    MukuChief_MukuScout = 0,
-    MukuChief_BYS,
-    MukuChief_YGLWS
-};
-
 // ============================================================================
 // 模拟循环实现
 

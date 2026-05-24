@@ -17,8 +17,6 @@
 #include <QDebug>
 
 // 包含您的核心头文件（路径根据实际项目调整）
-#include "Mage/Icicle/Person.h"
-#include "Mage/Icicle/Initializer.hpp"
 #include "Mage/Beam/Person.h"
 #include "Mage/Beam/Initializer.hpp"
 #include "core/Logger.h"
@@ -93,23 +91,13 @@ void SimulationWorker::run()
         // 重置自动攻击计时器
         AutoAttack::setTimer() = 0;
 
-        // 创建对应职业的人物对象
-        std::unique_ptr<Person> person;
-        if (m_profession == "icicle") {
-            person = std::make_unique<Mage_Icicle>(
-                m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
-                m_atk, m_refineAtk, m_elementAtk,
-                m_attackSpeed, m_castingSpeed,  // 注意：这里直接传入百分比值，不在内部除以100（与控制台版本一致）
-                m_critDmgSet, m_incSet, m_eleIncSet,
-                m_maxTime, m_fantasyConfig);
-        } else {
-            person = std::make_unique<Mage_Beam>(
-                m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
-                m_atk, m_refineAtk, m_elementAtk,
-                m_attackSpeed, m_castingSpeed,
-                m_critDmgSet, m_incSet, m_eleIncSet,
-                m_maxTime, m_fantasyConfig);
-        }
+        // 创建 Beam 职业人物对象
+        std::unique_ptr<Person> person = std::make_unique<Mage_Beam>(
+            m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
+            m_atk, m_refineAtk, m_elementAtk,
+            m_attackSpeed, m_castingSpeed,
+            m_critDmgSet, m_incSet, m_eleIncSet,
+            m_maxTime, m_fantasyConfig);
 
         // 设置随机种子
         if (m_randomSeed) {
@@ -119,13 +107,8 @@ void SimulationWorker::run()
         }
 
         // 初始化角色（装备技能、Buff等）
-        if (m_profession == "icicle") {
-            auto init = std::make_unique<Initializer_Mage_Icicle>(person.get(), m_deltaTime, m_fantasyConfig);
-            init->Initialize();
-        } else {
-            auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig);
-            init->Initialize();
-        }
+        auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig);
+        init->Initialize();
 
         emit logMessage(QString("开始第 %1 次模拟...").arg(i + 1));
 
@@ -221,12 +204,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化职业默认值
     m_defaults["beam"] = {
-        {"primaryAttr", 6000}, {"crit", 5.00}, {"quickness", 32.88}, {"lucky", 5.00}, {"proficient", 34.09}, {"almighty", 16.00}, {"atk", 4000}, {"refineAtk", 800}, {"elementAtk", 40}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
-    m_defaults["icicle"] = {
-        {"primaryAttr", 4593}, {"crit", 36.00}, {"quickness", 1.05}, {"lucky", 51.70}, {"proficient", 6.00}, {"almighty", 17.58}, {"atk", 3111}, {"refineAtk", 820}, {"elementAtk", 35}, {"attackSpeed", 10.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, {"incSet", 0}, {"eleIncSet", 0}, {"times", 20}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
-    connect(m_professionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &MainWindow::onProfessionChanged);
-    onProfessionChanged(0); // 初始化冰矛
+        {"primaryAttr", 6760}, {"crit", 18.00}, {"quickness", 40.88}, {"lucky", 48.00}, 
+        {"proficient", 48.09}, {"almighty", 21.00}, {"atk", 4533}, {"refineAtk", 1000}, 
+        {"elementAtk", 230}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, 
+        {"incSet", 0}, {"eleIncSet", 0}, {"times", 1}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
+    onProfessionChanged(0); // 初始化 Beam
 }
 
 MainWindow::~MainWindow()
@@ -277,17 +259,19 @@ QWidget *MainWindow::createInputPanel()
     // 0: 职业选择
     layout->addWidget(new QLabel("职业 *"), row, 0);
     m_professionCombo = new QComboBox;
-    m_professionCombo->addItem("冰矛 · Icicle");
     m_professionCombo->addItem("射线 · Beam");
     layout->addWidget(m_professionCombo, row++, 1);
 
     // 1: 幻想配置
     layout->addWidget(new QLabel("幻想配置"), row, 0);
     m_fantasyCombo = new QComboBox;
-    // 初始填充冰矛的选项（将在 onProfessionChanged 中动态更新）
+    // 初始填充 Beam 的选项
     m_fantasyCombo->addItem("姆头 + 尖兵");
-    m_fantasyCombo->addItem("姆头 + 博伊斯(仅三次释放)");
-    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯(仅三次释放)");
+    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+    m_fantasyCombo->addItem("姆头 + 嗜血毛球");
+    m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
+    m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
+    m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
     layout->addWidget(m_fantasyCombo, row++, 1);
 
     // 2: 三维属性
@@ -441,21 +425,14 @@ QWidget *MainWindow::createResultPanel()
 void MainWindow::onProfessionChanged(int index)
 {
     m_fantasyCombo->clear(); // 清空原有选项
-    if (index == 0) { // 冰矛
-        m_fantasyCombo->addItem("姆头 + 尖兵");
-        m_fantasyCombo->addItem("姆头 + 博伊斯(仅三次释放)");
-        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯(仅三次释放)");
-        m_fantasyCombo->setCurrentIndex(0); // 默认姆头+尖兵
-    } else { // 射线
-        m_fantasyCombo->addItem("姆头 + 尖兵");
-        m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
-        m_fantasyCombo->addItem("姆头 + 嗜血毛球");
-        m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
-        m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
-        m_fantasyCombo->setCurrentIndex(0); // 默认尖兵（与之前保持一致）
-    }
-    QString prof = (index == 0) ? "icicle" : "beam";
-    updateDefaultsForProfession(prof);
+    m_fantasyCombo->addItem("姆头 + 尖兵");
+    m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
+    m_fantasyCombo->addItem("姆头 + 嗜血毛球");
+    m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
+    m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
+    m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
+    m_fantasyCombo->setCurrentIndex(0);
+    updateDefaultsForProfession("beam");
 }
 
 void MainWindow::updateDefaultsForProfession(const QString &prof)
@@ -480,7 +457,7 @@ void MainWindow::updateDefaultsForProfession(const QString &prof)
     m_deltaTimeEdit->setText(QString::number(def["deltaTime"]));
     m_seedEdit->setText(QString::number(def["seed"]));
 
-    appendLog(QString("[CONFIG] 已切换至 %1 默认参数").arg(prof == "icicle" ? "冰矛" : "射线"));
+    appendLog("[CONFIG] 已切换至 射线 默认参数");
 }
 
 void MainWindow::onRunClicked()
@@ -492,7 +469,7 @@ void MainWindow::onRunClicked()
     }
 
     // 读取所有输入值
-    QString prof = m_professionCombo->currentIndex() == 0 ? "icicle" : "beam";
+    QString prof = "beam";
     double primaryAttr = m_primaryAttrEdit->text().toDouble();
     double crit = m_critEdit->text().toDouble();
     double quickness = m_quicknessEdit->text().toDouble();
