@@ -31,4 +31,4 @@ output/
 temp.text
 text.text
 .vs
-
+compile_commands.json

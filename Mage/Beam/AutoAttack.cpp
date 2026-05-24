@@ -264,3 +264,35 @@ AutoAttack_Mage_Beam_JBMQ::AutoAttack_Mage_Beam_JBMQ(Person* p)
             {FrostWind::name, false}, {Flood_Beam::name, false} },
           {SXMQ::name, MukuScout::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
+
+    // LSZZ
+AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
+    : AutoAttack_Mage_Beam_Base(p, {
+        // 阶段1
+        { { {SXMQ::name, false}, {LSZZ::name, false}, {Vortex::name, false},
+            {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, LSZZ::name, Vortex::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段2
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段3
+        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段4
+        { { {SXMQ::name, false}, {LSZZ::name, false}, {Ultimate_Beam::name, false},
+            {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, LSZZ::name, Vortex::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段5
+        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段6
+        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段7
+        { { {Ultimate_Beam::name, false}, {SXMQ::name, false}, {LSZZ::name, false}, {Vortex::name, false},
+            {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, LSZZ::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
+           Flood_Beam::name, Beam::name, WaterSpout::name} },
+    }) {}

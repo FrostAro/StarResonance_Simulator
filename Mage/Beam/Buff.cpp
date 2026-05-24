@@ -196,7 +196,6 @@ void FrostCrystalResonanceBuff::listenerCallback2(Skill *const skill)
 {
     if(skill->getSkillName() == IceArrow_Beam::name)
     {
-        skill->finalIncreaseAdd += 0.15;
         // 冰光共鸣部分
         if(this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
         {
@@ -1088,18 +1087,23 @@ void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
     {
     case secondaryAttributesEnum::CRITICAL:
         this->p->triggerAction<CriticalPercentModifyAction>(-this->number);
+        this->p->changeCriticalCount(-2000);
         break;
     case secondaryAttributesEnum::QUICKNESS:
         this->p->triggerAction<QuicknessPercentModifyAction>(-this->number);
+        this->p->changeQuicknessCount(-2000);
         break;
     case secondaryAttributesEnum::LUCKY:
         this->p->triggerAction<LuckyPercentModifyAction>(-this->number);
+        this->p->changeLuckyCount(-2000);
         break;
     case secondaryAttributesEnum::PROFICIENT:
         this->p->triggerAction<ProficientPercentModifyAction>(-this->number);
+        this->p->changeProficientCount(-2000);
         break;
     case secondaryAttributesEnum::ALMIGHTY:
         this->p->triggerAction<AlmightyPercentModifyAction>(-this->number);
+        this->p->changeAlmightyCount(-2000);
         break;
     default:
         break;
@@ -1455,7 +1459,7 @@ void IceArrowLuckyRealBuff::listenerCallback(DamageInfo& info)
 {
     // 灌注期伤害增加+幸运最终伤害增加
     // 默认灌注期全程触发
-    double floodIncrease = 0.2316;
+    double floodIncrease = 0.33;
     double finalIncrease = 0.505;
 
     info.luckyNum *= (1 + finalIncrease);
@@ -1548,9 +1552,6 @@ OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Fa
     this->maxDuration = this->duration;
     this->isInherent = true;
 
-    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.0153);
-    this->p->triggerAction<PrimaryAttributesCountModifyAction>(84);
-
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
@@ -1560,7 +1561,7 @@ OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Fa
 void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
 {
     double iceArrowIncrease = 0.211;
-    double beamIncrease = 0.0726;
+    double beamIncrease = 0.097;
     if (skill->getSkillName() == IceArrow_Beam::name)
     {
         if(this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
@@ -1579,11 +1580,11 @@ void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
                       this->getBuffName(),
                       "Factor energy reverted: 8");
         }
-        skill->damageIncreaseAdd += iceArrowIncrease;
+        skill->dreamIncreaseAdd += iceArrowIncrease;
     }
     if(skill->getSkillName() == FrostBurst::name)
     {
-        skill->damageIncreaseAdd += iceArrowIncrease;
+        skill->dreamIncreaseAdd += iceArrowIncrease;
     }
     // if (skill->getSkillName() == WaterSpout::name)
     // {
@@ -1635,16 +1636,14 @@ FantasyImpactBuff_Beam::FantasyImpactBuff_Beam(Person *p, double)
       triggerTimer(0),
       triggerInterval(1000),
       triggerStack(20),
-      extremeLuckTriggerStack(10)
+      extremeLuckTriggerStack(10),
+      extraTriggerStack(20)
 {
     this->stack = 0;
     this->duration = 99999;
     this->maxDuration = this->duration;
 
-    this->triggerStack += 10;
     this->isInherent = true;
-
-    p->LuckyExtraPersent += 0.01;
 
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
@@ -1661,13 +1660,14 @@ void FantasyImpactBuff_Beam::listenerCallback(DamageInfo &info)
         { // 如果计时器未达到触发间隔
             this->triggerTimer += 30 * AutoAttack::getDeltaTime();
         }
-        if (static_cast<int>(this->stack) % this->triggerStack == 0 &&
+        if (this->stack >= (this->triggerStack + this->extraTriggerStack) &&
             this->triggerTimer >= this->triggerInterval)
         {
             this->p->triggerAction<CreateSkillAction>(0, FantasyImpact_Beam::name);
             // 触发幻想冲击
             // 时阶加伤效果写在对应skill中
-            this->triggerTimer -= this->triggerInterval;
+            this->triggerTimer = 0;
+            this->stack = 0;
         }
         // 极运相关逻辑
         if (static_cast<int>(this->stack) % this->extremeLuckTriggerStack == 0)
@@ -1712,4 +1712,39 @@ ExtremeLuckBuff_Beam::~ExtremeLuckBuff_Beam()
 {
     // this->p->changePrimaryAttributesByPersent(-this->number);
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-this->number);
+}
+
+// 系数调整
+std::string CoefficientAdjustmentBuff_Beam::name = "CoefficientAdjustmentBuff_Beam";
+
+CoefficientAdjustmentBuff_Beam::CoefficientAdjustmentBuff_Beam(Person *p, double) : Buff(p)
+{
+    this->isInherent = true;
+    this->duration = 999999;
+    this->maxDuration = this->duration;
+
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo &damageInfo)
+        { this->listenerCallback(damageInfo); });
+    AttackAction::addListener(std::move(info));
+}
+
+void CoefficientAdjustmentBuff_Beam::listenerCallback(DamageInfo& info) 
+{
+    double fantasyImpactAdjustment = 1;
+    double luckyAdjustment = 2.1;
+    if(info.skillName == FantasyImpact_Beam::name)
+    {
+        info.damageNum *= fantasyImpactAdjustment;
+    }
+    info.luckyNum *= luckyAdjustment;
+}
+
+void CoefficientAdjustmentBuff_Beam::update(double) {}
+bool CoefficientAdjustmentBuff_Beam::shouldBeRemoved() { return this->duration < 0; }
+std::string CoefficientAdjustmentBuff_Beam::getBuffName() const { return CoefficientAdjustmentBuff_Beam::name; }
+
+CoefficientAdjustmentBuff_Beam::~CoefficientAdjustmentBuff_Beam() 
+{
+    AttackAction::deleteListener(this->getBuffID());
 }

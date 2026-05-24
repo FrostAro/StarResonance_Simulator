@@ -49,6 +49,7 @@ protected:
     
     // 技能类型标志
     bool canTriggerLucky = false;   // 可触发幸运伤害
+    bool canTriggerCrit = true;     // 可触发暴击伤害
     bool canCharge = false;         // 可充能（拥有充能CD）
     bool isInstant = false;         // 立即触发性技能
     bool isContinuous = false;      // 持续性技能
@@ -284,7 +285,9 @@ public:
     double getAdd() const;
     double getEnergyReduce() const;
     bool getCanTriggerLucky() const;
+    bool getCanTriggerCrit() const;
     void setCanTriggerLucky(bool value);
+    void setCanTriggerCrit(bool value);
     bool getCanCharge() const;
     bool getIsEquipped() const;
     bool getTriggered() const;

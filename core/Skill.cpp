@@ -311,7 +311,9 @@ int Skill::getSkillID() const { return this->skillID; }
 double Skill::getAdd() const { return this->energyAdd; }
 double Skill::getEnergyReduce() const { return this->energyReduce; }
 bool Skill::getCanTriggerLucky() const { return this->canTriggerLucky; }
+bool Skill::getCanTriggerCrit() const { return this->canTriggerCrit; }
 void Skill::setCanTriggerLucky(bool value) { this->canTriggerLucky = value; }
+void Skill::setCanTriggerCrit(bool value) { this->canTriggerCrit = value; }
 bool Skill::getCanCharge() const { return this->canCharge; }
 bool Skill::getIsEquipped() const { return this->isEquipped; }
 bool Skill::getTriggered() const { return this->triggered; }

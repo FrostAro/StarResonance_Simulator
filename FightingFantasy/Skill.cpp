@@ -278,3 +278,50 @@ void HYXZ::removePassiveEffect(Person *p)
 {
     p->triggerAction<ProficientCountModifyAction>(-8960);
 }
+
+// 掠食蜘蛛
+std::string LSZZ::name = "LSZZ";
+
+LSZZ::LSZZ(Person *p) : FightingFantasy(), InstantSkill()
+{
+
+    this->maxStack = 1;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->LSZZ::setSkillType();
+}
+
+void LSZZ::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void LSZZ::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, LSZZBuff::name);
+}
+
+std::string LSZZ::getSkillName() const
+{
+    return LSZZ::name;
+}
+
+void LSZZ::setPassiveEffect(Person *p)
+{
+    p->triggerAction<AttackIncreaseModifyAction>(0.21);
+}
+
+void LSZZ::removePassiveEffect(Person *p)
+{
+    p->triggerAction<AttackIncreaseModifyAction>(-0.21);
+}

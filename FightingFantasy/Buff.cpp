@@ -152,11 +152,11 @@ void SXMQBuff::listenerCallback(Skill *const skill)
     }
     if(a)
     {
-        skill->fixedValue += this->number * this->p->getATK();
+        skill->fixedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
     }
     if(skill->getCanTriggerLucky())
     {
-        skill->luckyFiexedValue += this->number * this->p->getATK();
+        skill->luckyFiexedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
     }
 }
 
@@ -244,4 +244,25 @@ std::string HYXZBuff::getBuffName() const { return HYXZBuff::name; }
 HYXZBuff::~HYXZBuff() 
 {
     this->p->triggerAction<ProficientPercentModifyAction>(-0.2);
+}
+
+// 掠食蜘蛛
+std::string LSZZBuff::name = "LSZZBuff";
+
+LSZZBuff::LSZZBuff(Person *p, double) : Buff(p)
+{
+    this->number = 0.35; // 用作主动倍率
+    this->duration = 2000;
+    this->maxDuration = this->duration;
+
+    p->triggerAction<AttackIncreaseModifyAction>(this->number);
+}
+
+void LSZZBuff::update(const double) {}
+bool LSZZBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string LSZZBuff::getBuffName() const { return LSZZBuff::name; }
+
+LSZZBuff::~LSZZBuff() 
+{
+    this->p->triggerAction<AttackIncreaseModifyAction>(-this->number);
 }

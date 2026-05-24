@@ -63,3 +63,8 @@ class AutoAttack_Mage_Beam_JBMQ : public AutoAttack_Mage_Beam_Base {
 public:
     explicit AutoAttack_Mage_Beam_JBMQ(Person* p);
 };
+
+class AutoAttack_Mage_Beam_LSZZ : public AutoAttack_Mage_Beam_Base {
+public:
+    explicit AutoAttack_Mage_Beam_LSZZ(Person* p);
+};

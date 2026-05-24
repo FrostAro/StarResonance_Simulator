@@ -35,6 +35,10 @@ class Initializer_Mage_Beam : public Initializer
             equipCertainSkill(MukuScout::name);   // 姆克尖兵+嗜血毛球
             equipCertainSkill(SXMQ::name);
         }
+        else if (m_fantasyConfig == 5) {
+            equipCertainSkill(LSZZ::name);        // 掠食蜘蛛+嗜血毛球
+            equipCertainSkill(SXMQ::name);
+        }
     }
 
     void registerSkills() override
@@ -55,6 +59,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<YGLWS>();
         registerCertainSkill<SXMQ>();
         registerCertainSkill<HYXZ>();
+        registerCertainSkill<LSZZ>();
     }
 
     void registerBuffs() override
@@ -83,6 +88,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<SXMQBuff>();
         registerCertainBuff<HYXZBuff>();
         registerCertainBuff<SXMQBuff_Passive>();
+        registerCertainBuff<LSZZBuff>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();
@@ -100,6 +106,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<OccupationalFactorBuff_Beam>();
         registerCertainBuff<FantasyImpactBuff_Beam>();
         registerCertainBuff<ExtremeLuckBuff_Beam>();
+        registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
     }
 
 public:

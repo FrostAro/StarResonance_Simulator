@@ -86,6 +86,8 @@ DamageInfo Person::Damage(const Skill *skill)
                             + skill->getFixedValue())
             /*增伤区*/
             * (1 + this->damageIncrease + skill->damageIncreaseAdd)
+            /*增效区*/
+            * (1 + this->enhenceIncrease)
             /*元素增伤区*/
             * (1 + this->elementIncrease + skill->elementIncreaseAdd)
             /*全能增伤区*/
@@ -103,7 +105,9 @@ DamageInfo Person::Damage(const Skill *skill)
             crit = 0.0;
         else
             crit = this->Critical + skill->criticalAdd;
-        damage = damage * crit * (1 + this->criticicalDamage + skill->criticalIncreaseAdd) + damage * (1 - crit);
+        if(!skill->getCanTriggerCrit())
+            crit = 0.0;
+        damage *= 1 + (this->criticicalDamage + skill->criticalIncreaseAdd) * crit;
         // 实际暴击模拟
         // double isCrit = this->isSuccess(this->Critical + skill->criticalAdd);
         // if (isCrit)
@@ -138,14 +142,16 @@ double Person::luckyDamage(const Skill *skill) const
     // 幸运伤害计算公式(概率)
     //double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying)) * (1 + this->elementIncrease) * (1 + this->damageIncrease + this->luckyDamageIncrease) * (1 + this->almightyIncrease);
     // (期望)
-    double damage = ((this->ATK * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
+    double damage = ((this->getATK() * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
                         * (1 + this->elementIncrease) 
                         * (1 + this->damageIncrease + this->Lucky) 
                         * (1 + this->almightyIncrease)
+                        * (1 + this->dreamIncrease)
+                        * (1 + this->enhenceIncrease)
                         * this->Lucky;
 
     // 幸运伤害也可暴击
-    damage = damage * this->Critical * (1 + this->criticicalDamage) + damage * (1 - this->Critical);
+    damage *= 1 + (this->criticicalDamage + skill->criticalIncreaseAdd) * this->Critical;
     return damage;
 }
 
@@ -654,6 +660,18 @@ double Person::changeDamageIncrease(const double increase)
 {
     this->damageIncrease += increase;
     return this->damageIncrease;
+}
+
+double Person::setEnhenceIncrease()
+{
+    this->enhenceIncrease = 0.0;
+    return this->enhenceIncrease;
+}
+
+double Person::changeEnhenceIncrease(const double increase)
+{
+    this->enhenceIncrease += increase;
+    return this->enhenceIncrease;
 }
 
 double Person::setCriticalDamage()
@@ -1191,7 +1209,7 @@ double Person::getDamageIncrease() const { return damageIncrease; }
 double Person::getElementIncrease() const { return elementIncrease; }
 double Person::getAlmightyIncrease() const { return almightyIncrease; }
 double Person::getCriticicalDamage() const { return criticicalDamage; }
-double Person::getVulnerable() const { return vulnerable; }
+double Person::getEnhenceIncrease() const { return enhenceIncrease; }
 double Person::getDamageReduce() const { return damageReduce; }
 double Person::getFinalIncrease() const { return finalIncrease; }
 double Person::getDreamIncrease() const { return dreamIncrease; }

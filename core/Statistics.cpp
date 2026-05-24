@@ -19,20 +19,6 @@
 void printDamageStatistics(const std::unordered_map<std::string, DamageStatistics>& damageStatsMap, 
                            int totalTime)
 {
-    // 打印每个技能的统计数据
-    std::cout << "skill Damage Statistics:" << std::endl;
-    for (const auto &info : damageStatsMap)
-    {
-        std::cout << "Skill: " << info.second.skillName
-                  << ", Damage: " << info.second.damage
-                  << ", Damage attack count: " << info.second.damageCount
-                  << ", Lucky Damage: " << info.second.luckyDamage
-                  << ", Lucky Attack count: " << info.second.luckyDamageCount
-                  << ", DPS: " << (info.second.damage + info.second.luckyDamage) / (static_cast<double>(totalTime) / 100.0)
-                  << ", Released Times:" << info.second.releasedTimes
-                  << std::endl;
-    }
-    
     // 计算总体统计
     double totalDamage = 0;
     double totalLuckyDamage = 0;
@@ -50,21 +36,42 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
         totalLuckyDamageCount += info.second.luckyDamageCount;
         totalCritCount += info.second.CritDamageCount;
     }
+
+    // 打印每个技能的统计数据
+    std::cout << "skill Damage Statistics:" << std::endl;
+    for (const auto &info : damageStatsMap)
+    {
+        if(info.second.skillName == "NONE")
+            continue; // 跳过无效技能统计
+        std::cout << "Skill: " << info.second.skillName
+                  << ", Damage: " << info.second.damage
+                  << ", Damage attack count: " << info.second.damageCount
+                  << ", Lucky Damage: " << info.second.luckyDamage
+                  << ", Lucky Attack count: " << info.second.luckyDamageCount
+                  << ", DPS: " << info.second.damage / (static_cast<double>(totalTime) / 100.0)
+                  << ", Propotion:" << (info.second.damage / totalAllDamage) * 100 << "%"
+                  << std::endl;
+    }
+
+    std::cout << "Lucky: " 
+                  << " Damage: " << totalLuckyDamage
+                  << ", Damage attack count: " << totalLuckyDamageCount
+                  << ", DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 100.0)
+                  << ", Propotion:" << (totalLuckyDamage / totalAllDamage) * 100 << "%"
+                  << std::endl;
     
     // 打印总体统计
     std::cout << std::endl
               << "total Damage Statistics:" << std::endl;
     
     std::cout << "Total Damage: " << totalDamage
-              << ", Total Lucky Damage: " << totalLuckyDamage
               << ", Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 100.0)
-              << ", Total Lucky DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 100.0)
               << std::endl;
     
     std::cout << "Total Damage Count: " << totalDamageCount
               << ", Total Lucky Damage Count: " << totalLuckyDamageCount
-              << " Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
-              << " Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
+              << ", Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
+              << ", Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
               << std::endl;
 }
 

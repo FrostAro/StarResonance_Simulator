@@ -123,7 +123,7 @@ public:
     double elementIncrease = 0;              // 元素增伤百分比 (1 + 百分比)
     double almightyIncrease = 0;             // 全能增伤百分比 (1 + 百分比)
     double criticicalDamage = 0.5;           // 暴击伤害加成（基础+50%）
-    double vulnerable = 0;                   // 易伤效果（目标受到的伤害增加）
+    double enhenceIncrease = 0;              // 增效效果增加百分比 (1 + 百分比)
     double damageReduce = 0;                 // 减伤百分比（1 - 百分比）
     double finalIncrease = 0;                // 最终伤害增加百分比 (1 + 百分比)
     double dreamIncrease = 0;                // 梦境增伤百分比 (1 + 百分比)
@@ -242,29 +242,32 @@ public:
 	virtual double changeATKCount(double count);			  		// 修改攻击力数值
 	virtual double changeRefineATKCount(double n);				  	// 修改精炼攻击
 
-	virtual double setAattackIncrease();													// 初始化攻击增加乘区
+	virtual double setAattackIncrease();											// 初始化攻击增加乘区
 	virtual double changeAattackIncrease(double attackIncrease); 					// 修改攻击增加乘区
 
-	virtual double setElementIncrease();													// 初始化元素增伤乘区
+	virtual double setElementIncrease();											// 初始化元素增伤乘区
 	virtual double changeElementIncreaseByProficient(double proficient);			// 通过精通修改元素增伤
 	virtual double changeElementIncreaseByElementIncrease(double elementIncrease); 	// 直接修改元素增伤
 
-	virtual double setAlmightyIncrease();													// 初始化全能增伤乘区
+	virtual double setAlmightyIncrease();											// 初始化全能增伤乘区
 	virtual double changeAlmightyIncrease(double almighty); 						// 修改全能增伤乘区
 
-	virtual double setDamageIncrease();					   									// 初始化通用增伤乘区
+	virtual double setDamageIncrease();					   							// 初始化通用增伤乘区
 	virtual double changeDamageIncrease(double increase); 							// 修改通用增伤乘区
 
-	virtual double setCriticalDamage();						   								// 初始化暴击伤害乘区
+	virtual double setEnhenceIncrease();					   							// 初始化通用增伤乘区
+	virtual double changeEnhenceIncrease(double increase); 							// 修改通用增伤乘区
+
+	virtual double setCriticalDamage();						   						// 初始化暴击伤害乘区
 	virtual double changeCriticalDamage(double criticalDamage); 					// 修改暴击伤害乘区
 
-	virtual double setLuckyMultiplying();								   					// 初始化幸运倍率
+	virtual double setLuckyMultiplying();								   			// 初始化幸运倍率
 	virtual double changeLuckyMultiplyingByAddMultiplying(double addMultiplying); 	// 修改幸运倍率
 
-	virtual double setDreamIncrease();						   								// 初始化梦境增伤乘区
+	virtual double setDreamIncrease();						   						// 初始化梦境增伤乘区
 	virtual double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
 
-	virtual double changeCastingSpeedByPersent(const double castingSpeedPersent);			// 修改施法速度
+	virtual double changeCastingSpeedByPersent(const double castingSpeedPersent);	// 修改施法速度
 	virtual double changeAttackSpeedByPersent(const double attackSpeedPersent);		// 修改攻击速度
 
 	virtual double chanageDamageReduce(const double n);								// 修改减伤区
@@ -361,7 +364,7 @@ public:
     double getElementIncrease() const;
     double getAlmightyIncrease() const;
     double getCriticicalDamage() const;
-    double getVulnerable() const;
+    double getEnhenceIncrease() const;
     double getDamageReduce() const;
     double getFinalIncrease() const;
     double getDreamIncrease() const;

@@ -123,3 +123,18 @@ public:
     HYXZBuff(Person *p, double n);
     ~HYXZBuff() override;
 };
+
+class LSZZBuff : public Buff
+{
+public:
+    // 掠食蜘蛛
+    static std::string name;
+
+public:
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    LSZZBuff(Person *p, double n);
+    ~LSZZBuff() override;
+};

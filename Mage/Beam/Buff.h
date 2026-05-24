@@ -555,10 +555,11 @@ class FantasyImpactBuff_Beam : public Buff
 public:
     // 幻想冲击 
     static std::string name;
-    double triggerTimer = 0;            //计时器
-    int triggerInterval = 0;            //触发间隔
-    int triggerStack = 0;               //触发所需层数
-    int extremeLuckTriggerStack = 0;   //极运触发所需层数
+    double triggerTimer = 0;                //计时器
+    int triggerInterval = 1000;             //触发间隔
+    int triggerStack = 20;                  //触发所需层数
+    int extremeLuckTriggerStack = 10;       //极运触发所需层数
+    int extraTriggerStack = 10;             // 额外层数（如极运提供的层数）
 
 public:
     void listenerCallback(DamageInfo &info);
@@ -583,4 +584,19 @@ public:
 
     ExtremeLuckBuff_Beam(Person *p, double n);
     ~ExtremeLuckBuff_Beam();
+};
+
+class CoefficientAdjustmentBuff_Beam : public Buff  //系数调整
+{
+public:
+    static std::string name;
+
+public:
+    void listenerCallback(DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    CoefficientAdjustmentBuff_Beam(Person *p, double n);
+    ~CoefficientAdjustmentBuff_Beam();
 };

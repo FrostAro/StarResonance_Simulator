@@ -389,14 +389,15 @@ FantasyImpact_Beam::FantasyImpact_Beam(Person *p) : InstantSkill()
     this->damageTriggerInterval = 20;
     this->damageTriggerTimer = 0;
 
-    this->multiplying = 12.5L;
+    this->multiplying = 13.75L;
     this->fixedValue = 0;
 
-    this->damageIncreaseAdd = p->luckyDamageIncrease;
+    this->damageIncreaseAdd = p->Lucky;
     this->dreamIncreaseAdd = 1.0;  
-    this->damageIncreaseAdd = 0.15; 
+    this->dreamIncreaseAdd = 0.15; 
 
     this->isNoReleasing = true;
+    this->canTriggerCrit = false; // 幻想冲击无法暴击
 
     this->setSkillType();
 }

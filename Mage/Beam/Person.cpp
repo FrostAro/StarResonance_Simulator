@@ -44,6 +44,9 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
         case 4:
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_JBMQ>(this);
             break;
+        case 5:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_LSZZ>(this);
+            break;
         default:
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
             break;
@@ -63,6 +66,8 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     initializeIncrease();
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.1);
+    changeEnhenceIncrease(0.06);
+    changeLuckyMultiplyingByAddMultiplying(0.1);
 }
 
 double Mage_Beam::changeElementIncreaseByProficient(double proficient)
