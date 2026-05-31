@@ -24,30 +24,22 @@ class Action {
 ### 2.1.在Action.h中声明
 
 ```cpp
-class NewAction : public Action {
+class NewAction : public TypedAction<ResourceRevertAction, ResourceListener> {
 private:
-    static std::string name;// 事件名
-
-    /* 监听器（可选）
-     * 用于绑定Buff类中的callback函数，从而使得在每次触发事件时，同时触发绑定的
-     * callback函数，实现监听的效果
-     * 如果选择不实现监听器，需删除此NewAction内所有监听器相关逻辑
-    */
-    static std::vector<std::unique_ptr<对应Listener>> listeners; 
-
-
     // 可选：构造函数参数相关成员，如buffName、skillName
     std::string targetName;
     
 public:
-    explicit NewAction(std::string targetName);
-    void execute(double n, Person *p) override;
+    static std::string name;// 事件名 
 
-    // 监听器的添加与删除（可选）
-    static void addListener(std::unique_ptr<对应Listener> listener);
-    static void deleteListener(int buffID);
-    // 获取事件名
-    std::string getActionName() override;  
+    NewAction();
+
+    /**
+     * @brief 事件行为
+     * @param n 自定义应用值
+     * @param p 执行动作的角色
+     */
+    void execute(double n, Person *p) override; 
 };
 ```
 
@@ -56,7 +48,6 @@ public:
 ```cpp
 // 定义静态成员
 std::string NewAction::name = "NewAction";
-std::vector<std::unique_ptr<对应Listener>> NewAction::listeners = {};
 
 // 构造函数
 NewAction::NewAction(std::string targetName) : targetName(targetName) {}
@@ -72,30 +63,6 @@ void NewAction::execute(double n, Person *p) {
         }
     }
 }
-
-// 添加监听器
-void NewAction::addListener(std::unique_ptr<对应Listener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-// 删除监听器
-void NewAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<对应Listener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
-
-std::string NewAction::getActionName(){ return NewAction::name; }
 ```
 
 ## 3.对于属性修改部分职业需要特殊实现时

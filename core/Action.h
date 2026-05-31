@@ -1,5 +1,6 @@
 #pragma once
 #include "Listener.hpp"
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <memory>
@@ -48,8 +49,6 @@ class SimulationWorker;
  */
 class Action
 {
-private:
-    static std::string name;  ///< 动作名称（静态成员，所有实例共享）
 public:
     Action() = default;
     
@@ -77,6 +76,51 @@ public:
     virtual std::string getActionName();
 };
 
+/**
+ * @brief 类型化动作基类，封装每类动作的静态监听器管理逻辑
+ * 
+ * 通过 CRTP 实现：每个派生动作只需继承 TypedAction<Derived, ListenerType>
+ * 即可自动获得静态监听器列表、add/delete/get 等统一管理接口。
+ */
+template <typename Derived, typename ListenerType>
+class TypedAction : public Action
+{
+public:
+    using ListenerPtr = std::unique_ptr<ListenerType>;
+
+    inline static std::vector<ListenerPtr> listeners;
+
+    static void addListener(ListenerPtr listener)
+    {
+        listeners.push_back(std::move(listener));
+    }
+
+    static void deleteListener(int buffID)
+    {
+        const auto it = std::find_if(
+            listeners.begin(), listeners.end(),
+            [buffID](const ListenerPtr &item)
+            {
+                return item && item->buffID == buffID;
+            });
+
+        if (it != listeners.end())
+        {
+            listeners.erase(it);
+        }
+    }
+
+    static auto &getListeners()
+    {
+        return listeners;
+    }
+
+    std::string getActionName() override
+    {
+        return Derived::name;
+    }
+};
+
 /* ============================================================================
  * 具体动作类定义
  * 每个动作类包含：
@@ -96,14 +140,14 @@ public:
  * 3. 通知所有伤害监听器
  * 4. 记录伤害信息
  */
-class AttackAction : public Action
+class AttackAction : public TypedAction<AttackAction, DamageListener>
 {
-public:
-    static std::string name;        ///< 动作名称："AttackAction"
-    static std::vector<std::unique_ptr<DamageListener>> listeners;  ///< 伤害监听器列表
+private:
     const Skill* const skill;       ///< 技能指针
 
 public:
+    static std::string name;        ///< 动作名称："AttackAction"
+
     /**
      * @brief 构造函数
      * @param skill 要攻击的技能
@@ -111,24 +155,18 @@ public:
     explicit AttackAction(const Skill* const skill);
 
     virtual void execute(double n, Person *p) override; // double n未使用
-    static void addListener(std::unique_ptr<DamageListener> listener);
-    static void deleteListener(int buffID); // 通过buffID删除监听器
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class ResourceConsumeAction
  * @brief 资源消耗动作，消耗玄冰资源
  */
-class ResourceConsumeAction : public Action
+class ResourceConsumeAction : public TypedAction<ResourceConsumeAction, ResourceListener>
 {
-private:
-    static std::string name;  ///< 动作名称："ResourceConsumeAction"
-    static std::vector<std::unique_ptr<ResourceListener>> listeners;  ///< 资源监听器列表
-
 public:
-    ResourceConsumeAction() : Action() {};
+    static std::string name;  ///< 动作名称："ResourceConsumeAction"
+
+    ResourceConsumeAction() = default;
     
     /**
      * @brief 执行资源消耗
@@ -136,24 +174,18 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<ResourceListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class ResourceRevertAction
  * @brief 资源回复动作，回复玄冰资源
  */
-class ResourceRevertAction : public Action
+class ResourceRevertAction : public TypedAction<ResourceRevertAction, ResourceListener>
 {
-private:
-    static std::string name;  ///< 动作名称："ResourceRevertAction"
-    static std::vector<std::unique_ptr<ResourceListener>> listeners;  ///< 资源监听器列表
-
 public:
-    ResourceRevertAction() : Action() {};
+    static std::string name;  ///< 动作名称："ResourceRevertAction"
+
+    ResourceRevertAction() = default;
     
     /**
      * @brief 执行资源回复
@@ -161,26 +193,22 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<ResourceListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class EnergyConsumeAction
  * @brief 能量消耗动作，消耗角色能量
  */
-class EnergyConsumeAction : public Action
+class EnergyConsumeAction : public TypedAction<EnergyConsumeAction, EnergyListener>
 {
 private:
-    static std::string name;        ///< 动作名称："EnergyConsumeAction"
-    static std::vector<std::unique_ptr<EnergyListener>> listeners;  ///< 能量监听器列表
     const Skill* const skill;       ///< 技能指针
 
 public:
-    EnergyConsumeAction() : Action(), skill(nullptr) {};
-    EnergyConsumeAction(const Skill* const skill) : Action(), skill(skill) {};
+    static std::string name;        ///< 动作名称："EnergyConsumeAction"
+
+    EnergyConsumeAction() : skill(nullptr) {};
+    EnergyConsumeAction(const Skill* const skill) : skill(skill) {};
     
     /**
      * @brief 执行能量消耗
@@ -188,26 +216,22 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<EnergyListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class EnergyRevertAction
  * @brief 能量回复动作，回复角色能量
  */
-class EnergyRevertAction : public Action
+class EnergyRevertAction : public TypedAction<EnergyRevertAction, EnergyListener>
 {
 private:
-    static std::string name;  ///< 动作名称："EnergyRevertAction"
-    static std::vector<std::unique_ptr<EnergyListener>> listeners;  ///< 能量监听器列表
     const Skill* const skill;       ///< 技能指针
 
 public:
-    EnergyRevertAction() : Action(), skill(nullptr) {};
-    EnergyRevertAction(const Skill* const skill) : Action(), skill(skill) {};
+    static std::string name;  ///< 动作名称："EnergyRevertAction"
+
+    EnergyRevertAction() : skill(nullptr) {};
+    EnergyRevertAction(const Skill* const skill) : skill(skill) {};
     
     /**
      * @brief 执行能量回复
@@ -215,24 +239,18 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<EnergyListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class CDReduceAction
  * @brief 冷却减少动作，减少技能冷却时间
  */
-class CDReduceAction : public Action
+class CDReduceAction : public TypedAction<CDReduceAction, CDListener>
 {
-private:
+public:
     static std::string name;  ///< 动作名称："CDReduceAction"
-    static std::vector<std::unique_ptr<CDListener>> listeners;  ///< 冷却监听器列表
     std::string skillName;    ///< 技能名称
 
-public:
     /**
      * @brief 构造函数
      * @param skillName 要减少冷却的技能名称
@@ -245,24 +263,18 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<CDListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class CDRefreshAction
  * @brief 冷却刷新动作，完全重置技能冷却
  */
-class CDRefreshAction : public Action
+class CDRefreshAction : public TypedAction<CDRefreshAction, CDListener>
 {
-private:
+public:
     static std::string name;  ///< 动作名称："CDRefreshAction"
-    static std::vector<std::unique_ptr<CDListener>> listeners;  ///< 冷却监听器列表
     std::string skillName;    ///< 技能名称
 
-public:
     /**
      * @brief 构造函数
      * @param skillName 要刷新冷却的技能名称
@@ -275,24 +287,18 @@ public:
      * @param p 执行动作的角色
      */
     void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<CDListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class CreateSkillAction
  * @brief 创建技能动作，实例化并释放新技能
  */
-class CreateSkillAction : public Action
+class CreateSkillAction : public TypedAction<CreateSkillAction, CreateSkillListener>
 {
-private:
+public:
     static std::string name;  ///< 动作名称："CreateSkillAction"
-    static std::vector<std::unique_ptr<CreateSkillListener>> listeners;  ///< 技能创建监听器列表
     std::string skillName;    ///< 技能名称
 
-public:
     /**
      * @brief 构造函数
      * @param skillname 要创建的技能名称
@@ -304,24 +310,18 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double, Person *p) override; // double n未使用
-    static void addListener(std::unique_ptr<CreateSkillListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class CreateBuffAction
  * @brief 创建Buff动作，实例化并应用新Buff
  */
-class CreateBuffAction : public Action
+class CreateBuffAction : public TypedAction<CreateBuffAction, CreateBuffListener>
 {
-private:
+public:
     static std::string name;  ///< 动作名称："CreateBuffAction"
-    static std::vector<std::unique_ptr<CreateBuffListener>> listeners;  ///< Buff创建监听器列表
     std::string buffName;     ///< Buff名称
 
-public:
     /**
      * @brief 构造函数
      * @param buffName 要创建的Buff名称
@@ -334,27 +334,21 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<CreateBuffListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /**
  * @class AddFactorEnergyAction
  * @brief 增加角色的因子能量值
  */
-class AddFactorEnergyAction : public Action
+class AddFactorEnergyAction : public TypedAction<AddFactorEnergyAction, FactorEnergyListener>
 {
-private:
-    static std::string name;  ///< 动作名称："AddFactorEnergyAction"
-    static std::vector<std::unique_ptr<FactorEnergyListener>> listeners;  ///< Buff创建监听器列表
-
 public:
+    static std::string name;  ///< 动作名称："AddFactorEnergyAction"
+
     /**
      * @brief 构造函数
      */
-    explicit AddFactorEnergyAction() : Action() {};
+    explicit AddFactorEnergyAction() = default;
     
     /**
      * @brief 执行Buff创建
@@ -362,10 +356,6 @@ public:
      * @param p 执行动作的角色
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<FactorEnergyListener> info);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    std::string getActionName() override;
 };
 
 /* ============================================================================
@@ -378,13 +368,10 @@ public:
  * @class CriticalCountModifyAction
  * @brief 暴击数值修改动作，通过属性点数修改暴击率
  */
-class CriticalCountModifyAction : public Action
+class CriticalCountModifyAction : public TypedAction<CriticalCountModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;  ///< 动作名称："CriticalCountModifyAction"
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;  ///< 副属性监听器列表
-
 public:
+    static std::string name;  ///< 动作名称："CriticalCountModifyAction"
     CriticalCountModifyAction();
     
     /**
@@ -394,23 +381,16 @@ public:
      * 下同
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 /**
  * @class CriticalPercentModifyAction
  * @brief 暴击百分比修改动作，直接修改暴击率百分比
  */
-class CriticalPercentModifyAction : public Action
+class CriticalPercentModifyAction : public TypedAction<CriticalPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;  ///< 动作名称："CriticalPercentModifyAction"
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;  ///< 副属性监听器列表
-
 public:
+    static std::string name;  ///< 动作名称："CriticalPercentModifyAction"
     CriticalPercentModifyAction();
     
     /**
@@ -420,328 +400,184 @@ public:
      * 下同
      */
     virtual void execute(double n, Person *p) override;
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 急速数值
-class QuicknessCountModifyAction : public Action
+class QuicknessCountModifyAction : public TypedAction<QuicknessCountModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     QuicknessCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的急速数值
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 急速百分比
-class QuicknessPercentModifyAction : public Action
+class QuicknessPercentModifyAction : public TypedAction<QuicknessPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     QuicknessPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的急速百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 幸运数值
-class LuckyCountModifyAction : public Action
+class LuckyCountModifyAction : public TypedAction<LuckyCountModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     LuckyCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的幸运数值
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 幸运百分比
-class LuckyPercentModifyAction : public Action
+class LuckyPercentModifyAction : public TypedAction<LuckyPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     LuckyPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的幸运百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 精通数值
-class ProficientCountModifyAction : public Action
+class ProficientCountModifyAction : public TypedAction<ProficientCountModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     ProficientCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的精通数值
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 精通百分比
-class ProficientPercentModifyAction : public Action
+class ProficientPercentModifyAction : public TypedAction<ProficientPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     ProficientPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的精通百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 全能数值
-class AlmightyCountModifyAction : public Action
+class AlmightyCountModifyAction : public TypedAction<AlmightyCountModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AlmightyCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的全能数值
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 全能百分比
-class AlmightyPercentModifyAction : public Action
+class AlmightyPercentModifyAction : public TypedAction<AlmightyPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AlmightyPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的全能百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 主属性数值
-class PrimaryAttributesCountModifyAction : public Action
+class PrimaryAttributesCountModifyAction : public TypedAction<PrimaryAttributesCountModifyAction, PrimaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<PrimaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     PrimaryAttributesCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的主属性数值
-    static void addListener(std::unique_ptr<PrimaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 主属性百分比
-class PrimaryAttributesPercentModifyAction : public Action
+class PrimaryAttributesPercentModifyAction : public TypedAction<PrimaryAttributesPercentModifyAction, PrimaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<PrimaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     PrimaryAttributesPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的主属性百分比
-    static void addListener(std::unique_ptr<PrimaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 施法速度百分比
-class CastingSpeedPercentModifyAction : public Action
+class CastingSpeedPercentModifyAction : public TypedAction<CastingSpeedPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     CastingSpeedPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的施法速度百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 攻击速度百分比
-class AttackSpeedPercentModifyAction : public Action
+class AttackSpeedPercentModifyAction : public TypedAction<AttackSpeedPercentModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AttackSpeedPercentModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的攻击速度百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 攻击增加数值
-class AttackCountModifyAction : public Action
+class AttackCountModifyAction : public TypedAction<AttackCountModifyAction, PrimaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<PrimaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AttackCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的攻击增加百分比
-    static void addListener(std::unique_ptr<PrimaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 攻击增加百分比
-class AttackIncreaseModifyAction : public Action
+class AttackIncreaseModifyAction : public TypedAction<AttackIncreaseModifyAction, PrimaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<PrimaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AttackIncreaseModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的攻击增加百分比
-    static void addListener(std::unique_ptr<PrimaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 精炼攻击增加数值
-class RefineATKCountModifyAction : public Action
+class RefineATKCountModifyAction : public TypedAction<RefineATKCountModifyAction, PrimaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<PrimaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     RefineATKCountModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的攻击增加百分比
-    static void addListener(std::unique_ptr<PrimaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 伤害增伤百分比
-class DamageIncreaseModifyAction : public Action
+class DamageIncreaseModifyAction : public TypedAction<DamageIncreaseModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     DamageIncreaseModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的伤害增伤百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 元素增伤百分比
-class ElementIncreaseModifyAction : public Action
+class ElementIncreaseModifyAction : public TypedAction<ElementIncreaseModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     ElementIncreaseModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的元素增伤百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 全能增伤百分比
-class AlmightyIncreaseModifyAction : public Action
+class AlmightyIncreaseModifyAction : public TypedAction<AlmightyIncreaseModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     AlmightyIncreaseModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的全能增伤百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 爆伤百分比
-class CriticalDamageModifyAction : public Action
+class CriticalDamageModifyAction : public TypedAction<CriticalDamageModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     CriticalDamageModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的爆伤百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };
 
 // 梦境增伤百分比
-class DreamIncreaseModifyAction : public Action
+class DreamIncreaseModifyAction : public TypedAction<DreamIncreaseModifyAction, SecondaryAttributeListener>
 {
-private:
-    static std::string name;
-    static std::vector<std::unique_ptr<SecondaryAttributeListener>> listeners;
-
 public:
+    static std::string name;
     DreamIncreaseModifyAction();
     virtual void execute(double n, Person *p) override; // n为增加的梦境增伤百分比
-    static void addListener(std::unique_ptr<SecondaryAttributeListener> listener);
-    static void deleteListener(int buffID);
-    static auto& getListeners() { return listeners; } // 获取监听器列表（调试用）
-    virtual std::string getActionName() override;
 };

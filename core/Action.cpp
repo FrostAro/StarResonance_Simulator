@@ -6,36 +6,13 @@
 #include <algorithm>
 #include <memory>
 
-std::string Action::name = "Action";
-
-std::string Action::getActionName() { return this->name; }
+std::string Action::getActionName() { return "Action"; }
 
 // 攻击事件
 std::string AttackAction::name = "AttackAction";
-std::vector<std::unique_ptr<DamageListener>> AttackAction::listeners = {};
 
 AttackAction::AttackAction(const Skill* const skill)
     : skill(skill) {}
-
-void AttackAction::addListener(std::unique_ptr<DamageListener> listener)
-{
-    listeners.push_back(std::move(listener));
-}
-
-void AttackAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<DamageListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void AttackAction::execute(const double, Person *p)
 {
@@ -52,33 +29,8 @@ void AttackAction::execute(const double, Person *p)
     p->pushDamgeInfo(damageInfo);
 }
 
-std::string AttackAction::getActionName() { return AttackAction::name; }
-
 // 资源消耗
 std::string ResourceConsumeAction::name = "ResourceConsumeAction";
-std::vector<std::unique_ptr<ResourceListener>>
-    ResourceConsumeAction::listeners = {};
-
-void ResourceConsumeAction::addListener(
-    std::unique_ptr<ResourceListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void ResourceConsumeAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<ResourceListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void ResourceConsumeAction::execute(const double n, Person *p)
 {
@@ -93,35 +45,8 @@ void ResourceConsumeAction::execute(const double n, Person *p)
     }
 }
 
-std::string ResourceConsumeAction::getActionName()
-{
-    return ResourceConsumeAction::name;
-}
-
 // 玄冰回复
 std::string ResourceRevertAction::name = "ResourceRevertAction";
-std::vector<std::unique_ptr<ResourceListener>> ResourceRevertAction::listeners =
-    {};
-
-void ResourceRevertAction::addListener(std::unique_ptr<ResourceListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void ResourceRevertAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<ResourceListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void ResourceRevertAction::execute(const double n, Person *p)
 {
@@ -140,35 +65,8 @@ void ResourceRevertAction::execute(const double n, Person *p)
     }
 }
 
-std::string ResourceRevertAction::getActionName()
-{
-    return ResourceRevertAction::name;
-}
-
 // 能量消耗
 std::string EnergyConsumeAction::name = "EnergyConsumeAction";
-std::vector<std::unique_ptr<EnergyListener>> EnergyConsumeAction::listeners =
-    {};
-
-void EnergyConsumeAction::addListener(std::unique_ptr<EnergyListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void EnergyConsumeAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<EnergyListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void EnergyConsumeAction::execute(double n, Person *p)
 {
@@ -199,34 +97,8 @@ void EnergyConsumeAction::execute(double n, Person *p)
     }
 }
 
-std::string EnergyConsumeAction::getActionName()
-{
-    return EnergyConsumeAction::name;
-}
-
 // 能量回复
 std::string EnergyRevertAction::name = "EnergyRevertAction";
-std::vector<std::unique_ptr<EnergyListener>> EnergyRevertAction::listeners = {};
-
-void EnergyRevertAction::addListener(std::unique_ptr<EnergyListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void EnergyRevertAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<EnergyListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void EnergyRevertAction::execute(double n, Person *p)
 {
@@ -253,38 +125,12 @@ void EnergyRevertAction::execute(double n, Person *p)
     }
 }
 
-std::string EnergyRevertAction::getActionName()
-{
-    return EnergyRevertAction::name;
-}
-
 // CD事件
 // CD减少
 std::string CDReduceAction::name = "CDReduceAction";
-std::vector<std::unique_ptr<CDListener>> CDReduceAction::listeners = {};
 
 CDReduceAction::CDReduceAction(std::string skillName)
     : skillName(skillName) {}
-
-void CDReduceAction::addListener(std::unique_ptr<CDListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CDReduceAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<CDListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void CDReduceAction::execute(const double n, Person *p)
 {
@@ -299,34 +145,11 @@ void CDReduceAction::execute(const double n, Person *p)
     }
 }
 
-std::string CDReduceAction::getActionName() { return CDReduceAction::name; }
-
 // CD刷新
 std::string CDRefreshAction::name = "CDRefreshAction";
-std::vector<std::unique_ptr<CDListener>> CDRefreshAction::listeners = {};
 
 CDRefreshAction::CDRefreshAction(std::string skillName)
     : skillName(skillName) {}
-
-void CDRefreshAction::addListener(std::unique_ptr<CDListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CDRefreshAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<CDListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void CDRefreshAction::execute(const double n, Person *p)
 {
@@ -364,39 +187,11 @@ void CDRefreshAction::execute(const double n, Person *p)
     }
 }
 
-std::string CDRefreshAction::getActionName() { return CDRefreshAction::name; }
-
 // 释放技能
 std::string CreateSkillAction::name = "CreateSkillAction";
-std::vector<std::unique_ptr<CreateSkillListener>> CreateSkillAction::listeners =
-    {};
 
 CreateSkillAction::CreateSkillAction(std::string skillName)
     : skillName(skillName) {}
-
-void CreateSkillAction::addListener(std::unique_ptr<CreateSkillListener> info)
-{
-    listeners.push_back(std::move(info));
-    if(listeners.size() + 5 > listeners.capacity())
-    {
-        listeners.reserve(listeners.capacity() * 2); // 扩容，减少频繁分配
-    }
-}
-
-void CreateSkillAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<CreateSkillListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void CreateSkillAction::execute(double, Person *p)
 {
@@ -440,42 +235,11 @@ void CreateSkillAction::execute(double, Person *p)
     }
 }
 
-std::string CreateSkillAction::getActionName()
-{
-    return CreateSkillAction::name;
-}
-
 // 创建Buff
 std::string CreateBuffAction::name = "CreateBuffAction";
-std::vector<std::unique_ptr<CreateBuffListener>> CreateBuffAction::listeners =
-    {};
 
 CreateBuffAction::CreateBuffAction(std::string buffName)
     : buffName(buffName) {}
-
-void CreateBuffAction::addListener(std::unique_ptr<CreateBuffListener> info)
-{
-    listeners.push_back(std::move(info));
-    if(listeners.size() + 5 > listeners.capacity())
-    {
-        listeners.reserve(listeners.capacity() * 2); // 扩容，减少频繁分配
-    }
-}
-
-void CreateBuffAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<CreateBuffListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void CreateBuffAction::execute(double n, Person *p)
 {
@@ -553,32 +317,8 @@ void CreateBuffAction::execute(double n, Person *p)
                             ", buffID: " + std::to_string(newBuffID));
 }
 
-std::string CreateBuffAction::getActionName() { return CreateBuffAction::name; }
-
 // 增加因子能量
 std::string AddFactorEnergyAction::name = "AddFactorEnergyAction";
-std::vector<std::unique_ptr<FactorEnergyListener>> AddFactorEnergyAction::listeners =
-    {};
-
-void AddFactorEnergyAction::addListener(std::unique_ptr<FactorEnergyListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AddFactorEnergyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<FactorEnergyListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
 
 void AddFactorEnergyAction::execute(double n, Person *p)
 {
@@ -591,36 +331,10 @@ void AddFactorEnergyAction::execute(double n, Person *p)
     }
 }
 
-std::string AddFactorEnergyAction::getActionName() { return AddFactorEnergyAction::name; }
-
 // 属性更改事件
 // 暴击数值
 std::string CriticalCountModifyAction::name = "CriticalCountModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> CriticalCountModifyAction::listeners =
-    {};
-
-CriticalCountModifyAction::CriticalCountModifyAction()
-    : Action() {}
-
-void CriticalCountModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CriticalCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+CriticalCountModifyAction::CriticalCountModifyAction() = default;
 
 void CriticalCountModifyAction::execute(double n, Person *p)
 {
@@ -635,35 +349,9 @@ void CriticalCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string CriticalCountModifyAction::getActionName() { return CriticalCountModifyAction::name; }
-
 // 暴击百分比
 std::string CriticalPercentModifyAction::name = "CriticalPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> CriticalPercentModifyAction::listeners =
-    {};
-
-CriticalPercentModifyAction::CriticalPercentModifyAction()
-    : Action() {}
-
-void CriticalPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CriticalPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+CriticalPercentModifyAction::CriticalPercentModifyAction() = default;
 
 void CriticalPercentModifyAction::execute(double n, Person *p)
 {
@@ -678,34 +366,9 @@ void CriticalPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string CriticalPercentModifyAction::getActionName() { return CriticalPercentModifyAction::name; }
-
 // 急速数值
 std::string QuicknessCountModifyAction::name = "QuicknessCountModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> QuicknessCountModifyAction::listeners = {};
-
-QuicknessCountModifyAction::QuicknessCountModifyAction()
-    : Action() {}
-
-void QuicknessCountModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void QuicknessCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+QuicknessCountModifyAction::QuicknessCountModifyAction() = default;
 
 void QuicknessCountModifyAction::execute(double n, Person *p)
 {
@@ -721,34 +384,9 @@ void QuicknessCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string QuicknessCountModifyAction::getActionName() { return QuicknessCountModifyAction::name; }
-
 // 急速百分比
 std::string QuicknessPercentModifyAction::name = "QuicknessPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> QuicknessPercentModifyAction::listeners = {};
-
-QuicknessPercentModifyAction::QuicknessPercentModifyAction()
-    : Action() {}
-
-void QuicknessPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void QuicknessPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+QuicknessPercentModifyAction::QuicknessPercentModifyAction() = default;
 
 void QuicknessPercentModifyAction::execute(double n, Person *p)
 {
@@ -763,34 +401,9 @@ void QuicknessPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string QuicknessPercentModifyAction::getActionName() { return QuicknessPercentModifyAction::name; }
-
 // 幸运数值
 std::string LuckyCountModifyAction::name = "LuckyCountModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> LuckyCountModifyAction::listeners = {};
-
-LuckyCountModifyAction::LuckyCountModifyAction()
-    : Action() {}
-
-void LuckyCountModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void LuckyCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+LuckyCountModifyAction::LuckyCountModifyAction() = default;
 
 void LuckyCountModifyAction::execute(double n, Person *p)
 {
@@ -806,34 +419,9 @@ void LuckyCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string LuckyCountModifyAction::getActionName() { return LuckyCountModifyAction::name; }
-
 // 幸运百分比
 std::string LuckyPercentModifyAction::name = "LuckyPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> LuckyPercentModifyAction::listeners = {};
-
-LuckyPercentModifyAction::LuckyPercentModifyAction()
-    : Action() {}
-
-void LuckyPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void LuckyPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+LuckyPercentModifyAction::LuckyPercentModifyAction() = default;
 
 void LuckyPercentModifyAction::execute(double n, Person *p)
 {
@@ -849,34 +437,9 @@ void LuckyPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string LuckyPercentModifyAction::getActionName() { return LuckyPercentModifyAction::name; }
-
 // 精通数值
 std::string ProficientCountModifyAction::name = "ProficientCountModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> ProficientCountModifyAction::listeners = {};
-
-ProficientCountModifyAction::ProficientCountModifyAction()
-    : Action() {}
-
-void ProficientCountModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void ProficientCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+ProficientCountModifyAction::ProficientCountModifyAction() = default;
 
 void ProficientCountModifyAction::execute(double n, Person *p)
 {
@@ -892,34 +455,9 @@ void ProficientCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string ProficientCountModifyAction::getActionName() { return ProficientCountModifyAction::name; }
-
 // 精通百分比
 std::string ProficientPercentModifyAction::name = "ProficientPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> ProficientPercentModifyAction::listeners = {};
-
-ProficientPercentModifyAction::ProficientPercentModifyAction()
-    : Action() {}
-
-void ProficientPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void ProficientPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+ProficientPercentModifyAction::ProficientPercentModifyAction() = default;
 
 void ProficientPercentModifyAction::execute(double n, Person *p)
 {
@@ -935,34 +473,9 @@ void ProficientPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string ProficientPercentModifyAction::getActionName() { return ProficientPercentModifyAction::name; }
-
 // 全能数值
 std::string AlmightyCountModifyAction::name = "AlmightyCountModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> AlmightyCountModifyAction::listeners = {};
-
-AlmightyCountModifyAction::AlmightyCountModifyAction()
-    : Action() {}
-
-void AlmightyCountModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AlmightyCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AlmightyCountModifyAction::AlmightyCountModifyAction() = default;
 
 void AlmightyCountModifyAction::execute(double n, Person *p)
 {
@@ -978,34 +491,9 @@ void AlmightyCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AlmightyCountModifyAction::getActionName() { return AlmightyCountModifyAction::name; }
-
 // 全能百分比
 std::string AlmightyPercentModifyAction::name = "AlmightyPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> AlmightyPercentModifyAction::listeners = {};
-
-AlmightyPercentModifyAction::AlmightyPercentModifyAction()
-    : Action() {}
-
-void AlmightyPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AlmightyPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AlmightyPercentModifyAction::AlmightyPercentModifyAction() = default;
 
 void AlmightyPercentModifyAction::execute(double n, Person *p)
 {
@@ -1021,34 +509,9 @@ void AlmightyPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AlmightyPercentModifyAction::getActionName() { return AlmightyPercentModifyAction::name; }
-
 // 主属性数值
 std::string PrimaryAttributesCountModifyAction::name = "PrimaryAttributesCountModifyAction";
-std::vector<std::unique_ptr<PrimaryAttributeListener>> PrimaryAttributesCountModifyAction::listeners = {};
-
-PrimaryAttributesCountModifyAction::PrimaryAttributesCountModifyAction()
-    : Action() {}
-
-void PrimaryAttributesCountModifyAction::addListener(std::unique_ptr<PrimaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void PrimaryAttributesCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<PrimaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+PrimaryAttributesCountModifyAction::PrimaryAttributesCountModifyAction() = default;
 
 void PrimaryAttributesCountModifyAction::execute(double n, Person *p)
 {
@@ -1063,34 +526,9 @@ void PrimaryAttributesCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string PrimaryAttributesCountModifyAction::getActionName() { return PrimaryAttributesCountModifyAction::name; }
-
 // 主属性百分比
 std::string PrimaryAttributesPercentModifyAction::name = "PrimaryAttributesPercentModifyAction";
-std::vector<std::unique_ptr<PrimaryAttributeListener>> PrimaryAttributesPercentModifyAction::listeners = {};
-
-PrimaryAttributesPercentModifyAction::PrimaryAttributesPercentModifyAction()
-    : Action() {}
-
-void PrimaryAttributesPercentModifyAction::addListener(std::unique_ptr<PrimaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void PrimaryAttributesPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<PrimaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+PrimaryAttributesPercentModifyAction::PrimaryAttributesPercentModifyAction() = default;
 
 void PrimaryAttributesPercentModifyAction::execute(double n, Person *p)
 {
@@ -1105,34 +543,9 @@ void PrimaryAttributesPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string PrimaryAttributesPercentModifyAction::getActionName() { return PrimaryAttributesPercentModifyAction::name; }
-
 // 施法速度百分比
 std::string CastingSpeedPercentModifyAction::name = "CastingSpeedPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> CastingSpeedPercentModifyAction::listeners = {};
-
-CastingSpeedPercentModifyAction::CastingSpeedPercentModifyAction()
-    : Action() {}
-
-void CastingSpeedPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CastingSpeedPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+CastingSpeedPercentModifyAction::CastingSpeedPercentModifyAction() = default;
 
 void CastingSpeedPercentModifyAction::execute(double n, Person *p)
 {
@@ -1147,34 +560,9 @@ void CastingSpeedPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string CastingSpeedPercentModifyAction::getActionName() { return CastingSpeedPercentModifyAction::name; }
-
 // 攻击速度百分比
 std::string AttackSpeedPercentModifyAction::name = "AttackSpeedPercentModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> AttackSpeedPercentModifyAction::listeners = {};
-
-AttackSpeedPercentModifyAction::AttackSpeedPercentModifyAction()
-    : Action() {}
-
-void AttackSpeedPercentModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AttackSpeedPercentModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AttackSpeedPercentModifyAction::AttackSpeedPercentModifyAction() = default;
 
 void AttackSpeedPercentModifyAction::execute(double n, Person *p)
 {
@@ -1189,34 +577,9 @@ void AttackSpeedPercentModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AttackSpeedPercentModifyAction::getActionName() { return AttackSpeedPercentModifyAction::name; }
-
 // 攻击增加数值
 std::string AttackCountModifyAction::name = "AttackCountModifyAction";
-std::vector<std::unique_ptr<PrimaryAttributeListener>> AttackCountModifyAction::listeners = {};
-
-AttackCountModifyAction::AttackCountModifyAction()
-    : Action() {}
-
-void AttackCountModifyAction::addListener(std::unique_ptr<PrimaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AttackCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<PrimaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AttackCountModifyAction::AttackCountModifyAction() = default;
 
 void AttackCountModifyAction::execute(double n, Person *p)
 {
@@ -1231,34 +594,9 @@ void AttackCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AttackCountModifyAction::getActionName() { return AttackCountModifyAction::name; }
-
 // 攻击增伤百分比
 std::string AttackIncreaseModifyAction::name = "AttackIncreaseModifyAction";
-std::vector<std::unique_ptr<PrimaryAttributeListener>> AttackIncreaseModifyAction::listeners = {};
-
-AttackIncreaseModifyAction::AttackIncreaseModifyAction()
-    : Action() {}
-
-void AttackIncreaseModifyAction::addListener(std::unique_ptr<PrimaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AttackIncreaseModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<PrimaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AttackIncreaseModifyAction::AttackIncreaseModifyAction() = default;
 
 void AttackIncreaseModifyAction::execute(double n, Person *p)
 {
@@ -1273,34 +611,9 @@ void AttackIncreaseModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AttackIncreaseModifyAction::getActionName() { return AttackIncreaseModifyAction::name; }
-
 // 精炼攻击增加数值
 std::string RefineATKCountModifyAction::name = "RefineATKCountModifyAction";
-std::vector<std::unique_ptr<PrimaryAttributeListener>> RefineATKCountModifyAction::listeners = {};
-
-RefineATKCountModifyAction::RefineATKCountModifyAction()
-    : Action() {}
-
-void RefineATKCountModifyAction::addListener(std::unique_ptr<PrimaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void RefineATKCountModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<PrimaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+RefineATKCountModifyAction::RefineATKCountModifyAction() = default;
 
 void RefineATKCountModifyAction::execute(double n, Person *p)
 {
@@ -1315,34 +628,9 @@ void RefineATKCountModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string RefineATKCountModifyAction::getActionName() { return RefineATKCountModifyAction::name; }
-
 // 伤害增伤百分比
 std::string DamageIncreaseModifyAction::name = "DamageIncreaseModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> DamageIncreaseModifyAction::listeners = {};
-
-DamageIncreaseModifyAction::DamageIncreaseModifyAction()
-    : Action() {}
-
-void DamageIncreaseModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void DamageIncreaseModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+DamageIncreaseModifyAction::DamageIncreaseModifyAction() = default;
 
 void DamageIncreaseModifyAction::execute(double n, Person *p)
 {
@@ -1357,34 +645,9 @@ void DamageIncreaseModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string DamageIncreaseModifyAction::getActionName() { return DamageIncreaseModifyAction::name; }
-
 // 元素增伤百分比
 std::string ElementIncreaseModifyAction::name = "ElementIncreaseModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> ElementIncreaseModifyAction::listeners = {};
-
-ElementIncreaseModifyAction::ElementIncreaseModifyAction()
-    : Action() {}
-
-void ElementIncreaseModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void ElementIncreaseModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+ElementIncreaseModifyAction::ElementIncreaseModifyAction() = default;
 
 void ElementIncreaseModifyAction::execute(double n, Person *p)
 {
@@ -1399,34 +662,9 @@ void ElementIncreaseModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string ElementIncreaseModifyAction::getActionName() { return ElementIncreaseModifyAction::name; }
-
 // 全能增伤百分比
 std::string AlmightyIncreaseModifyAction::name = "AlmightyIncreaseModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> AlmightyIncreaseModifyAction::listeners = {};
-
-AlmightyIncreaseModifyAction::AlmightyIncreaseModifyAction()
-    : Action() {}
-
-void AlmightyIncreaseModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void AlmightyIncreaseModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+AlmightyIncreaseModifyAction::AlmightyIncreaseModifyAction() = default;
 
 void AlmightyIncreaseModifyAction::execute(double n, Person *p)
 {
@@ -1441,34 +679,9 @@ void AlmightyIncreaseModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string AlmightyIncreaseModifyAction::getActionName() { return AlmightyIncreaseModifyAction::name; }
-
 // 爆伤百分比
 std::string CriticalDamageModifyAction::name = "CriticalDamageModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> CriticalDamageModifyAction::listeners = {};
-
-CriticalDamageModifyAction::CriticalDamageModifyAction()
-    : Action() {}
-
-void CriticalDamageModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void CriticalDamageModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+CriticalDamageModifyAction::CriticalDamageModifyAction() = default;
 
 void CriticalDamageModifyAction::execute(double n, Person *p)
 {
@@ -1483,34 +696,9 @@ void CriticalDamageModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string CriticalDamageModifyAction::getActionName() { return CriticalDamageModifyAction::name; }
-
 // 梦境增伤百分比
 std::string DreamIncreaseModifyAction::name = "DreamIncreaseModifyAction";
-std::vector<std::unique_ptr<SecondaryAttributeListener>> DreamIncreaseModifyAction::listeners = {};
-
-DreamIncreaseModifyAction::DreamIncreaseModifyAction()
-    : Action() {}
-
-void DreamIncreaseModifyAction::addListener(std::unique_ptr<SecondaryAttributeListener> info)
-{
-    listeners.push_back(std::move(info));
-}
-
-void DreamIncreaseModifyAction::deleteListener(int buffID)
-{
-    const auto it =
-        std::find_if(listeners.begin(), listeners.end(),
-                     [buffID](const std::unique_ptr<SecondaryAttributeListener> &item)
-                     {
-                         return item->buffID == buffID;
-                     });
-
-    if (it != listeners.end())
-    {
-        listeners.erase(it);
-    }
-}
+DreamIncreaseModifyAction::DreamIncreaseModifyAction() = default;
 
 void DreamIncreaseModifyAction::execute(double n, Person *p)
 {
@@ -1525,4 +713,3 @@ void DreamIncreaseModifyAction::execute(double n, Person *p)
     }
 }
 
-std::string DreamIncreaseModifyAction::getActionName() { return DreamIncreaseModifyAction::name; }
