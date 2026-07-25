@@ -68,6 +68,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     changeElementIncreaseByElementIncrease(0.1);
     changeEnhenceIncrease(0.06);
     // changeLuckyMultiplyingByAddMultiplying(0.1);
+
 }
 
 double Mage_Beam::changeElementIncreaseByProficient(double proficient)

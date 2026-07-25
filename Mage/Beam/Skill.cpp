@@ -111,8 +111,8 @@ WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
     this->fixedValue = 514;
     this->damageTriggerInterval = 45;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
-    this->MaxCD = 1000;
-    this->duration = 2000;
+    this->MaxCD = 10;
+    this->duration = 1500;
 
     this->setSkillType();
 }

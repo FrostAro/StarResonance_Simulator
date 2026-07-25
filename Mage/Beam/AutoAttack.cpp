@@ -73,6 +73,7 @@ void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
         maniAddPriorSkillList(Vortex::name);
         maniAddPriorSkillList(FrostWind::name);
         maniAddPriorSkillList(Beam::name);
+        maniAddPriorSkillList(WaterSpout::name);
         windowSkillTriggered = true;
     }
 
