@@ -17,8 +17,8 @@ Person::Person(){};
 Person::Person(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
                const double criticaldamage_set, const double increase_set, const double elementincrease_set, const int totalTime)
-    : propertyTransformationCoeffcient_General(50000),     // 一般属性转化系数
-      propertyTransformationCoeffcient_Almighty(25000),    // 全能属性转化系数
+    : propertyTransformationCoeffcient_General(200000),     // 一般属性转化系数
+      propertyTransformationCoeffcient_Almighty(89600),    // 全能属性转化系数
       totalTime(totalTime),                                // 总模拟时间
       proficientRatio(0),                                  // 精通转化率（子类设置）
       almightyRatio(0),                                    // 全能转化率（子类设置）
@@ -144,10 +144,11 @@ double Person::luckyDamage(const Skill *skill) const
     // (期望)
     double damage = ((this->getATK() * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
                         * (1 + this->elementIncrease) 
-                        * (1 + this->damageIncrease + this->Lucky) 
+                        * (1 + this->damageIncrease + this->Lucky + this->luckyDamageIncrease + skill->getLuckyIncreaseAdd()) 
                         * (1 + this->almightyIncrease)
-                        * (1 + this->dreamIncrease)
+                        * (1 + this->dreamIncrease + this->luckyDreamIncrease)
                         * (1 + this->enhenceIncrease)
+                        * (1 + this->luckyFinalIncrease)
                         * this->Lucky;
 
     // 幸运伤害也可暴击
@@ -602,6 +603,8 @@ void Person::initializeIncrease()
     setAlmightyIncrease();
     setDamageIncrease();
     setCriticalDamage();
+    setLuckyFinalIncrease();
+    setLuckyDreamIncrease();
     changeCriticalDamage(criticaldamage_set);
     changeDamageIncrease(increase_set);
     changeElementIncreaseByElementIncrease(elementincrease_set);
@@ -697,6 +700,30 @@ double Person::changeLuckyMultiplyingByAddMultiplying(const double addMultiplyin
 {
     this->luckyMultiplying += addMultiplying;
     return this->luckyMultiplying;
+}
+
+double Person::setLuckyFinalIncrease()
+{
+    this->luckyFinalIncrease = 0;
+    return this->luckyFinalIncrease;
+}
+
+double Person::changeLuckyFinalIncrease(const double luckyFinalIncrease)
+{
+    this->luckyFinalIncrease += luckyFinalIncrease;
+    return this->luckyFinalIncrease;
+}
+
+double Person::setLuckyDreamIncrease()
+{
+    this->luckyDreamIncrease = 0;
+    return this->luckyDreamIncrease;
+}
+
+double Person::changeLuckyDreamIncrease(const double luckyDreamIncrease)
+{
+    this->luckyDreamIncrease += luckyDreamIncrease;
+    return this->luckyDreamIncrease;
 }
 
 double Person::setDreamIncrease()
@@ -1216,6 +1243,9 @@ double Person::getDreamIncrease() const { return dreamIncrease; }
 
 double Person::getLuckyDamageIncrease() const { return luckyDamageIncrease; }
 double Person::getLuckyMultiplying() const { return luckyMultiplying; }
+double Person::getLuckyMultiplyingExtra() const { return luckyMultiplyingExtra; }
+double Person::getLuckyFinalIncrease() const { return luckyFinalIncrease; }
+double Person::getLuckyDreamIncrease() const { return luckyDreamIncrease; }
 
 double Person::getProficientRatio() const { return proficientRatio; }
 double Person::getAlmightyRatio() const { return almightyRatio; }

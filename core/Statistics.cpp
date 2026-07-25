@@ -26,6 +26,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
     double totalDamageCount = 0;
     double totalLuckyDamageCount = 0;
     double totalCritCount = 0;
+    double totalReleasedTimes = 0;
     
     for (const auto &info : damageStatsMap)
     {
@@ -35,6 +36,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
         totalDamageCount += info.second.damageCount;
         totalLuckyDamageCount += info.second.luckyDamageCount;
         totalCritCount += info.second.CritDamageCount;
+        totalReleasedTimes += info.second.releasedTimes;
     }
 
     // 打印每个技能的统计数据
@@ -46,6 +48,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
         std::cout << "Skill: " << info.second.skillName
                   << ", Damage: " << info.second.damage
                   << ", Damage attack count: " << info.second.damageCount
+                  << ", Released Times: " << info.second.releasedTimes
                   << ", Lucky Damage: " << info.second.luckyDamage
                   << ", Lucky Attack count: " << info.second.luckyDamageCount
                   << ", DPS: " << info.second.damage / (static_cast<double>(totalTime) / 100.0)
@@ -72,6 +75,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
               << ", Total Lucky Damage Count: " << totalLuckyDamageCount
               << ", Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
               << ", Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
+              << ", Total Released Times: " << totalReleasedTimes
               << std::endl;
 }
 
@@ -109,6 +113,7 @@ void summaryCirculationPrint(const std::vector<std::unordered_map<std::string, D
             acc.luckyDamage += stat.luckyDamage;
             acc.luckyDamageCount += stat.luckyDamageCount;
             acc.CritDamageCount += stat.CritDamageCount;
+            acc.releasedTimes += stat.releasedTimes;
             // totalTime 在此处无用，忽略
         }
     }
@@ -121,6 +126,7 @@ void summaryCirculationPrint(const std::vector<std::unordered_map<std::string, D
         acc.luckyDamage /= simCount;
         acc.luckyDamageCount /= simCount;
         acc.CritDamageCount /= simCount;
+        acc.releasedTimes = static_cast<int>(acc.releasedTimes / simCount);
     }
     
     // 输出平均后的统计结果

@@ -150,7 +150,7 @@ FrostWind::FrostWind(Person* p) : InstantSkill()
     this->MaxCD = 3000;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 10;
+    this->releasingTime = 100;
 
     this->setSkillType();
 }

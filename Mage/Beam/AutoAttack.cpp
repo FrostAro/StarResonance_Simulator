@@ -296,3 +296,30 @@ AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
           {SXMQ::name, LSZZ::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
            Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
+
+// -------------------- 无幻想版本 --------------------
+// 无幻想 AutoAttack - 仅使用基础技能，不依赖任何 FightingFantasy 技能
+AutoAttack_Mage_Beam_NoFantasy::AutoAttack_Mage_Beam_NoFantasy(Person* p)
+    : AutoAttack_Mage_Beam_Base(p, {
+        // 阶段1 - 起手爆发：释放所有核心技能
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段2
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段3
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段4
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段5
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段6
+        { { {Ultimate_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段7
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+    }) {}

@@ -333,6 +333,9 @@ double Skill::getAlmightyIncreaseAdd() const { return this->almightyIncreaseAdd;
 double Skill::getDreamIncreaseAdd() const { return this->dreamIncreaseAdd; }
 double Skill::getFinalIncreaseAdd() const { return this->finalIncreaseAdd; }
 double Skill::getMultiplyingIncrease() const { return this->multiplyingIncrease; }
+double Skill::getLuckyIncreaseAdd() const { return this->luckyIncreaseAdd; }
+double Skill::getLuckyFinalIncreaseAdd() const { return this->luckyFinalIncreaseAdd; }
+double Skill::getLuckyDreamIncreaseAdd() const { return this->luckyDreamIncreaseAdd; }
 
 double Skill::getMaxCD() const { return this->MaxCD; }
 double &Skill::getCurrentCD_Ref() { return this->CD; }

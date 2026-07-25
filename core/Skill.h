@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <stdexcept>
 
 // 前向声明
 class Person;
@@ -111,6 +110,9 @@ public:
     double dreamIncreaseAdd = 0;         // 幻梦伤害加成
     double finalIncreaseAdd = 0;         // 最终伤害加成
     double multiplyingIncrease = 0;      // 技能倍率加成
+    double luckyIncreaseAdd = 0;         // 幸运伤害加成
+    double luckyFinalIncreaseAdd = 0;    // 幸运最终伤害加成
+    double luckyDreamIncreaseAdd = 0;    // 幸运幻梦伤害加成
 
     // 技能属性针对加成
     double criticalAdd = 0;             //暴击属性加成
@@ -307,6 +309,9 @@ public:
     double getDreamIncreaseAdd() const;
     double getFinalIncreaseAdd() const;
     double getMultiplyingIncrease() const;
+    double getLuckyIncreaseAdd() const;
+    double getLuckyFinalIncreaseAdd() const;
+    double getLuckyDreamIncreaseAdd() const;
     
     double getMaxCD() const;
     double &getCurrentCD_Ref();
@@ -479,8 +484,8 @@ class temp_InstantSkill : public InstantSkill
 public:
 	static std::string name;
 
-	void setSkillType() {};
-	void trigger(Person *p) {};
+	void setSkillType() override {};
+	void trigger(Person *p) override {};
 	std::string getSkillName() const override;
 
 	explicit temp_InstantSkill(std::string skillName,double multiplying,double fixedValue);

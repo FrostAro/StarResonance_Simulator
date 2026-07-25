@@ -445,34 +445,16 @@ public:
     ~ExtensiveArrow() override;
 };
 
-// 龙卷真实因子
-class WaterSpoutRealBuff : public RealFactor
-{
-public:   
-    static std::string name;
-    double triggerNum = 720;
-    bool canTrigger = false;
-
-public:
-    void listenerCallback(double n);
-    void listenerCallback2(Skill* const skill);
-    void update(double deltaTime) override;
-    bool shouldBeRemoved() override;
-    std::string getBuffName() const override;
-
-    WaterSpoutRealBuff(Person *p, double n);
-    ~WaterSpoutRealBuff() override;
-};
-
 // 9冰真实因子
-class IceRealBuff : public RealFactor
+class IceRealBuff : public Buff
 {
 public:   
     static std::string name;
-    double triggerNum = 450;
+    int triggerNum = 15;
+    int count = 0;
 
 public:
-    void listenerCallback(double n);
+    void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -498,20 +480,68 @@ public:
 };
 
 // 冰箭幸运
-class IceArrowLuckyRealBuff : public RealFactor
+class IceArrowLuckyRealBuff : public Buff
 {
 public:   
     static std::string name;
 
 public:
-    void listenerCallback(DamageInfo& info);
-    void listenerCallback2(Skill* const skill);
+    void listenerCallback1(Skill* const skill);
+    void listenerCallback2(Buff* const buff);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
     IceArrowLuckyRealBuff(Person *p, double n);
     ~IceArrowLuckyRealBuff() override;
+};
+
+// 灌注幸运增伤
+class FloodLuckyBuff : public Buff
+{
+public:   
+    static std::string name;
+
+public:
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    FloodLuckyBuff(Person *p, double n);
+    ~FloodLuckyBuff() override;
+};
+
+class CoefficientAdjustmentBuff_Beam : public Buff  //系数调整
+{
+public:
+    static std::string name;
+
+public:
+    void listenerCallback(DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    CoefficientAdjustmentBuff_Beam(Person *p, double n);
+    ~CoefficientAdjustmentBuff_Beam();
+};
+
+// 龙卷真实因子
+class WaterSpoutRealBuff : public RealFactor
+{
+public:   
+    static std::string name;
+    double triggerNum = 720;
+    bool canTrigger = false;
+
+public:
+    void listenerCallback(double n);
+    void listenerCallback2(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    WaterSpoutRealBuff(Person *p, double n);
+    ~WaterSpoutRealBuff() override;
 };
 
 // 无尽思维
@@ -584,19 +614,4 @@ public:
 
     ExtremeLuckBuff_Beam(Person *p, double n);
     ~ExtremeLuckBuff_Beam();
-};
-
-class CoefficientAdjustmentBuff_Beam : public Buff  //系数调整
-{
-public:
-    static std::string name;
-
-public:
-    void listenerCallback(DamageInfo &info);
-    void update(double deltaTime) override;
-    bool shouldBeRemoved() override;
-    std::string getBuffName() const override;
-
-    CoefficientAdjustmentBuff_Beam(Person *p, double n);
-    ~CoefficientAdjustmentBuff_Beam();
 };

@@ -1,6 +1,5 @@
 #pragma once
 #include "../../core/AutoAttack.h"
-#include "Skill.h"
 
 class AutoAttack_Mage_Icicle_MukuScout : public AutoAttack
 {

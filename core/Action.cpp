@@ -3,7 +3,6 @@
 #include "Creators.hpp"
 #include "Logger.h"
 #include "Person.h"
-#include <algorithm>
 #include <memory>
 
 std::string Action::getActionName() { return "Action"; }
@@ -243,78 +242,61 @@ CreateBuffAction::CreateBuffAction(std::string buffName)
 
 void CreateBuffAction::execute(double n, Person *p)
 {
-    // 先检查是否已存在同名buff
     int existingIndex = p->findBuffInBuffList(this->buffName);
 
     if (existingIndex != -1)
-    { // 已存在同名buff
+    {
         auto &existingBuff = p->getBuffListRef().at(existingIndex);
-        // 检查是否可叠加
+
         if (existingBuff->getIsStackable())
         {
             if (existingBuff->getStack() < existingBuff->getMaxStack())
             {
                 existingBuff->addStack(n);
-                Logger::debugAction(AutoAttack::getTimer(),
-                                    this->getActionName(),
-                                    "Buff Stack Increased: " + this->buffName +
-                                        ", buffID: " + std::to_string(existingBuff->getBuffID()) +
-                                        ", Stack: " + std::to_string(existingBuff->getStack()));
+                Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                    "Buff Stack Increased: " + this->buffName +
+                    ", buffID: " + std::to_string(existingBuff->getBuffID()) +
+                    ", Stack: " + std::to_string(existingBuff->getStack()));
             }
-            existingBuff->resetDuration();
-            Logger::debugAction(AutoAttack::getTimer(),
-                                this->getActionName(),
-                                "Buff Refreshed: " + this->buffName +
-                                    ", buffID: " + std::to_string(existingBuff->getBuffID()));
 
-            return; // 无需创建新buff
+            existingBuff->resetDuration();
+            Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                "Buff Refreshed: " + this->buffName +
+                ", buffID: " + std::to_string(existingBuff->getBuffID()));
+
+            return;
         }
 
-        // 检查是否允许多种同类存在
         if (!existingBuff->getAllowDuplicates())
         {
-            // 不允许多种同类存在，只刷新持续时间
             existingBuff->resetDuration();
-
-            Logger::debugAction(AutoAttack::getTimer(),
-                                this->getActionName(),
-                                "Buff Refreshed: " + this->buffName +
-                                    ", buffID: " + std::to_string(existingBuff->getBuffID()));
-            return; // 无需创建新buff
+            Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                "Buff Refreshed: " + this->buffName +
+                ", buffID: " + std::to_string(existingBuff->getBuffID()));
+            return;
         }
-        // 如果允许重复，则继续创建新buff
     }
 
-    // 未存在重复buff
-    // 创建新buff（首次创建或允许重复时）
     auto it = BuffCreator::createBuff(this->buffName, p, n);
-    if (it == nullptr)
+    if (!it)
     {
-        Logger::debugAction(AutoAttack::getTimer(),
-                            this->getActionName(),
-                            "Failed to create buff: " + this->buffName);
+        Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+            "Failed to create buff: " + this->buffName);
         return;
     }
 
-    // 在移动前先获取buffID
     int newBuffID = it->getBuffID();
 
-    // 遍历监听，触发回调
-    // 方便回调函数对创建的buff进行修改
-    for (const auto &listener : CreateBuffAction::listeners)
+    for (const auto &listener : listeners)
     {
         if (listener && listener->callback)
-        {
             listener->trigger(it.get());
-        }
     }
 
-    // 添加到buff列表
     p->createBuff(std::move(it));
-    Logger::debugAction(AutoAttack::getTimer(),
-                        this->getActionName(),
-                        "Buff Created: " + this->buffName +
-                            ", buffID: " + std::to_string(newBuffID));
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+        "Buff Created: " + this->buffName +
+        ", buffID: " + std::to_string(newBuffID));
 }
 
 // 增加因子能量

@@ -68,8 +68,7 @@ SimulationWorker::SimulationWorker(const QString& profession,
       m_randomSeed(randomSeed),
       m_seed(seed),
       m_fantasyConfig(fantasyConfig)
-{
-}
+{}
 
 SimulationWorker::~SimulationWorker()
 {
@@ -266,6 +265,7 @@ QWidget *MainWindow::createInputPanel()
     layout->addWidget(new QLabel("幻想配置"), row, 0);
     m_fantasyCombo = new QComboBox;
     // 初始填充 Beam 的选项
+    m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
     m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
     m_fantasyCombo->addItem("姆头 + 嗜血毛球");
@@ -425,6 +425,7 @@ QWidget *MainWindow::createResultPanel()
 void MainWindow::onProfessionChanged(int index)
 {
     m_fantasyCombo->clear(); // 清空原有选项
+    m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
     m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
     m_fantasyCombo->addItem("姆头 + 嗜血毛球");
@@ -489,7 +490,8 @@ void MainWindow::onRunClicked()
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
-    int fantasyConfig = m_fantasyCombo->currentIndex(); // 获取幻想配置索引
+    int fantasyConfig = m_fantasyCombo->currentIndex() - 1; // 偏移：0=无幻想 → -1，1=姆头尖兵 → 0...
+    if (fantasyConfig < 0) fantasyConfig = 999;             // 无幻想走 default 分支
 
     // 清空之前的日志和表格
     m_logText->clear();

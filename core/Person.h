@@ -2,7 +2,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include <random>
 #include <unordered_map>
 #include <queue>
@@ -135,6 +134,8 @@ public:
     double luckyDamageIncrease = 0;          // 幸运伤害增加百分比 (1 + 百分比)
     double luckyMultiplying = 0;             // 幸运伤害倍率（基础41.25%，每1%幸运+0.75%）
 	double luckyMultiplyingExtra = 0;        // 额外幸运伤害倍率（来自buff等）
+	double luckyFinalIncrease = 0;           // 幸运最终伤害增加百分比 (1 + 百分比)
+	double luckyDreamIncrease = 0;           // 幸运梦境增伤百分比 (1 + 百分比)
 
 	// ==== 能量系统 ====
     double energyAddIncrease = 0;            // 能量回复增加
@@ -255,7 +256,7 @@ public:
 	virtual double setDamageIncrease();					   							// 初始化通用增伤乘区
 	virtual double changeDamageIncrease(double increase); 							// 修改通用增伤乘区
 
-	virtual double setEnhenceIncrease();					   							// 初始化通用增伤乘区
+	virtual double setEnhenceIncrease();					   						// 初始化通用增伤乘区
 	virtual double changeEnhenceIncrease(double increase); 							// 修改通用增伤乘区
 
 	virtual double setCriticalDamage();						   						// 初始化暴击伤害乘区
@@ -263,6 +264,11 @@ public:
 
 	virtual double setLuckyMultiplying();								   			// 初始化幸运倍率
 	virtual double changeLuckyMultiplyingByAddMultiplying(double addMultiplying); 	// 修改幸运倍率
+
+	virtual double setLuckyFinalIncrease();											// 初始化幸运最终伤害增加
+	virtual double changeLuckyFinalIncrease(double luckyFinalIncrease);				// 修改幸运最终伤害增加
+	virtual double setLuckyDreamIncrease();											// 初始化幸运梦境增伤
+	virtual double changeLuckyDreamIncrease(double luckyDreamIncrease);				// 修改幸运梦境增伤
 
 	virtual double setDreamIncrease();						   						// 初始化梦境增伤乘区
 	virtual double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
@@ -371,6 +377,9 @@ public:
     
     double getLuckyDamageIncrease() const;
     double getLuckyMultiplying() const;
+	double getLuckyMultiplyingExtra() const;
+	double getLuckyFinalIncrease() const;
+	double getLuckyDreamIncrease() const;
     
     double getProficientRatio() const;
     double getAlmightyRatio() const;

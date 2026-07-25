@@ -25,7 +25,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     this->max_energy = 165;
     this->present_energy = max_energy;
     this->proficientToEnergyRatio = 1;
-    this->proficientAmplification = 0.03;
+    this->proficientAmplification = 0.035;
 
     // 根据幻想配置选择对应的自动战斗逻辑
     switch (fantasyConfig) {
@@ -48,7 +48,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_LSZZ>(this);
             break;
         default:
-            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_NoFantasy>(this);
             break;
     }
 
@@ -67,7 +67,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.1);
     changeEnhenceIncrease(0.06);
-    changeLuckyMultiplyingByAddMultiplying(0.1);
+    // changeLuckyMultiplyingByAddMultiplying(0.1);
 }
 
 double Mage_Beam::changeElementIncreaseByProficient(double proficient)

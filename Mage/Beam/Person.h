@@ -4,8 +4,8 @@
 class Mage_Beam : public Person
 {
 private:
-    double proficientToEnergyRatio = 0.4;             // 精通转额外回能率
-    double proficientEnhanceRatio = 0.03;              // 精通增效
+    double proficientToEnergyRatio = 1;               // 精通转额外回能率
+    double proficientEnhanceRatio = 0.035;              // 精通增效
 public:
     friend class Initializer;
     friend class EnergyRevertAction_Beam;

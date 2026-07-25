@@ -39,6 +39,9 @@ class Initializer_Mage_Beam : public Initializer
             equipCertainSkill(LSZZ::name);        // 掠食蜘蛛+嗜血毛球
             equipCertainSkill(SXMQ::name);
         }
+        else {
+            // 默认配置(无幻想)
+        }
     }
 
     void registerSkills() override
@@ -53,7 +56,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<CrystalsHail>();
         registerCertainSkill<FrostDecreePulse>();
         registerCertainSkill<FrostBurst>();
-        registerCertainSkill<FantasyImpact_Beam>();
+        // registerCertainSkill<FantasyImpact_Beam>();
         registerCertainSkill<MukuChief>();
         registerCertainSkill<MukuScout>();
         registerCertainSkill<YGLWS>();
@@ -94,19 +97,19 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<ExtensiveArrow>();
 
         // //心相仪与装备套装效果
-        registerCertainBuff<EquipmentSetEffectBuff_Beam>();
+        // registerCertainBuff<EquipmentSetEffectBuff_Beam>();
         //registerCertainBuff<IllusoryDreamBuff>();
         //registerCertainBuff<ATKIncreaseBuff_IllusoryDream>();
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
         //registerCertainBuff<IceRealBuff>();
-        registerCertainBuff<WaterSpoutRealBuff>();
+        // registerCertainBuff<WaterSpoutRealBuff>();
         //registerCertainBuff<NineIceBuff>();
         registerCertainBuff<IceArrowLuckyRealBuff>();
         //registerCertainBuff<InfiniteMindBuff>();
-        registerCertainBuff<OccupationalFactorBuff_Beam>();
-        registerCertainBuff<FantasyImpactBuff_Beam>();
-        registerCertainBuff<ExtremeLuckBuff_Beam>();
-        registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
+        // registerCertainBuff<OccupationalFactorBuff_Beam>();
+        // registerCertainBuff<FantasyImpactBuff_Beam>();
+        // registerCertainBuff<ExtremeLuckBuff_Beam>();
+        // registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
     }
 
 public:

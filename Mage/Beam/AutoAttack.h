@@ -23,8 +23,8 @@ public:
     void update(int deltaTime) override final;
 
 protected:
-    void windowPeriodLogic();
-    void checkAndFinishOutBurst();
+    void windowPeriodLogic() override;
+    void checkAndFinishOutBurst() override;
 
 private:
     void tryTriggerStage(int stageIdx);
@@ -67,4 +67,10 @@ public:
 class AutoAttack_Mage_Beam_LSZZ : public AutoAttack_Mage_Beam_Base {
 public:
     explicit AutoAttack_Mage_Beam_LSZZ(Person* p);
+};
+
+// 无幻想版本 - 仅使用基础技能，不依赖任何幻想技能
+class AutoAttack_Mage_Beam_NoFantasy : public AutoAttack_Mage_Beam_Base {
+public:
+    explicit AutoAttack_Mage_Beam_NoFantasy(Person* p);
 };

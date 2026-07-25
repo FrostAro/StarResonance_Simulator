@@ -49,6 +49,7 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
         if (this->count >= this->triggerNum)
         {
             this->p->triggerAction<CDReduceAction>(100, Flood_Beam::name);
+            this->count -= this->triggerNum;
             Logger::debugBuff(AutoAttack::getTimer(),
                               this->getBuffName(),
                               "ReduceCD triggered ");
@@ -538,7 +539,6 @@ std::string BeamMagnumOpusBuff::name = "BeamMagnumOpusBuff";
 BeamMagnumOpusBuff::BeamMagnumOpusBuff(Person *p, double)
     : Buff(p)
 {
-    this->number = 0.1; // 触发概率
     this->duration = 999999;
     this->maxDuration = this->duration;
     this->isInherent = true;
@@ -554,18 +554,12 @@ void BeamMagnumOpusBuff::listenerCallback(DamageInfo &info)
     // 射线出伤10%概率使精通翻倍
     if (info.skillName == Beam::name)
     {
-        if (this->p->isSuccess(this->number))
-        {
-            this->p->triggerAction<CreateBuffAction>(0, DoubleProficientBuff::name);
-            this->number = 0.1;
-            Logger::debugBuff(AutoAttack::getTimer(),
-                              this->getBuffName(),
-                              " triggered ");
-        }
-        else
-        {
-            this->number += 0.1;
-        }
+        
+        this->p->triggerAction<CreateBuffAction>(0, DoubleProficientBuff::name);
+        Logger::debugBuff(AutoAttack::getTimer(),
+                this->getBuffName(),
+                " triggered ");
+            
     }
 }
 
@@ -1037,23 +1031,23 @@ FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_
     {
     case secondaryAttributesEnum::CRITICAL:
         this->p->triggerAction<CriticalPercentModifyAction>(this->number);
-        this->p->triggerAction<CriticalCountModifyAction>(2000);
+        //this->p->triggerAction<CriticalCountModifyAction>(2000);
         break;
     case secondaryAttributesEnum::QUICKNESS:
         this->p->triggerAction<QuicknessPercentModifyAction>(this->number);
-        this->p->triggerAction<QuicknessCountModifyAction>(2000);
+        //this->p->triggerAction<QuicknessCountModifyAction>(2000);
         break;
     case secondaryAttributesEnum::LUCKY:
         this->p->triggerAction<LuckyPercentModifyAction>(this->number);
-        this->p->triggerAction<LuckyCountModifyAction>(2000);
+        //this->p->triggerAction<LuckyCountModifyAction>(2000);
         break;
     case secondaryAttributesEnum::PROFICIENT:
         this->p->triggerAction<ProficientPercentModifyAction>(this->number);
-        this->p->triggerAction<ProficientCountModifyAction>(2000);
+        //this->p->triggerAction<ProficientCountModifyAction>(2000);
         break;
     case secondaryAttributesEnum::ALMIGHTY:
         this->p->triggerAction<AlmightyPercentModifyAction>(this->number);
-        this->p->triggerAction<AlmightyCountModifyAction>(2000);
+        //this->p->triggerAction<AlmightyCountModifyAction>(2000);
         break;
     default:
         break;
@@ -1087,23 +1081,23 @@ void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
     {
     case secondaryAttributesEnum::CRITICAL:
         this->p->triggerAction<CriticalPercentModifyAction>(-this->number);
-        this->p->changeCriticalCount(-2000);
+        //this->p->changeCriticalCount(-2000);
         break;
     case secondaryAttributesEnum::QUICKNESS:
         this->p->triggerAction<QuicknessPercentModifyAction>(-this->number);
-        this->p->changeQuicknessCount(-2000);
+        //this->p->changeQuicknessCount(-2000);
         break;
     case secondaryAttributesEnum::LUCKY:
         this->p->triggerAction<LuckyPercentModifyAction>(-this->number);
-        this->p->changeLuckyCount(-2000);
+        //this->p->changeLuckyCount(-2000);
         break;
     case secondaryAttributesEnum::PROFICIENT:
         this->p->triggerAction<ProficientPercentModifyAction>(-this->number);
-        this->p->changeProficientCount(-2000);
+        //this->p->changeProficientCount(-2000);
         break;
     case secondaryAttributesEnum::ALMIGHTY:
         this->p->triggerAction<AlmightyPercentModifyAction>(-this->number);
-        this->p->changeAlmightyCount(-2000);
+        //this->p->changeAlmightyCount(-2000);
         break;
     default:
         break;
@@ -1141,27 +1135,27 @@ void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
     case secondaryAttributesEnum::CRITICAL:
         this->p->triggerAction<CriticalPercentModifyAction>(this->number);
         //this->p->triggerAction<CriticalCountModifyAction>(2000);
-        this->p->changeCriticalCount(2000);
+        //this->p->changeCriticalCount(2000);
         break;
     case secondaryAttributesEnum::QUICKNESS:
         this->p->triggerAction<QuicknessPercentModifyAction>(this->number);
         //this->p->triggerAction<QuicknessCountModifyAction>(2000);
-        this->p->changeQuicknessCount(2000);
+        //this->p->changeQuicknessCount(2000);
         break;
     case secondaryAttributesEnum::LUCKY:
         this->p->triggerAction<LuckyPercentModifyAction>(this->number);
         //this->p->triggerAction<LuckyCountModifyAction>(2000);
-        this->p->changeLuckyCount(2000);
+        //this->p->changeLuckyCount(2000);
         break;
     case secondaryAttributesEnum::PROFICIENT:
         this->p->triggerAction<ProficientPercentModifyAction>(this->number);
         //this->p->triggerAction<ProficientCountModifyAction>(2000);
-        this->p->changeProficientCount(2000);
+        //this->p->changeProficientCount(2000);
         break;
     case secondaryAttributesEnum::ALMIGHTY:
         this->p->triggerAction<AlmightyPercentModifyAction>(this->number);
         //this->p->triggerAction<AlmightyCountModifyAction>(2000);
-        this->p->changeAlmightyCount(2000);
+        //this->p->changeAlmightyCount(2000);
         break;
     default:
         break;
@@ -1362,26 +1356,28 @@ WaterSpoutRealBuff::~WaterSpoutRealBuff()
 // 9冰真实因子
 std::string IceRealBuff::name = "IceRealBuff";
 
-IceRealBuff::IceRealBuff(Person *p, double n) : RealFactor(p)
+IceRealBuff::IceRealBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 999999;
     this->maxDuration = this->duration;
     this->isInherent = true;
-    this->triggerNum = 35;
+    this->triggerNum = 15;
+    this->count = 0;
 
-    auto info = std::make_unique<FactorEnergyListener>(
-        this->getBuffID(), [this](double n)
-        { this->listenerCallback(n); });
-    AddFactorEnergyAction::addListener(std::move(info));
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo& info)
+        { this->listenerCallback(info); });
+    AttackAction::addListener(std::move(info));
 }
 
-void IceRealBuff::listenerCallback(double n)
+void IceRealBuff::listenerCallback(DamageInfo& info)
 {
-    this->changeEnergy(n);
-    if(this->getPresentEnergy() >= this->triggerNum)
+    if(info.skillName != Beam::name) return;
+    this->count += 1;
+    if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CreateBuffAction>(0, NineIceBuff::name);
-        this->changeEnergy(-this->triggerNum);
+        this->count -= this->triggerNum;
     }
 }
 
@@ -1400,7 +1396,7 @@ std::string NineIceBuff::name = "NineIceBuff";
 NineIceBuff::NineIceBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 1500;
-    this->number = 0.0161; // 9冰能量减少
+    this->number = 0.025; // 9冰能量减少
     this->maxDuration = this->duration;
 
     p->maxResourceNum += 3;
@@ -1438,47 +1434,38 @@ NineIceBuff::~NineIceBuff()
 // 冰箭幸运真实因子
 std::string IceArrowLuckyRealBuff::name = "IceArrowLuckyRealBuff";
 
-IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : RealFactor(p)
+IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 999999;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
-    auto info1 = std::make_unique<DamageListener>(
-        this->getBuffID(), [this](DamageInfo& info)
-        { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info1));
-
-    auto info2 = std::make_unique<CreateSkillListener>(
+    auto info1 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
-        { this->listenerCallback2(skill); });
-    CreateSkillAction::addListener(std::move(info2));
+        { this->listenerCallback1(skill); });
+    CreateSkillAction::addListener(std::move(info1));
+
+    auto info2 = std::make_unique<CreateBuffListener>(
+        this->getBuffID(), [this](Buff* const buff)
+        { this->listenerCallback2(buff); });
+    CreateBuffAction::addListener(std::move(info2));
 }
 
-void IceArrowLuckyRealBuff::listenerCallback(DamageInfo& info)
+void IceArrowLuckyRealBuff::listenerCallback1(Skill *const skill)
 {
-    // 灌注期伤害增加+幸运最终伤害增加
-    // 默认灌注期全程触发
-    double floodIncrease = 0.33;
-    double finalIncrease = 0.505;
-
-    info.luckyNum *= (1 + finalIncrease);
-
-    if(this->p->findBuffInBuffList(FloodBuff_Beam::name) == -1)
-        return;
-    
-    info.luckyNum *= (1 + floodIncrease);
+    if(skill == nullptr) return;
+    if(skill->getSkillName() == IceArrow_Beam::name) 
+    { 
+        skill->setCanTriggerLucky(true); 
+    }
 }
 
-void IceArrowLuckyRealBuff::listenerCallback2(Skill *const skill)
+void IceArrowLuckyRealBuff::listenerCallback2(Buff *const buff)
 {
-    if(skill == nullptr)
-        return;
-    if(this->p->findBuffInBuffList(FloodBuff_Beam::name) == -1)
-        return;
-    if(skill->getSkillName() == IceArrow_Beam::name)
-    {
-        skill->setCanTriggerLucky(true);
+    if(buff == nullptr) return;
+    if(buff->getBuffName() == FloodBuff_Beam::name) 
+    { 
+        this->p->triggerAction<CreateBuffAction>(0,FloodLuckyBuff::name);
     }
 }
 
@@ -1488,8 +1475,25 @@ std::string IceArrowLuckyRealBuff::getBuffName() const { return IceArrowLuckyRea
 
 IceArrowLuckyRealBuff::~IceArrowLuckyRealBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    CreateBuffAction::deleteListener(this->getBuffID());
     CreateSkillAction::deleteListener(this->getBuffID());
+}
+
+// 灌注幸运
+std::string FloodLuckyBuff::name = "FloodLuckyBuff";
+
+FloodLuckyBuff::FloodLuckyBuff(Person *p, double n) : Buff(p)
+{
+    this->duration = 999999;
+    this->maxDuration = this->duration;
+    this->p->luckyDreamIncrease += 0.35;
+}
+
+bool FloodLuckyBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string FloodLuckyBuff::getBuffName() const { return FloodLuckyBuff::name; }
+FloodLuckyBuff::~FloodLuckyBuff() 
+{
+    this->p->luckyDreamIncrease -= 0.35;
 }
 
 // 无尽思维
