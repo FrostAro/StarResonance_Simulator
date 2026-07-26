@@ -96,20 +96,13 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();
 
-        // //心相仪与装备套装效果
-        // registerCertainBuff<EquipmentSetEffectBuff_Beam>();
-        //registerCertainBuff<IllusoryDreamBuff>();
-        //registerCertainBuff<ATKIncreaseBuff_IllusoryDream>();
+        //心相仪与装备套装效果
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
-        //registerCertainBuff<IceRealBuff>();
-        // registerCertainBuff<WaterSpoutRealBuff>();
-        //registerCertainBuff<NineIceBuff>();
         registerCertainBuff<IceArrowLuckyRealBuff>();
-        //registerCertainBuff<InfiniteMindBuff>();
-        // registerCertainBuff<OccupationalFactorBuff_Beam>();
-        // registerCertainBuff<FantasyImpactBuff_Beam>();
-        // registerCertainBuff<ExtremeLuckBuff_Beam>();
-        // registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
+        registerCertainBuff<ConquerorBuff>();
+        registerCertainBuff<StackMometumeBuff>();
+        registerCertainBuff<BreakThroughBuff>();
+        registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
     }
 
 public:

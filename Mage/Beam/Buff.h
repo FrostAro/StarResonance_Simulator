@@ -446,7 +446,7 @@ public:
 };
 
 // 9冰真实因子
-class IceRealBuff : public Buff
+class IceRealBuff : public Factor
 {
 public:   
     static std::string name;
@@ -480,7 +480,7 @@ public:
 };
 
 // 冰箭幸运
-class IceArrowLuckyRealBuff : public Buff
+class IceArrowLuckyRealBuff : public Factor
 {
 public:   
     static std::string name;
@@ -542,6 +542,57 @@ public:
 
     WaterSpoutRealBuff(Person *p, double n);
     ~WaterSpoutRealBuff() override;
+};
+
+class ConquerorBuff : public Buff
+{
+public:
+    // 叠势迸破
+    static std::string name;
+    double count = 0;                       //计数器
+    int triggerNum = 8;                     //触发次数
+
+public:
+    void listenerCallback(DamageInfo &info);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    ConquerorBuff(Person *p, double n);
+    ~ConquerorBuff() override;
+};
+
+// 叠势
+class StackMometumeBuff : public Buff
+{
+public:   
+    static std::string name;
+    int lastStack = 0;
+    int triggerNum = 5;
+
+public:
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    StackMometumeBuff(Person *p, double n);
+    ~StackMometumeBuff() override;
+};
+
+// 迸破
+class BreakThroughBuff : public Buff
+{
+public:   
+    static std::string name;
+    double enhance = 1.5;
+
+public:
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    BreakThroughBuff(Person *p, double n);
+    ~BreakThroughBuff() override;
 };
 
 // 无尽思维

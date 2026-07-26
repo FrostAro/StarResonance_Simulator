@@ -1356,7 +1356,7 @@ WaterSpoutRealBuff::~WaterSpoutRealBuff()
 // 9冰真实因子
 std::string IceRealBuff::name = "IceRealBuff";
 
-IceRealBuff::IceRealBuff(Person *p, double n) : Buff(p)
+IceRealBuff::IceRealBuff(Person *p, double n) : Factor(p)
 {
     this->duration = 999999;
     this->maxDuration = this->duration;
@@ -1434,7 +1434,7 @@ NineIceBuff::~NineIceBuff()
 // 冰箭幸运真实因子
 std::string IceArrowLuckyRealBuff::name = "IceArrowLuckyRealBuff";
 
-IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Buff(p)
+IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Factor(p)
 {
     this->duration = 999999;
     this->maxDuration = this->duration;
@@ -1494,6 +1494,117 @@ std::string FloodLuckyBuff::getBuffName() const { return FloodLuckyBuff::name; }
 FloodLuckyBuff::~FloodLuckyBuff() 
 {
     this->p->luckyDreamIncrease -= 0.35;
+}
+
+// 叠势迸破
+std::string ConquerorBuff::name = "ConquerorBuff";
+
+ConquerorBuff::ConquerorBuff(Person *p, double)
+    : Buff(p),
+      count(0),
+      triggerNum(8)
+{
+    this->stack = 0;
+    this->duration = 99999;
+    this->maxDuration = this->duration;
+
+    this->isInherent = true;
+    this->isStackable = true;
+
+    auto info = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo &damageInfo)
+        { this->listenerCallback(damageInfo); });
+    AttackAction::addListener(std::move(info));
+}
+
+void ConquerorBuff::listenerCallback(DamageInfo &info)
+{
+    if(info.skillName == Beam::name)
+    {
+        this->count += 1;
+    }
+    if(this->count >= this->triggerNum)
+    {
+        this->p->triggerAction<CreateBuffAction>(1, StackMometumeBuff::name);
+    }
+}
+
+void ConquerorBuff::update(const double deltaTime) {}
+bool ConquerorBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string ConquerorBuff::getBuffName() const { return ConquerorBuff::name; }
+
+ConquerorBuff::~ConquerorBuff()
+{
+    AttackAction::deleteListener(this->getBuffID());
+}
+
+// 叠势
+std::string StackMometumeBuff::name = "StackMometumeBuff";
+
+StackMometumeBuff::StackMometumeBuff(Person *p, double n) : Buff(p)
+{
+    this->duration = 800;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    this->number = 96.8;
+    this->stack = 0;
+    this->triggerNum = 5;
+}
+
+void StackMometumeBuff::update(const double) 
+{
+    if(this->p->findBuffInBuffList(BreakThroughBuff::name) != -1) return;
+    if(this->stack >= this->triggerNum)
+    {
+        this->duration = 0;
+    }
+
+    if(this->stack != this->lastStack)
+    {
+        int temp = this->stack - this->lastStack;
+        this->p->triggerAction<AttackCountModifyAction>(temp * this->number);
+        this->p->triggerAction<DreamIncreaseModifyAction>(temp * 0.016);
+        this->lastStack = this->stack;
+    }
+}
+
+bool StackMometumeBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string StackMometumeBuff::getBuffName() const { return StackMometumeBuff::name; }
+
+StackMometumeBuff::~StackMometumeBuff() 
+{
+    this->p->triggerAction<AttackCountModifyAction>(-this->stack * this->number);
+    this->p->triggerAction<DreamIncreaseModifyAction>(-this->stack * 0.016);
+}
+
+// 迸破
+std::string BreakThroughBuff::name = "BreakThroughBuff";
+
+BreakThroughBuff::BreakThroughBuff(Person *p, double n) : Buff(p)
+{
+    this->duration = 800;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    this->enhance = 1.5;
+    this->number = 580 * this->enhance;
+    this->p->triggerAction<AttackCountModifyAction>(this->number * this->enhance);
+    this->p->triggerAction<AttackIncreaseModifyAction>(0.08 * this->enhance);
+    this->p->triggerAction<DreamIncreaseModifyAction>(0.1 * this->enhance);
+}
+
+void BreakThroughBuff::update(const double) {}
+
+bool BreakThroughBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string BreakThroughBuff::getBuffName() const { return BreakThroughBuff::name; }
+
+BreakThroughBuff::~BreakThroughBuff() 
+{
+    this->p->triggerAction<AttackCountModifyAction>(-this->number * this->enhance);
+    this->p->triggerAction<AttackIncreaseModifyAction>(-0.08 * this->enhance);
+    this->p->triggerAction<DreamIncreaseModifyAction>(-0.1 * this->enhance);
+    this->p->triggerAction<CreateBuffAction>(2,StackMometumeBuff::name);
 }
 
 // 无尽思维
@@ -1590,10 +1701,6 @@ void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
     {
         skill->dreamIncreaseAdd += iceArrowIncrease;
     }
-    // if (skill->getSkillName() == WaterSpout::name)
-    // {
-    //     skill->dreamIncreaseAdd += 0.25;
-    // }
 
     if (skill->getSkillName() == Beam::name)
     {
@@ -1735,13 +1842,16 @@ CoefficientAdjustmentBuff_Beam::CoefficientAdjustmentBuff_Beam(Person *p, double
 
 void CoefficientAdjustmentBuff_Beam::listenerCallback(DamageInfo& info) 
 {
-    double fantasyImpactAdjustment = 1;
-    double luckyAdjustment = 2.1;
-    if(info.skillName == FantasyImpact_Beam::name)
+    double beamAdjustment = 1.3;
+    double icearrowAdjustment = 0.8;
+    if(info.skillName == Beam::name)
     {
-        info.damageNum *= fantasyImpactAdjustment;
+        info.damageNum *= beamAdjustment;
     }
-    info.luckyNum *= luckyAdjustment;
+    if(info.skillName == IceArrow_Beam::name || info.skillName == FrostBurst::name)
+    {
+        info.damageNum *= icearrowAdjustment;
+    }
 }
 
 void CoefficientAdjustmentBuff_Beam::update(double) {}
