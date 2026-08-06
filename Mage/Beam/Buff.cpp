@@ -1634,18 +1634,17 @@ InfiniteMindBuff::InfiniteMindBuff(Person *p, double n) : Buff(p)
     p->triggerAction<ProficientPercentModifyAction>(0.08);
 }
 
-void InfiniteMindBuff::update(const double) 
+void InfiniteMindBuff::update(const double)
 {
-    static bool triggered = false;
-    if(this->p->findBuffInBuffList(UltiIncreaseBuff_Beam::name) != -1 && !triggered)
+    if(this->p->findBuffInBuffList(UltiIncreaseBuff_Beam::name) != -1 && !this->triggered)
     {
         this->p->triggerAction<ProficientPercentModifyAction>(0.08);
-        triggered = true;
+        this->triggered = true;
     }
-    if(this->p->findBuffInBuffList(UltiIncreaseBuff_Beam::name) == -1 && triggered)
+    if(this->p->findBuffInBuffList(UltiIncreaseBuff_Beam::name) == -1 && this->triggered)
     {
         this->p->triggerAction<ProficientPercentModifyAction>(-0.08);
-        triggered = false;
+        this->triggered = false;
     }
 }
 bool InfiniteMindBuff::shouldBeRemoved() { return this->duration < 0; }

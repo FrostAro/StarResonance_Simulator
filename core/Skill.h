@@ -482,11 +482,12 @@ public:
 class temp_InstantSkill : public InstantSkill
 {
 public:
-	static std::string name;
-
 	void setSkillType() override {};
 	void trigger(Person *p) override {};
 	std::string getSkillName() const override;
 
 	explicit temp_InstantSkill(std::string skillName,double multiplying,double fixedValue);
+
+private:
+	std::string skillName_;	// 实例级技能名（静态名会被后创建的实例覆盖，故改为成员变量）
 };

@@ -144,7 +144,7 @@ double Person::luckyDamage(const Skill *skill) const
     // (期望)
     double damage = ((this->getATK() * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
                         * (1 + this->elementIncrease) 
-                        * (1 + this->damageIncrease + this->Lucky + this->luckyDamageIncrease + skill->getLuckyIncreaseAdd()) 
+                        * (1 + this->damageIncrease + this->Lucky + skill->getLuckyIncreaseAdd()) 
                         * (1 + this->almightyIncrease)
                         * (1 + this->dreamIncrease + this->luckyDreamIncrease)
                         * (1 + this->enhenceIncrease)
@@ -728,8 +728,8 @@ double Person::changeLuckyDreamIncrease(const double luckyDreamIncrease)
 
 double Person::setDreamIncrease()
 {
-    this->criticicalDamage = 0;
-    return this->criticicalDamage;
+    this->dreamIncrease = 0;
+    return this->dreamIncrease;
 }
 
 double Person::changeDreamIncrease(const double dreamIncrease)

@@ -442,12 +442,11 @@ void FacilitationSkill::stop()
     this->duration = 0;
 }
 
-std::string temp_InstantSkill::name = "temp_InstantSkill";
 temp_InstantSkill::temp_InstantSkill(std::string skillName,double multiplying,double fixedValue) : InstantSkill()
 {
-    this->name = skillName;
+    this->skillName_ = skillName;
     this->multiplying = multiplying;
     this->fixedValue = fixedValue;
 }
 
-std::string temp_InstantSkill::getSkillName() const { return temp_InstantSkill::name; }
+std::string temp_InstantSkill::getSkillName() const { return this->skillName_; }

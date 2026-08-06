@@ -183,10 +183,11 @@ void DamageStatistics::damageInfoAppend(const DamageInfo &damageInfo)
     damageCount += 1;
     damage += damageInfo.damageNum;
 
+    // luckyNum 已是期望值（内部已乘幸运率），每次命中都计入；触发次数仍按 isSuccess 独立统计
+    luckyDamage += damageInfo.luckyNum;
     if (damageInfo.isLucky)
     {
         luckyDamageCount += 1;
-        luckyDamage += damageInfo.luckyNum;
     }
     if (damageInfo.isCritical)
     {

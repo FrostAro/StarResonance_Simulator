@@ -89,6 +89,9 @@ public:
     // 玄冰回复
     static std::string name;
 
+private:
+    bool checked = false;   // 是否已完成首次更新检查（实例级，防止多实例共享状态）
+
 public:
     void listenerCallback(double n);
     void update(double deltaTime) override;

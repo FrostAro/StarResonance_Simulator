@@ -598,8 +598,11 @@ public:
 // 无尽思维
 class InfiniteMindBuff : public Buff
 {
-public:   
+public:
     static std::string name;
+
+private:
+    bool triggered = false;   // 是否已应用额外精通加成（实例级，防止多实例共享状态）
 
 public:
     void update(double deltaTime) override;

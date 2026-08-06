@@ -46,7 +46,7 @@ void Buff::stop()
 }
 
 // 重载等于操作符：通过ID比较两个Buff是否相同
-bool Buff::operator==(const Buff &) const { return ID == this->getBuffID(); }
+bool Buff::operator==(const Buff &other) const { return other.getBuffID() == this->getBuffID(); }
 
 // 获取下一个可用的BuffID
 int Buff::getID() { return Buff::ID; }

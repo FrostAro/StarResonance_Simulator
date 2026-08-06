@@ -248,8 +248,7 @@ void IceRevertBuff::listenerCallback(double) {}
 void IceRevertBuff::update(const double)
 {
     // 在第一次更新时检查UltiIncreaseBuff
-    static bool checked = false;
-    if (!checked)
+    if (!this->checked)
     {
         int a = this->p->findBuffInBuffList(UltiIncreaseBuff_Icicle::name);
         if (a == -1)
@@ -257,7 +256,7 @@ void IceRevertBuff::update(const double)
             this->duration = 900;
             this->maxDuration = this->duration;
         }
-        checked = true;
+        this->checked = true;
     }
 
     if (this->duration > 0)
