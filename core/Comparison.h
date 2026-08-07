@@ -93,6 +93,8 @@ struct ComparisonResult
  * @param maxTime    每次模拟总时长（毫秒）
  * @param deltaTime  模拟步长（毫秒）
  * @param simulate   单次模拟函数（职业相关）
+ * @param shouldStop 可选提前终止回调：返回 true 时停止并返回已完成的候选结果
+ *                   （用于GUI响应窗口关闭/用户中断，控制台可不传）
  * @return 每个候选的对比结果
  */
 std::vector<ComparisonResult> runPairedComparison(
@@ -102,7 +104,8 @@ std::vector<ComparisonResult> runPairedComparison(
     int seedCount,
     int maxTime,
     int deltaTime,
-    const SimulateFn& simulate);
+    const SimulateFn& simulate,
+    const std::function<bool()>& shouldStop = {});
 
 /**
  * @brief 打印对比结果表

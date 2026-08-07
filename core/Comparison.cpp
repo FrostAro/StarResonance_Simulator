@@ -10,6 +10,8 @@
 
 double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& statsMap, int maxTime)
 {
+    if (maxTime <= 0)
+        return 0;  // 避免除零（GUI输入被清空等情况）
     double total = 0;
     for (const auto& [name, stat] : statsMap)
     {
@@ -50,7 +52,8 @@ std::vector<ComparisonResult> runPairedComparison(
     int seedCount,
     int maxTime,
     int deltaTime,
-    const SimulateFn& simulate)
+    const SimulateFn& simulate,
+    const std::function<bool()>& shouldStop)
 {
     std::vector<ComparisonResult> results;
     if (seedCount <= 0 || !simulate)
@@ -60,6 +63,8 @@ std::vector<ComparisonResult> runPairedComparison(
     std::vector<double> baseDpsBySeed(seedCount);
     for (int i = 0; i < seedCount; ++i)
     {
+        if (shouldStop && shouldStop())
+            return results;  // 提前终止：基准尚未完成，无候选结果
         const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
         auto map = simulate(base, seed, maxTime, deltaTime);
         baseDpsBySeed[i] = getTotalDPS(map, maxTime);
@@ -75,6 +80,8 @@ std::vector<ComparisonResult> runPairedComparison(
         std::vector<double> deltas(seedCount);
         for (int i = 0; i < seedCount; ++i)
         {
+            if (shouldStop && shouldStop())
+                return results;  // 提前终止：返回已完成的候选
             const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
             auto map = simulate(cand, seed, maxTime, deltaTime);
             candDpsBySeed[i] = getTotalDPS(map, maxTime);

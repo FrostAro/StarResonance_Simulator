@@ -231,6 +231,9 @@ ComparisonWorker::~ComparisonWorker()
 
 void ComparisonWorker::run()
 {
+    // 压低日志级别：配对对比会产生大量buff/技能DEBUG日志，避免刷屏卡顿GUI
+    Logger::setLevel(Logger::Level::WARNING);
+
     auto callback = [this](const std::string &msg) {
         emit logMessage(QString::fromStdString(msg));
     };
@@ -242,8 +245,13 @@ void ComparisonWorker::run()
                         .arg(m_seed)
                         .arg(m_seed + m_pairs - 1));
 
+    // 支持窗口关闭/中断时提前停止（配合 shouldStop 回调，避免关闭窗口时卡死）
+    auto shouldStop = []() { return QThread::currentThread()->isInterruptionRequested(); };
     auto results = runPairedComparison(m_base, m_candidates, m_seed, m_pairs,
-                                       m_maxTime, m_deltaTime, m_simulate);
+                                       m_maxTime, m_deltaTime, m_simulate, shouldStop);
+
+    if (QThread::currentThread()->isInterruptionRequested())
+        emit logMessage("对比已中断，仅输出已完成的候选。");
 
     QVector<QVector<QVariant>> rows;
     rows.reserve(results.size());
@@ -590,7 +598,7 @@ std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const 
         if (hash >= 0) line = line.left(hash).trimmed();
         if (line.isEmpty()) continue;
 
-        const QStringList parts = line.split(QRegularExpression("\\s+"));
+        const QStringList parts = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
         if (parts.size() < 2) continue;
         const QString& key = parts[0];
         bool ok = false;

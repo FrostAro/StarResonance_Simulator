@@ -27,7 +27,7 @@ LuckyPercentModifyAction_Icicle::LuckyPercentModifyAction_Icicle()
 void LuckyPercentModifyAction_Icicle::execute(double n, Person *p)
 {
     LuckyPercentModifyAction::execute(n,p);
-    p->changeLuckyMultiplyingByAddMultiplying(0.15 + (p->Lucky - 0.05) / 2);
+    p->changeLuckyMultiplyingByAddMultiplying(0.15 + (p->Lucky - kBaseLuckyPercent) / 2);
 }
 
 std::string LuckyPercentModifyAction_Icicle::getActionName() { return LuckyPercentModifyAction_Icicle::name; }
