@@ -183,6 +183,7 @@ private:
 
     QTextEdit* m_logText;
     QTableWidget* m_resultTable;
+    QLabel* m_statusLabel;  // 状态栏文字
 
     QThread* m_workerThread;
     SimulationWorker* m_worker;

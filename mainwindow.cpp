@@ -15,7 +15,9 @@
 #include <QThread>
 #include <QRegularExpression>
 #include <QScrollArea>
+#include <QStatusBar>
 #include <random>
+#include <utility>
 #include <QDebug>
 
 // 包含您的核心头文件（路径根据实际项目调整）
@@ -277,7 +279,34 @@ void ComparisonWorker::run()
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_workerThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
 {
+    // 全局样式：简洁浅色主题 + 蓝色强调
+    setStyleSheet(R"(
+        QMainWindow { background-color: #eef1f6; }
+        QGroupBox { background-color: #ffffff; border: 1px solid #dfe3ea; border-radius: 8px; margin-top: 14px; padding: 10px 12px 12px 12px; }
+        QGroupBox::title { subcontrol-origin: margin; left: 10px; top: 0px; padding: 0 4px; color: #111827; font-weight: bold; font-size: 13px; }
+        QLabel { color: #374151; }
+        QLineEdit, QComboBox, QPlainTextEdit { background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 8px; selection-background-color: #2563eb; }
+        QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #2563eb; }
+        QLineEdit:disabled, QComboBox:disabled, QPlainTextEdit:disabled { background: #f3f4f6; color: #9ca3af; }
+        QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; }
+        QPushButton:hover { background: #1d4ed8; }
+        QPushButton:pressed { background: #1e40af; }
+        QPushButton:disabled { background: #9ca3af; }
+        QCheckBox { spacing: 6px; color: #374151; }
+        QTableWidget { background: #ffffff; border: 1px solid #dfe3ea; border-radius: 6px; gridline-color: #eef1f6; selection-background-color: #dbeafe; selection-color: #111827; }
+        QHeaderView::section { background: #f3f4f6; border: none; border-bottom: 1px solid #dfe3ea; padding: 6px 8px; font-weight: bold; color: #374151; }
+        QScrollArea { border: none; background: transparent; }
+        QScrollBar:vertical { background: transparent; width: 10px; }
+        QScrollBar::handle:vertical { background: #cbd5e1; border-radius: 5px; min-height: 30px; }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+    )");
+
     setupUI();
+
+    // 状态栏
+    m_statusLabel = new QLabel("就绪");
+    statusBar()->addWidget(m_statusLabel);
+
     connect(m_professionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onProfessionChanged);
     connect(m_runButton, &QPushButton::clicked, this, &MainWindow::onRunClicked);
@@ -330,26 +359,30 @@ void MainWindow::setupUI()
 
 QWidget *MainWindow::createInputPanel()
 {
-    QGroupBox *groupBox = new QGroupBox("角色配置");
-    groupBox->setStyleSheet("QGroupBox { font-weight: bold; }");
+    // 面板容器（子分组自带标题，外层不再套 GroupBox）
+    QWidget *panel = new QWidget;
+    QVBoxLayout *mainLayout = new QVBoxLayout(panel);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(8);
 
-    QGridLayout *layout = new QGridLayout(groupBox);
-    int row = 0; // 当前行计数器
+    // 便捷：向网格添加"标签 + 输入框"一行
+    auto addField = [](QGridLayout* gl, int row, const QString& label, QWidget* field) {
+        gl->addWidget(new QLabel(label), row, 0);
+        gl->addWidget(field, row, 1);
+    };
+    auto makeGroup = [](const QString& title) {
+        QGroupBox* box = new QGroupBox(title);
+        QGridLayout* gl = new QGridLayout(box);
+        gl->setColumnStretch(0, 0);
+        gl->setColumnStretch(1, 1);
+        return std::make_pair(box, gl);
+    };
 
-    // 设置列拉伸：第0列固定大小（标签），第1列自动拉伸
-    layout->setColumnStretch(0, 0);
-    layout->setColumnStretch(1, 1);
-
-    // 0: 职业选择
-    layout->addWidget(new QLabel("职业 *"), row, 0);
-    m_professionCombo = new QComboBox;
+    // ---- 职业与幻想 ----
+    auto [classBox, classLayout] = makeGroup("职业");
+    addField(classLayout, 0, "职业", m_professionCombo = new QComboBox);
     m_professionCombo->addItem("射线 · Beam");
-    layout->addWidget(m_professionCombo, row++, 1);
-
-    // 1: 幻想配置
-    layout->addWidget(new QLabel("幻想配置"), row, 0);
-    m_fantasyCombo = new QComboBox;
-    // 初始填充 Beam 的选项
+    addField(classLayout, 1, "幻想配置", m_fantasyCombo = new QComboBox);
     m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
     m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
@@ -357,121 +390,58 @@ QWidget *MainWindow::createInputPanel()
     m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
     m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
-    layout->addWidget(m_fantasyCombo, row++, 1);
+    mainLayout->addWidget(classBox);
 
-    // 2: 三维属性
-    layout->addWidget(new QLabel("三维属性"), row, 0);
-    m_primaryAttrEdit = new QLineEdit("4593");
-    layout->addWidget(m_primaryAttrEdit, row++, 1);
+    // ---- 基础属性 ----
+    auto [baseBox, baseLayout] = makeGroup("基础属性");
+    addField(baseLayout, 0, "三维属性", m_primaryAttrEdit = new QLineEdit("4593"));
+    addField(baseLayout, 1, "暴击 (%)", m_critEdit = new QLineEdit("36.00"));
+    addField(baseLayout, 2, "急速 (%)", m_quicknessEdit = new QLineEdit("1.05"));
+    addField(baseLayout, 3, "幸运 (%)", m_luckyEdit = new QLineEdit("51.70"));
+    addField(baseLayout, 4, "精通 (%)", m_proficientEdit = new QLineEdit("6.00"));
+    addField(baseLayout, 5, "全能 (%)", m_almightyEdit = new QLineEdit("17.58"));
+    mainLayout->addWidget(baseBox);
 
-    // 3: 暴击 (%)
-    layout->addWidget(new QLabel("暴击 (%)"), row, 0);
-    m_critEdit = new QLineEdit("36.00");
-    layout->addWidget(m_critEdit, row++, 1);
+    // ---- 攻击 ----
+    auto [atkBox, atkLayout] = makeGroup("攻击");
+    addField(atkLayout, 0, "攻击", m_atkEdit = new QLineEdit("3111"));
+    addField(atkLayout, 1, "精炼攻击", m_refineAtkEdit = new QLineEdit("820"));
+    addField(atkLayout, 2, "元素攻击", m_elementAtkEdit = new QLineEdit("35"));
+    addField(atkLayout, 3, "额外攻击速度 (%)", m_attackSpeedEdit = new QLineEdit("10.00"));
+    addField(atkLayout, 4, "额外施法速度 (%)", m_castingSpeedEdit = new QLineEdit("0.00"));
+    mainLayout->addWidget(atkBox);
 
-    // 4: 急速 (%)
-    layout->addWidget(new QLabel("急速 (%)"), row, 0);
-    m_quicknessEdit = new QLineEdit("1.05");
-    layout->addWidget(m_quicknessEdit, row++, 1);
+    // ---- 额外乘区 ----
+    auto [boostBox, boostLayout] = makeGroup("额外乘区");
+    addField(boostLayout, 0, "爆伤额外值", m_critDmgSetEdit = new QLineEdit("0"));
+    addField(boostLayout, 1, "增伤额外值", m_incSetEdit = new QLineEdit("0"));
+    addField(boostLayout, 2, "元素增伤额外值", m_eleIncSetEdit = new QLineEdit("0"));
+    mainLayout->addWidget(boostBox);
 
-    // 5: 幸运 (%)
-    layout->addWidget(new QLabel("幸运 (%)"), row, 0);
-    m_luckyEdit = new QLineEdit("51.70");
-    layout->addWidget(m_luckyEdit, row++, 1);
-
-    // 6: 精通 (%)
-    layout->addWidget(new QLabel("精通 (%)"), row, 0);
-    m_proficientEdit = new QLineEdit("6.00");
-    layout->addWidget(m_proficientEdit, row++, 1);
-
-    // 7: 全能 (%)
-    layout->addWidget(new QLabel("全能 (%)"), row, 0);
-    m_almightyEdit = new QLineEdit("17.58");
-    layout->addWidget(m_almightyEdit, row++, 1);
-
-    // 8: 攻击
-    layout->addWidget(new QLabel("攻击"), row, 0);
-    m_atkEdit = new QLineEdit("3111");
-    layout->addWidget(m_atkEdit, row++, 1);
-
-    // 9: 精炼攻击
-    layout->addWidget(new QLabel("精炼攻击"), row, 0);
-    m_refineAtkEdit = new QLineEdit("820");
-    layout->addWidget(m_refineAtkEdit, row++, 1);
-
-    // 10: 元素攻击
-    layout->addWidget(new QLabel("元素攻击"), row, 0);
-    m_elementAtkEdit = new QLineEdit("35");
-    layout->addWidget(m_elementAtkEdit, row++, 1);
-
-    // 11: 攻击速度 (%)
-    layout->addWidget(new QLabel("额外攻击速度 (%)"), row, 0);
-    m_attackSpeedEdit = new QLineEdit("10.00");
-    layout->addWidget(m_attackSpeedEdit, row++, 1);
-
-    // 12: 施法速度 (%)
-    layout->addWidget(new QLabel("额外施法速度 (%)"), row, 0);
-    m_castingSpeedEdit = new QLineEdit("0.00");
-    layout->addWidget(m_castingSpeedEdit, row++, 1);
-
-    // 13: 爆伤额外值
-    layout->addWidget(new QLabel("爆伤额外值"), row, 0);
-    m_critDmgSetEdit = new QLineEdit("0");
-    layout->addWidget(m_critDmgSetEdit, row++, 1);
-
-    // 14: 增伤额外值
-    layout->addWidget(new QLabel("增伤额外值"), row, 0);
-    m_incSetEdit = new QLineEdit("0");
-    layout->addWidget(m_incSetEdit, row++, 1);
-
-    // 15: 元素增伤额外值
-    layout->addWidget(new QLabel("元素增伤额外值"), row, 0);
-    m_eleIncSetEdit = new QLineEdit("0");
-    layout->addWidget(m_eleIncSetEdit, row++, 1);
-
-    // 16: 模拟循环次数
-    layout->addWidget(new QLabel("模拟循环次数"), row, 0);
-    m_timesEdit = new QLineEdit("1");
-    layout->addWidget(m_timesEdit, row++, 1);
-
-    // 17: 最大运行时间 (0.01s)
-    layout->addWidget(new QLabel("最大运行时间 (0.01s)"), row, 0);
-    m_maxTimeEdit = new QLineEdit("18000");
-    layout->addWidget(m_maxTimeEdit, row++, 1);
-
-    // 18: deltaTime (0.01s)
-    layout->addWidget(new QLabel("deltaTime (0.01s)"), row, 0);
-    m_deltaTimeEdit = new QLineEdit("1");
-    layout->addWidget(m_deltaTimeEdit, row++, 1);
-
-    // 19: 随机种子选项（跨两列）
+    // ---- 模拟参数 ----
+    auto [simBox, simLayout] = makeGroup("模拟参数");
+    addField(simLayout, 0, "模拟循环次数", m_timesEdit = new QLineEdit("1"));
+    addField(simLayout, 1, "最大运行时间 (0.01s)", m_maxTimeEdit = new QLineEdit("18000"));
+    addField(simLayout, 2, "deltaTime (0.01s)", m_deltaTimeEdit = new QLineEdit("1"));
     m_randomSeedCheck = new QCheckBox("使用随机种子");
-    layout->addWidget(m_randomSeedCheck, row, 0, 1, 2); // 占两列
-    row++; // 手动递增行号
-
-    // 20: 固定种子
-    layout->addWidget(new QLabel("固定种子"), row, 0);
-    m_seedEdit = new QLineEdit("42");
+    simLayout->addWidget(m_randomSeedCheck, 3, 0, 1, 2);
+    addField(simLayout, 4, "固定种子", m_seedEdit = new QLineEdit("42"));
     m_seedEdit->setEnabled(false); // 初始禁用，因为随机种子默认未勾选
-    layout->addWidget(m_seedEdit, row++, 1);
+    mainLayout->addWidget(simBox);
 
-    // 21: 运行按钮（跨两列）
-    m_runButton = new QPushButton("运行模拟");
-    m_runButton->setStyleSheet("QPushButton { background-color: #1d4ed8; color: white; font-weight: bold; padding: 8px; }");
-    layout->addWidget(m_runButton, row, 0, 1, 2); // 跨两列
-    row++; // 可选，后续不再使用
+    // 连接随机种子复选框与种子输入框的启用状态
+    connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked){
+        m_seedEdit->setEnabled(!checked);
+    });
 
-    // 22: 对比模式（同种子配对）——独立分组，勾选后启用相关配置
-    QGroupBox *compareBox = new QGroupBox("对比模式（同种子配对）");
-    QGridLayout *compareLayout = new QGridLayout(compareBox);
+    // ---- 对比模式（同种子配对）----
+    auto [compareBox, compareLayout] = makeGroup("对比模式（同种子配对）");
     m_compareCheck = new QCheckBox("启用对比模式");
     m_compareCheck->setToolTip(
         "勾选后：以当前输入面板为基准，按下方候选配置逐行对比DPS提升。\n"
         "基准与每个候选在相同随机种子下配对模拟，程序随机互相抵消，1%级提升也能测出。");
     compareLayout->addWidget(m_compareCheck, 0, 0, 1, 2);
-    compareLayout->addWidget(new QLabel("配对次数"), 1, 0);
-    m_comparePairsEdit = new QLineEdit("20");
-    compareLayout->addWidget(m_comparePairsEdit, 1, 1);
+    addField(compareLayout, 1, "配对次数", m_comparePairsEdit = new QLineEdit("20"));
     compareLayout->addWidget(new QLabel("候选配置(每行一个)"), 2, 0);
     m_candidatesEdit = new QPlainTextEdit;
     m_candidatesEdit->setPlainText(
@@ -480,15 +450,9 @@ QWidget *MainWindow::createInputPanel()
         "攻击 +100\n"
         "精通 +10\n"
         "# 幻想用绝对值，如：幻想 0");
-    m_candidatesEdit->setFixedHeight(90);
+    m_candidatesEdit->setFixedHeight(80);
     compareLayout->addWidget(m_candidatesEdit, 2, 1);
-    layout->addWidget(compareBox, row, 0, 1, 2);
-    row++;
-
-    // 连接随机种子复选框与种子输入框的启用状态
-    connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked){
-        m_seedEdit->setEnabled(!checked);
-    });
+    mainLayout->addWidget(compareBox);
 
     // 勾选对比模式时：启用对比配置，禁用无关的模拟循环次数；反之恢复
     connect(m_compareCheck, &QCheckBox::toggled, [this](bool on){
@@ -499,7 +463,12 @@ QWidget *MainWindow::createInputPanel()
     m_comparePairsEdit->setEnabled(false);
     m_candidatesEdit->setEnabled(false);
 
-    return groupBox;
+    // ---- 运行按钮 ----
+    m_runButton = new QPushButton("运行模拟");
+    m_runButton->setMinimumHeight(40);
+    mainLayout->addWidget(m_runButton);
+
+    return panel;
 }
 
 QWidget *MainWindow::createDebugPanel()
@@ -690,6 +659,7 @@ void MainWindow::onRunClicked()
 
         m_workerThread->start();
         m_runButton->setEnabled(false);
+        m_statusLabel->setText("对比模拟中...");
         return;
     }
 
@@ -755,6 +725,7 @@ void MainWindow::onRunClicked()
 
     m_workerThread->start();
     m_runButton->setEnabled(false);
+    m_statusLabel->setText("模拟中...");
 }
 
 void MainWindow::appendLog(const QString &msg)
@@ -767,6 +738,7 @@ void MainWindow::appendLog(const QString &msg)
 void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, int totalTime)
 {
     m_runButton->setEnabled(true);
+    m_statusLabel->setText("模拟完成");
 
     // 恢复普通伤害统计的列头（对比模式可能改过列头）
     QStringList headers = {"技能", "总伤害", "攻击次数", "幸运伤害", "幸运次数", "DPS", "暴击率"};
@@ -817,6 +789,7 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
 void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs)
 {
     m_runButton->setEnabled(true);
+    m_statusLabel->setText("对比完成");
 
     QStringList headers = {"候选配置", "基准DPS", "候选DPS", "ΔDPS", "Δ%", "配对σ", "t值"};
     m_resultTable->setColumnCount(7);
@@ -831,6 +804,14 @@ void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, in
             if (j >= 1)
             {
                 item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            }
+            // ΔDPS / Δ% 列按涨跌着色：绿涨红跌
+            if (j == 3 || j == 4)
+            {
+                double v = row[j].toDouble();
+                item->setForeground(v > 0 ? QColor("#10b981")
+                                    : v < 0 ? QColor("#ef4444")
+                                            : QColor("#6b7280"));
             }
             m_resultTable->setItem(i, j, item);
         }

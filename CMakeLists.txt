@@ -7,11 +7,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-if(NOT Qt6_FOUND)
-    message(FATAL_ERROR "Qt6 not found. Please set CMAKE_PREFIX_PATH to Qt installation.")
+# Qt6 仅 GUI 目标需要；控制台程序（icicle/beam/compare）不依赖 Qt
+find_package(Qt6 COMPONENTS Core Widgets)
+if(Qt6_FOUND)
+    message(STATUS "Found Qt6: ${Qt6_DIR}")
+else()
+    message(WARNING "Qt6 not found (可设置 CMAKE_PREFIX_PATH 指向 Qt 安装目录)。GUI 目标将跳过，仅构建控制台程序。")
 endif()
-message(STATUS "Found Qt6: $cmake --build . --config Release{Qt6_DIR}")
 
 # 头文件路径（也可改用 target_include_directories 更精细地控制）
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -87,13 +89,18 @@ set_target_properties(dps_simulator_beam PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
-# ===== 4. 创建 GUI 程序 =====
+# ===== 4. 创建 GUI 程序（需要 Qt6）=====
 # GUI 需要包含所有职业的实现源文件
-add_executable(dps_simulator_gui ${ICICLE_SOURCES} ${BEAM_SOURCES} ${GUI_SOURCES})
-target_link_libraries(dps_simulator_gui PRIVATE core_lib Qt6::Core Qt6::Widgets Qt6::Gui)
-set_target_properties(dps_simulator_gui PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+if(Qt6_FOUND)
+    add_executable(dps_simulator_gui ${ICICLE_SOURCES} ${BEAM_SOURCES} ${GUI_SOURCES})
+    target_link_libraries(dps_simulator_gui PRIVATE core_lib Qt6::Core Qt6::Widgets Qt6::Gui)
+    set_target_properties(dps_simulator_gui PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+    if(MSVC)
+        target_compile_options(dps_simulator_gui PRIVATE /permissive- /Zc:__cplusplus /wd4244 /wd4267)
+    endif()
+endif()
 
 # ===== 5. 创建配对对比程序（CRN 同种子） =====
 # 对比"基准配置"与多个"候选配置"的提升，见 core/Comparison.h
@@ -102,7 +109,3 @@ target_link_libraries(dps_simulator_compare PRIVATE core_lib)
 set_target_properties(dps_simulator_compare PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
-
-if(MSVC)
-    target_compile_options(dps_simulator_gui PRIVATE /permissive- /Zc:__cplusplus /wd4244 /wd4267)
-endif()
