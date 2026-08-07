@@ -44,7 +44,7 @@ struct SimConfig
     int elementATK = 0;             // 元素攻击
     double attackSpeed = 0;         // 额外攻击速度(%)
     double castingSpeed = 0;        // 额外施法速度(%)
-    double critialdamage_set = 0;   // 爆伤额外值
+    double criticaldamage_set = 0;   // 爆伤额外值
     double increasedamage_set = 0;  // 增伤额外值
     double elementdamage_set = 0;   // 元素增伤额外值
     int fantasyConfig = 0;          // 幻想配置

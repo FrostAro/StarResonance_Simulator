@@ -14,7 +14,6 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    explicit SpearCritialBuff(Person *p);
     SpearCritialBuff(Person *p, double n);
     ~SpearCritialBuff() override;
 };
@@ -46,7 +45,6 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    explicit IceCountBuff(Person *p);
     IceCountBuff(Person *p, double n);
     ~IceCountBuff() override;
 };
@@ -326,7 +324,8 @@ private:
         PROFICIENT,
         ALMIGHTY
     };
-public: 
+    void findMaxAttribute();  // 找出当前点数最高的副属性并记录到 lastAttribute
+public:
     static std::string name;
     secondaryAttributesEnum lastAttribute = secondaryAttributesEnum::CRITICAL;
 

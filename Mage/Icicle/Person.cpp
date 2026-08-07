@@ -1,15 +1,16 @@
 #include "Person.h"
+#include "../../core/GameConstants.h"
 #include "AutoAttack.h"
 #include "../../core/Action.h"
 #include "Action.h"
 
 Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                          const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
-                         const double critialdamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
+                         const double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
                          const int fantasyConfig)
     : Person(PrimaryAttributes, critical, quickness, lucky, Proficient, almighty,
              atk, refindatk, elementatk, attackSpeed, castingSpeed,
-             critialdamage_set, increasedamage_set, elementdamage_set, totalTime)
+             criticaldamage_set, increasedamage_set, elementdamage_set, totalTime)
 {
     // 覆盖基类中的默认值
     this->primaryAttributeRatio = 0.6;

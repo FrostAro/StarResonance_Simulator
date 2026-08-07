@@ -26,6 +26,7 @@
 // 包含您的核心头文件（路径根据实际项目调整）
 #include "Mage/Beam/Person.h"
 #include "Mage/Beam/Initializer.hpp"
+#include "Mage/Beam/SimulationHelper.h"
 #include "core/Logger.h"
 #include "core/Statistics.h"
 #include "core/Action.h"
@@ -79,12 +80,16 @@ SimulationWorker::SimulationWorker(const QString& profession,
 
 SimulationWorker::~SimulationWorker()
 {
-    // 确保移除日志回调，避免悬挂指针   
-    Logger::setLogCallback(nullptr);
+    // 日志回调只在 run() 末尾清理，不在析构中清——否则旧 worker 的析构
+    // 可能在新的 run() 已设置回调之后执行，把新回调清掉（竞态）
 }
 
 void SimulationWorker::run()
 {
+    // 模拟期间压低日志级别，避免 buff/技能 DEBUG 日志海量刷屏
+    const Logger::Level oldLevel = Logger::getLevel();
+    Logger::setLevel(Logger::Level::WARNING);
+
     // 设置日志回调
     auto callback = [this](const std::string &msg) {
         emit logMessage(QString::fromStdString(msg));
@@ -193,51 +198,27 @@ void SimulationWorker::run()
 
     emit simulationFinished(tableData, m_maxTime);
 
-    // 移除日志回调
+    // 移除日志回调并恢复日志级别
     Logger::setLogCallback(nullptr);
+    Logger::setLevel(oldLevel);
 }
 
 //==============================================================================
-// 对比模式：射线单次模拟函数（供配对对比使用）
+// 对比模式：射线单次模拟函数（共享 Mage/Beam/SimulationHelper.h）
 //==============================================================================
-static std::unordered_map<std::string, DamageStatistics> beamSimulateOnce(
-    const SimConfig& cfg, std::uint32_t seed, int maxTime, int deltaTime)
-{
-    auto person = std::make_unique<Mage_Beam>(
-        cfg.primaryAttributes, cfg.critical, cfg.quickness, cfg.lucky, cfg.proficient, cfg.almighty,
-        cfg.atk, cfg.refineATK, cfg.elementATK,
-        cfg.attackSpeed, cfg.castingSpeed,
-        cfg.critialdamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
-        maxTime, cfg.fantasyConfig);
-    person->setRandomSeed(seed);
-
-    auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig);
-    init->Initialize();
-
-    int currentTime = 0;
-    while (currentTime < maxTime)
-    {
-        person->autoAttackPtr->update(deltaTime);
-        currentTime += deltaTime;
-        person->autoAttackPtr->setTimer() += deltaTime;
-    }
-
-    person->calculateDamageStatistics();
-    return person->damageStatsMap;
-}
 
 //==============================================================================
 // ComparisonWorker 实现
 //==============================================================================
 ComparisonWorker::~ComparisonWorker()
 {
-    // 确保移除日志回调，避免悬挂指针
-    Logger::setLogCallback(nullptr);
+    // 日志回调只在 run() 末尾清理，不在析构中清——避免竞态清掉新 worker 的回调
 }
 
 void ComparisonWorker::run()
 {
     // 压低日志级别：配对对比会产生大量buff/技能DEBUG日志，避免刷屏卡顿GUI
+    const Logger::Level oldLevel = Logger::getLevel();
     Logger::setLevel(Logger::Level::WARNING);
 
     auto callback = [this](const std::string &msg) {
@@ -272,8 +253,9 @@ void ComparisonWorker::run()
 
     emit comparisonFinished(rows, m_pairs);
 
-    // 移除日志回调
+    // 移除日志回调并恢复日志级别
     Logger::setLogCallback(nullptr);
+    Logger::setLevel(oldLevel);
 }
 
 //==============================================================================
@@ -628,7 +610,7 @@ SimConfig MainWindow::buildBaseConfig()
     cfg.elementATK = m_elementAtkEdit->text().toInt();
     cfg.attackSpeed = m_attackSpeedEdit->text().toDouble();
     cfg.castingSpeed = m_castingSpeedEdit->text().toDouble();
-    cfg.critialdamage_set = m_critDmgSetEdit->text().toDouble();
+    cfg.criticaldamage_set = m_critDmgSetEdit->text().toDouble();
     cfg.increasedamage_set = m_incSetEdit->text().toDouble();
     cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
     int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 0=无幻想 → -1 → 999
@@ -670,7 +652,7 @@ std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const 
         else if (key == "元素"    || key == "elementAtk")  c.elementATK += static_cast<int>(value);
         else if (key == "攻速"    || key == "attackSpeed") c.attackSpeed += value;
         else if (key == "施速"    || key == "castingSpeed")c.castingSpeed += value;
-        else if (key == "爆伤"    || key == "critDmgSet")  c.critialdamage_set += value;
+        else if (key == "爆伤"    || key == "critDmgSet")  c.criticaldamage_set += value;
         else if (key == "增伤"    || key == "incSet")      c.increasedamage_set += value;
         else if (key == "元素增伤"|| key == "eleIncSet")   c.elementdamage_set += value;
         else if (key == "幻想"    || key == "fantasy")     c.fantasyConfig = static_cast<int>(value);
@@ -711,7 +693,7 @@ void MainWindow::onRunClicked()
 
         m_workerThread = new QThread(this);
         m_compareWorker = new ComparisonWorker(base, std::move(candidates), pairs, seed,
-                                               maxTime, deltaTime, beamSimulateOnce);
+                                               maxTime, deltaTime, runBeamSimulationOnce);
         m_compareWorker->moveToThread(m_workerThread);
 
         connect(m_workerThread, &QThread::started, m_compareWorker, &ComparisonWorker::run);

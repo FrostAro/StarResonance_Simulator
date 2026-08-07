@@ -16,6 +16,7 @@
 
 #include "Mage/Beam/Person.h"
 #include "Mage/Beam/Initializer.hpp"
+#include "Mage/Beam/SimulationHelper.h"
 #include "Mage/Icicle/Person.h"
 #include "Mage/Icicle/Initializer.hpp"
 
@@ -27,33 +28,8 @@
 
 // ============================================================================
 // 职业相关：单次模拟函数（只跑一次、返回统计表，不打印）
+// 射线使用共享的 Mage/Beam/SimulationHelper.h::runBeamSimulationOnce
 // ============================================================================
-
-// 射线
-static std::unordered_map<std::string, DamageStatistics> simulateBeamOnce(
-    const SimConfig& cfg, std::uint32_t seed, int maxTime, int deltaTime)
-{
-    auto p = std::make_unique<Mage_Beam>(
-        cfg.primaryAttributes, cfg.critical, cfg.quickness, cfg.lucky, cfg.proficient, cfg.almighty,
-        cfg.atk, cfg.refineATK, cfg.elementATK, cfg.attackSpeed, cfg.castingSpeed,
-        cfg.critialdamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
-        maxTime, cfg.fantasyConfig);
-    p->setRandomSeed(seed);
-
-    auto initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime, cfg.fantasyConfig);
-    initializer->Initialize();
-
-    int currentTime = 0;
-    while (currentTime < maxTime)
-    {
-        p->autoAttackPtr->update(deltaTime);
-        currentTime += deltaTime;
-        p->autoAttackPtr->setTimer() += deltaTime;
-    }
-
-    p->calculateDamageStatistics();
-    return p->damageStatsMap;
-}
 
 // 冰矛
 static std::unordered_map<std::string, DamageStatistics> simulateIcicleOnce(
@@ -62,7 +38,7 @@ static std::unordered_map<std::string, DamageStatistics> simulateIcicleOnce(
     auto p = std::make_unique<Mage_Icicle>(
         cfg.primaryAttributes, cfg.critical, cfg.quickness, cfg.lucky, cfg.proficient, cfg.almighty,
         cfg.atk, cfg.refineATK, cfg.elementATK, cfg.attackSpeed, cfg.castingSpeed,
-        cfg.critialdamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
+        cfg.criticaldamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
         maxTime, cfg.fantasyConfig);
     p->setRandomSeed(seed);
 
@@ -148,11 +124,11 @@ int main(int argc, char** argv)
         base.elementATK = 230;
         base.attackSpeed = 0;
         base.castingSpeed = 0;
-        base.critialdamage_set = 0;
+        base.criticaldamage_set = 0;
         base.increasedamage_set = 0;
         base.elementdamage_set = 0;
         base.fantasyConfig = 5;
-        simulate = simulateBeamOnce;
+        simulate = runBeamSimulationOnce;
     }
     else
     {
@@ -167,7 +143,7 @@ int main(int argc, char** argv)
         base.elementATK = 35;
         base.attackSpeed = 0;
         base.castingSpeed = 0;
-        base.critialdamage_set = 0;
+        base.criticaldamage_set = 0;
         base.increasedamage_set = 0;
         base.elementdamage_set = 0;
         base.fantasyConfig = 0;

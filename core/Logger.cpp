@@ -205,12 +205,18 @@ void Logger::shutdown() {
 void Logger::setLevel(Level level) {
     Logger& logger = instance();
     std::lock_guard<std::mutex> lock(logger.mutex_);
-    
+
     // 更新配置
     logger.config_.level = level;
-    
+
     // 记录级别变更（使用debug级别）
     logger.debug("Logger", "Log level changed to: {0}", levelToString(level));
+}
+
+Logger::Level Logger::getLevel() {
+    Logger& logger = instance();
+    std::lock_guard<std::mutex> lock(logger.mutex_);
+    return logger.config_.level;
 }
 
 /**

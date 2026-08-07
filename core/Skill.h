@@ -323,9 +323,9 @@ public:
     int &getStackRef();
     int getStackValue() const;
     int getMaxStack() const;
-    double getMutiplying() const;
+    double getMultiplying() const;
     double getFixedValue() const;
-    double getLuckyFiexedValue() const;
+    double getLuckyFixedValue() const;
     double getReleasingTime() const;
     double getDuration() const;
     double getDamageTriggerInterval() const;

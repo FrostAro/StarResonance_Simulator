@@ -25,14 +25,14 @@ DamageInfo::DamageInfo()
  * @param skillName 技能名称
  * @param damageNum 基础伤害值
  * @param luckyNum 幸运伤害值
- * @param isCritial 是否暴击
+ * @param isCritical 是否暴击
  * @param isLucky 是否幸运
  */
-DamageInfo::DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritial, bool isLucky)
+DamageInfo::DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky)
             : skillName(skillName),
               damageNum(damageNum),
               luckyNum(luckyNum),
-              isCritical(isCritial),
+              isCritical(isCritical),
               isLucky(isLucky),
               time(AutoAttack::getTimer())  // 使用当前时间戳
             {}
@@ -72,7 +72,7 @@ std::ostream& operator<<(std::ostream& os, const DamageInfo& damageInfo) {
     << ", skillName:" << damageInfo.skillName
     << ", damageNum:" << damageInfo.damageNum
     << ", luckyNum:" << damageInfo.luckyNum
-    << ", isCritial:" << damageInfo.isCritical;
+    << ", isCritical:" << damageInfo.isCritical;
     return os;
 }
 

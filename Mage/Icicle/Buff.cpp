@@ -1,4 +1,5 @@
 #include "Buff.h"
+#include "../../core/GameConstants.h"
 #include "Skill.h"
 #include "Action.h"
 #include "../../core/Person.h"
@@ -10,22 +11,6 @@
 
 // 冰矛暴伤
 std::string SpearCritialBuff::name = "SpearCritialBuff";
-
-SpearCritialBuff::SpearCritialBuff(Person *p) : Buff(p)
-{
-    this->number = 0.015; // 用作每层给予的爆伤数值
-    this->maxStack = 10;
-    this->duration = 600;
-    this->maxDuration = this->duration;
-    this->isStackable = true;
-
-    // 构造buff时同步链接监听
-    auto info = std::make_unique<DamageListener>(
-        this->getBuffID(), [this](DamageInfo &damageInfo)
-        { this->listenerCallback(damageInfo); });
-
-    AttackAction::addListener(std::move(info));
-}
 
 SpearCritialBuff::SpearCritialBuff(Person *p, const double n) : Buff(p)
 {
@@ -83,7 +68,7 @@ SpearCritialToRevertIceBuff::SpearCritialToRevertIceBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.3; // 用作触发概率
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -121,26 +106,11 @@ SpearCritialToRevertIceBuff::~SpearCritialToRevertIceBuff()
 // 玄冰计数
 std::string IceCountBuff::name = "IceCountBuff";
 
-IceCountBuff::IceCountBuff(Person *p) : Buff(p)
-{
-    this->maxStack = 99999;
-    this->duration = 99999;
-    this->maxDuration = this->duration;
-    this->isStackable = true;
-    this->isInherent = true;
-
-    auto info = std::make_unique<ResourceListener>(
-        this->getBuffID(), [this](const double n)
-        { this->listenerCallback(n); });
-
-    ResourceConsumeAction::addListener(std::move(info));
-}
-
 IceCountBuff::IceCountBuff(Person *p, double n) : Buff(p)
 {
     this->stack = n;
-    this->maxStack = 99999;
-    this->duration = 99999;
+    this->maxStack = kPermanentBuffDuration;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isStackable = true;
     this->isInherent = true;
@@ -219,7 +189,7 @@ std::string DoubleSpearBuff::name = "DoubleSpearBuff";
 
 DoubleSpearBuff::DoubleSpearBuff(Person *p, double) : Buff(p)
 {
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
 }
 
@@ -280,8 +250,8 @@ std::string ConsumedEnergyCountBuff::name = "ConsumedEnergyCountBuff";
 // ConsumedEnergyCountBuff::ConsumedEnergyCountBuff(Person *p) : Buff(p)
 // {
 //     this->number = 100; // 用作减少的冷却数值
-//     this->maxStack = 99999;
-//     this->duration = 99999;
+//     this->maxStack = kPermanentBuffDuration;
+//     this->duration = kPermanentBuffDuration;
 //     this->maxDuration = this->duration;
 //     this->isStackable = true;
 //     this->isInherent = true;
@@ -297,7 +267,7 @@ ConsumedEnergyCountBuff::ConsumedEnergyCountBuff(Person *p, const double n)
 {
     this->stack = n;
     this->number = 100;  // 每攒满25能量，减少水球CD的毫秒数（恢复被注释掉的旧构造函数的数值）
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isStackable = true;
     this->isInherent = true;
@@ -384,7 +354,7 @@ std::string MeteoriteRefreshBuff::name = "MeteoriteRefreshBuff";
 
 MeteoriteRefreshBuff::MeteoriteRefreshBuff(Person *p, double) : Buff(p)
 {
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -436,7 +406,7 @@ std::string FrostCometBuff::name = "FrostCometBuff";
 FrostCometBuff::FrostCometBuff(Person *p, double) : Buff(p)
 {
     this->number = 0.21; // 用作触发概率
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -474,7 +444,7 @@ std::string MeteoriteSynergyBuff::name = "MeteoriteSynergyBuff";
 
 MeteoriteSynergyBuff::MeteoriteSynergyBuff(Person *p, double) : Buff(p)
 {
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -536,7 +506,7 @@ SimulateNormalAttackToRevertIceBuff::SimulateNormalAttackToRevertIceBuff(
       revertTimer(0)
 {
     this->number = 400; // 用作触发间隔
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 }
@@ -573,7 +543,7 @@ std::string PierceSpearBuff::name = "PierceSpearBuff";
 PierceSpearBuff::PierceSpearBuff(Person *p, double) : Buff(p)
 {
     this->stack = 0;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -616,7 +586,7 @@ std::string EquipmentSetEffectBuff_Icicle::name = "EquipmentSetEffectBuff_Icicle
 EquipmentSetEffectBuff_Icicle::EquipmentSetEffectBuff_Icicle(Person *p, double) : Buff(p)
 {
     this->stack = 0;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -672,7 +642,7 @@ FantasyImpactBuff::FantasyImpactBuff(Person *p, double)
       extremeLuckTriggerStack(10)
 {
     this->stack = 0;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     // 时阶 +5s 内置cd
     this->triggerInterval += 500;
@@ -836,15 +806,8 @@ InstantCooldownBuff_Icicle::~InstantCooldownBuff_Icicle()
 // 浮动额外副属性值
 std::string FloatingExtraSecondaryAttributesBuff_Icicle::name = "FloatingExtraSecondaryAttributesBuff";
 
-FloatingExtraSecondaryAttributesBuff_Icicle::FloatingExtraSecondaryAttributesBuff_Icicle(Person *p, double)
-    : Buff(p)
+void FloatingExtraSecondaryAttributesBuff_Icicle::findMaxAttribute()
 {
-    this->number = 800; // 数值
-    this->duration = kPermanentBuffDuration;
-    this->maxDuration = this->duration;
-    this->isInherent = true;
-
-    // 寻找属性最大值
     double temp = 0;
     if (this->p->getCriticalCount() > temp)
     {
@@ -871,6 +834,18 @@ FloatingExtraSecondaryAttributesBuff_Icicle::FloatingExtraSecondaryAttributesBuf
         this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
         temp = this->p->getAlmightyCount();
     }
+}
+
+FloatingExtraSecondaryAttributesBuff_Icicle::FloatingExtraSecondaryAttributesBuff_Icicle(Person *p, double)
+    : Buff(p)
+{
+    this->number = 800; // 数值
+    this->duration = kPermanentBuffDuration;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    // 寻找属性最大值
+    this->findMaxAttribute();
     switch (lastAttribute)
     {
     case secondaryAttributesEnum::CRITICAL:
@@ -938,32 +913,7 @@ void FloatingExtraSecondaryAttributesBuff_Icicle::listenerCallback(double n)
     }
 
     // 寻找属性最大值
-    double temp = 0;
-    if (this->p->getCriticalCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::CRITICAL;
-        temp = this->p->getCriticalCount();
-    }
-    if (this->p->getQuicknessCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::QUICKNESS;
-        temp = this->p->getQuicknessCount();
-    }
-    if (this->p->getLuckyCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::LUCKY;
-        temp = this->p->getLuckyCount();
-    }
-    if (this->p->getProficientCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::PROFICIENT;
-        temp = this->p->getProficientCount();
-    }
-    if (this->p->getAlmightyCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
-        temp = this->p->getAlmightyCount();
-    }
+    this->findMaxAttribute();
     switch (lastAttribute)
     {
     case secondaryAttributesEnum::CRITICAL:

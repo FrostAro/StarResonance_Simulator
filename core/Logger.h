@@ -281,6 +281,11 @@ public:
      * @brief 动态设置日志级别
      */
     static void setLevel(Level level);
+
+    /**
+     * @brief 获取当前日志级别
+     */
+    static Level getLevel();
     
     /**
      * @brief 设置立即刷新模式

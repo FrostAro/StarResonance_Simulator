@@ -163,14 +163,14 @@ public:
 	 * @param elementatk 元素攻击力
 	 * @param attackSpeed 额外攻击速度加成
 	 * @param castingSpeed 额外施法速度加成
-	 * @param critialdamage_set 额外爆伤（调试用）
+	 * @param criticaldamage_set 额外爆伤（调试用）
 	 * @param increasedamage_set 额外增伤（调试用）
 	 * @param elementdamage_set 额外元素增伤（调试用）
 	 * @param totalTime 模拟总时间（毫秒）
 	 */
 	Person(const double PrimaryPrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
         const int atk, const  int refineatk, const  int elementatk, const double attackSpeed, const double castingSpeed,
-        const double critialdamage_set, const double increasedamage_set, const double elementdamage_set, const  int totalTime);
+        const double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const  int totalTime);
 	
 	Person();
 	// ==== 属性操作方法（可被子类重写） ====

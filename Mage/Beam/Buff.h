@@ -375,7 +375,8 @@ private:
         PROFICIENT,
         ALMIGHTY
     };
-public: 
+    void findMaxAttribute();  // 找出当前点数最高的副属性并记录到 lastAttribute
+public:
     static std::string name;
     secondaryAttributesEnum lastAttribute = secondaryAttributesEnum::CRITICAL;
 
@@ -563,7 +564,7 @@ public:
 };
 
 // 叠势
-class StackMometumeBuff : public Buff
+class StackMomentumBuff : public Buff
 {
 public:   
     static std::string name;
@@ -575,8 +576,8 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    StackMometumeBuff(Person *p, double n);
-    ~StackMometumeBuff() override;
+    StackMomentumBuff(Person *p, double n);
+    ~StackMomentumBuff() override;
 };
 
 // 迸破

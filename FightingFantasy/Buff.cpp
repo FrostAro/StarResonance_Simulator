@@ -1,4 +1,5 @@
 #include "Buff.h"
+#include "../core/GameConstants.h"
 #include "../core/Action.h"
 #include "../core/Person.h"
 #include "../core/Skill.h"

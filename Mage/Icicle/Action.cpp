@@ -1,4 +1,5 @@
 #include "Action.h"
+#include "../../core/GameConstants.h"
 #include "../../core/Person.h"
 #include "Person.h"
 

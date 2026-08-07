@@ -1,4 +1,5 @@
 #include "Buff.h"
+#include "../../core/GameConstants.h"
 #include "Skill.h"
 #include "Action.h"
 #include "../../core/Person.h"
@@ -17,7 +18,7 @@ BeamBuildBuff::BeamBuildBuff(Person *p, double)
 {
     this->stack = 0;
     this->number = 0.15;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->lastExtraIncrease = 0;
     this->proficientRatio = 0.085;
@@ -171,7 +172,7 @@ std::string FrostCrystalResonanceBuff::name = "FrostCrystalResonanceBuff";
 FrostCrystalResonanceBuff::FrostCrystalResonanceBuff(Person *p, double)
     : Buff(p)
 {
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerInterval = 50;
@@ -249,7 +250,7 @@ ChillPersistenceBuff::ChillPersistenceBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.25;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -659,7 +660,7 @@ SwiftCastBuff::SwiftCastBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.15; // 灌注期增加的施法速度
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -992,15 +993,8 @@ ATKIncreaseBuff_IllusoryDream::~ATKIncreaseBuff_IllusoryDream()
 // 浮动额外副属性百分比
 std::string FloatingExtraSecondaryAttributesBuff_Beam::name = "FloatingExtraSecondaryAttributesBuff_Beam";
 
-FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_Beam(Person *p, double)
-    : Buff(p)
+void FloatingExtraSecondaryAttributesBuff_Beam::findMaxAttribute()
 {
-    this->number = 0.035; // 百分比
-    this->duration = kPermanentBuffDuration;
-    this->maxDuration = this->duration;
-    this->isInherent = true;
-
-    // 寻找属性最大值
     double temp = 0;
     if (this->p->getCriticalCount() > temp)
     {
@@ -1027,6 +1021,18 @@ FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_
         this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
         temp = this->p->getAlmightyCount();
     }
+}
+
+FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_Beam(Person *p, double)
+    : Buff(p)
+{
+    this->number = 0.035; // 百分比
+    this->duration = kPermanentBuffDuration;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    // 寻找属性最大值
+    this->findMaxAttribute();
     switch (lastAttribute)
     {
     case secondaryAttributesEnum::CRITICAL:
@@ -1104,32 +1110,7 @@ void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
     }
 
     // 寻找属性最大值
-    double temp = 0;
-    if (this->p->getCriticalCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::CRITICAL;
-        temp = this->p->getCriticalCount();
-    }
-    if (this->p->getQuicknessCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::QUICKNESS;
-        temp = this->p->getQuicknessCount();
-    }
-    if (this->p->getLuckyCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::LUCKY;
-        temp = this->p->getLuckyCount();
-    }
-    if (this->p->getProficientCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::PROFICIENT;
-        temp = this->p->getProficientCount();
-    }
-    if (this->p->getAlmightyCount() > temp)
-    {
-        this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
-        temp = this->p->getAlmightyCount();
-    }
+    this->findMaxAttribute();
     switch (lastAttribute)
     {
     case secondaryAttributesEnum::CRITICAL:
@@ -1505,7 +1486,7 @@ ConquerorBuff::ConquerorBuff(Person *p, double)
       triggerNum(8)
 {
     this->stack = 0;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
 
     this->isInherent = true;
@@ -1525,7 +1506,7 @@ void ConquerorBuff::listenerCallback(DamageInfo &info)
     }
     if(this->count >= this->triggerNum)
     {
-        this->p->triggerAction<CreateBuffAction>(1, StackMometumeBuff::name);
+        this->p->triggerAction<CreateBuffAction>(1, StackMomentumBuff::name);
         this->count -= this->triggerNum;
     }
 }
@@ -1540,9 +1521,9 @@ ConquerorBuff::~ConquerorBuff()
 }
 
 // 叠势
-std::string StackMometumeBuff::name = "StackMometumeBuff";
+std::string StackMomentumBuff::name = "StackMomentumBuff";
 
-StackMometumeBuff::StackMometumeBuff(Person *p, double n) : Buff(p)
+StackMomentumBuff::StackMomentumBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 800;
     this->maxDuration = this->duration;
@@ -1557,7 +1538,7 @@ StackMometumeBuff::StackMometumeBuff(Person *p, double n) : Buff(p)
     this->triggerNum = 5;
 }
 
-void StackMometumeBuff::update(const double) 
+void StackMomentumBuff::update(const double) 
 {
     if(this->p->findBuffInBuffList(BreakThroughBuff::name) != -1) return;
     if(this->stack >= this->triggerNum)
@@ -1575,10 +1556,10 @@ void StackMometumeBuff::update(const double)
     }
 }
 
-bool StackMometumeBuff::shouldBeRemoved() { return this->duration < 0; }
-std::string StackMometumeBuff::getBuffName() const { return StackMometumeBuff::name; }
+bool StackMomentumBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string StackMomentumBuff::getBuffName() const { return StackMomentumBuff::name; }
 
-StackMometumeBuff::~StackMometumeBuff() 
+StackMomentumBuff::~StackMomentumBuff() 
 {
     this->p->triggerAction<AttackCountModifyAction>(-this->stack * this->number);
     this->p->triggerAction<DreamIncreaseModifyAction>(-this->stack * 0.016);
@@ -1613,7 +1594,7 @@ BreakThroughBuff::~BreakThroughBuff()
     // 仅当角色存活时生成叠势buff；Person析构期间禁止修改正在销毁的buffList
     if (!this->p->getIsTearingDown())
     {
-        this->p->triggerAction<CreateBuffAction>(2, StackMometumeBuff::name);
+        this->p->triggerAction<CreateBuffAction>(2, StackMomentumBuff::name);
     }
 }
 
@@ -1760,7 +1741,7 @@ FantasyImpactBuff_Beam::FantasyImpactBuff_Beam(Person *p, double)
       extraTriggerStack(20)
 {
     this->stack = 0;
-    this->duration = 99999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
 
     this->isInherent = true;

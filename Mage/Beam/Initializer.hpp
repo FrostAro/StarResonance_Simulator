@@ -100,7 +100,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
         registerCertainBuff<IceArrowLuckyRealBuff>();
         registerCertainBuff<ConquerorBuff>();
-        registerCertainBuff<StackMometumeBuff>();
+        registerCertainBuff<StackMomentumBuff>();
         registerCertainBuff<BreakThroughBuff>();
         registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
     }

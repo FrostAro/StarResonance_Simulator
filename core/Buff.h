@@ -3,7 +3,6 @@
 #include <map>
 #include <unordered_map>
 #include <stdexcept>
-#include "GameConstants.h"
 
 class DamageInfo;
 class Person;

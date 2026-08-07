@@ -1,4 +1,5 @@
 #include "Person.h"
+#include "GameConstants.h"
 #include <cstddef>
 // #include <random>
 #include <ctime>
@@ -80,9 +81,9 @@ DamageInfo Person::Damage(const Skill *skill)
     if (skill)
     {
         double damage =
-            /*基础攻击区*/ ((this->ATK * (1 + this->attackIncrease) * skill->getMutiplying() * (1 + skill->multiplyingIncrease) * (1 - this->damageReduce))
+            /*基础攻击区*/ ((this->ATK * (1 + this->attackIncrease) * skill->getMultiplying() * (1 + skill->multiplyingIncrease) * (1 - this->damageReduce))
                             /*精炼攻击与元素攻击区*/
-                            + ((this->refineATK + this->elementATK) * skill->getMutiplying() * (1 + skill->multiplyingIncrease))
+                            + ((this->refineATK + this->elementATK) * skill->getMultiplying() * (1 + skill->multiplyingIncrease))
                             /*技能固定值*/
                             + skill->getFixedValue())
             /*增伤区*/
@@ -143,7 +144,7 @@ double Person::luckyDamage(const Skill *skill) const
     // 幸运伤害计算公式(概率)
     //double damage = ((this->ATK * this->luckyMultiplying * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * this->luckyMultiplying)) * (1 + this->elementIncrease) * (1 + this->damageIncrease + this->luckyDamageIncrease) * (1 + this->almightyIncrease);
     // (期望)
-    double damage = ((this->getATK() * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFiexedValue()) 
+    double damage = ((this->getATK() * (this->luckyMultiplying + this->luckyMultiplyingExtra) * (1 + this->attackIncrease) * (1 - this->damageReduce) + (this->refineATK + this->elementATK) * (this->luckyMultiplying + this->luckyMultiplyingExtra)) + skill->getLuckyFixedValue()) 
                         * (1 + this->elementIncrease) 
                         * (1 + this->damageIncrease + this->Lucky + skill->getLuckyIncreaseAdd()) 
                         * (1 + this->almightyIncrease)

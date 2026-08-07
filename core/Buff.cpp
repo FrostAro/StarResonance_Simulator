@@ -1,4 +1,5 @@
 #include "Buff.h"
+#include "GameConstants.h"
 #include <string>
 #include "Skill.h"
 #include "Action.h"

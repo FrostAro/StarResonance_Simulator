@@ -75,11 +75,11 @@ public:
      * @param skillName 技能名称
      * @param damageNum 基础伤害值
      * @param luckyNum 幸运伤害值
-     * @param isCritial 是否暴击
+     * @param isCritical 是否暴击
      * @param isLucky 是否幸运
      * @details 使用提供的参数完全初始化伤害信息
      */
-    DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritial, bool isLucky);
+    DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky);
     
     /**
      * @brief 拷贝构造函数（默认）
