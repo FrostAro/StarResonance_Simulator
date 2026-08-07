@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QThread>
 #include <QRegularExpression>
+#include <QScrollArea>
 #include <random>
 #include <QDebug>
 
@@ -314,8 +315,12 @@ void MainWindow::setupUI()
     mainVerticalLayout->setContentsMargins(10, 10, 10, 10);
 
     // 上部分：水平布局，包含输入面板和调试面板
+    // 输入面板行数较多，套入滚动区域避免底部（对比模式等）被窗口高度裁掉
     QHBoxLayout *topHorizontalLayout = new QHBoxLayout();
-    topHorizontalLayout->addWidget(createInputPanel(), 3);
+    QScrollArea *inputScroll = new QScrollArea;
+    inputScroll->setWidgetResizable(true);
+    inputScroll->setWidget(createInputPanel());
+    topHorizontalLayout->addWidget(inputScroll, 3);
     topHorizontalLayout->addWidget(createDebugPanel(), 2);
     mainVerticalLayout->addLayout(topHorizontalLayout, 2); // 2 为拉伸因子
 
@@ -456,14 +461,18 @@ QWidget *MainWindow::createInputPanel()
     layout->addWidget(m_runButton, row, 0, 1, 2); // 跨两列
     row++; // 可选，后续不再使用
 
-    // 22: 对比模式（同种子配对）
-    m_compareCheck = new QCheckBox("启用对比模式（同种子配对）");
-    layout->addWidget(m_compareCheck, row, 0, 1, 2);
-    row++;
-    layout->addWidget(new QLabel("配对次数"), row, 0);
+    // 22: 对比模式（同种子配对）——独立分组，勾选后启用相关配置
+    QGroupBox *compareBox = new QGroupBox("对比模式（同种子配对）");
+    QGridLayout *compareLayout = new QGridLayout(compareBox);
+    m_compareCheck = new QCheckBox("启用对比模式");
+    m_compareCheck->setToolTip(
+        "勾选后：以当前输入面板为基准，按下方候选配置逐行对比DPS提升。\n"
+        "基准与每个候选在相同随机种子下配对模拟，程序随机互相抵消，1%级提升也能测出。");
+    compareLayout->addWidget(m_compareCheck, 0, 0, 1, 2);
+    compareLayout->addWidget(new QLabel("配对次数"), 1, 0);
     m_comparePairsEdit = new QLineEdit("20");
-    layout->addWidget(m_comparePairsEdit, row++, 1);
-    layout->addWidget(new QLabel("候选配置(每行一个)"), row, 0);
+    compareLayout->addWidget(m_comparePairsEdit, 1, 1);
+    compareLayout->addWidget(new QLabel("候选配置(每行一个)"), 2, 0);
     m_candidatesEdit = new QPlainTextEdit;
     m_candidatesEdit->setPlainText(
         "# 每行一个候选：关键词 增量\n"
@@ -472,12 +481,23 @@ QWidget *MainWindow::createInputPanel()
         "精通 +10\n"
         "# 幻想用绝对值，如：幻想 0");
     m_candidatesEdit->setFixedHeight(90);
-    layout->addWidget(m_candidatesEdit, row++, 1);
+    compareLayout->addWidget(m_candidatesEdit, 2, 1);
+    layout->addWidget(compareBox, row, 0, 1, 2);
+    row++;
 
     // 连接随机种子复选框与种子输入框的启用状态
     connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked){
         m_seedEdit->setEnabled(!checked);
     });
+
+    // 勾选对比模式时：启用对比配置，禁用无关的模拟循环次数；反之恢复
+    connect(m_compareCheck, &QCheckBox::toggled, [this](bool on){
+        m_comparePairsEdit->setEnabled(on);
+        m_candidatesEdit->setEnabled(on);
+        m_timesEdit->setEnabled(!on);
+    });
+    m_comparePairsEdit->setEnabled(false);
+    m_candidatesEdit->setEnabled(false);
 
     return groupBox;
 }
