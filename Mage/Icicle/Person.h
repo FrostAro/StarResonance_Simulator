@@ -11,6 +11,6 @@ public:
         const  double critialdamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
         const int fantasyConfig = 0);
 
-	double changeLuckyPersent(double persent) override;
+	double changeLuckyPercent(double percent) override;
 	double changeLuckyCount(int addCount) override;
 };

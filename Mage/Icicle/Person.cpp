@@ -43,7 +43,7 @@ Mage_Icicle::Mage_Icicle(const double PrimaryAttributes, const double critical, 
     resetATK();
 
     // 冰矛天赋的幸运倍率加成
-    changeLuckyMultiplyingByAddMultiplying(0.15 + (this->Lucky - 0.05) / 2);
+    changeLuckyMultiplyingByAddMultiplying(0.15 + (this->Lucky - kBaseLuckyPercent) / 2);
 
     // 因子效果:智力
     // triggerAction<PrimaryAttributesCountModifyAction>(70);
@@ -66,9 +66,9 @@ double Mage_Icicle::changeLuckyCount(int addCount)
     return this->Lucky;
 }
 
-double Mage_Icicle::changeLuckyPersent(double persent)
+double Mage_Icicle::changeLuckyPercent(double percent)
 {
-    Person::changeLuckyPersent(persent);
+    Person::changeLuckyPercent(percent);
     changeLuckyMultiplyingByAddMultiplying(0.15 + this->Lucky / 2);
     return this->Lucky;
 }

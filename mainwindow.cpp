@@ -13,6 +13,7 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QThread>
+#include <QRegularExpression>
 #include <random>
 #include <QDebug>
 
@@ -191,10 +192,81 @@ void SimulationWorker::run()
 }
 
 //==============================================================================
+// 对比模式：射线单次模拟函数（供配对对比使用）
+//==============================================================================
+static std::unordered_map<std::string, DamageStatistics> beamSimulateOnce(
+    const SimConfig& cfg, std::uint32_t seed, int maxTime, int deltaTime)
+{
+    auto person = std::make_unique<Mage_Beam>(
+        cfg.primaryAttributes, cfg.critical, cfg.quickness, cfg.lucky, cfg.proficient, cfg.almighty,
+        cfg.atk, cfg.refineATK, cfg.elementATK,
+        cfg.attackSpeed, cfg.castingSpeed,
+        cfg.critialdamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
+        maxTime, cfg.fantasyConfig);
+    person->setRandomSeed(seed);
+
+    auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig);
+    init->Initialize();
+
+    int currentTime = 0;
+    while (currentTime < maxTime)
+    {
+        person->autoAttackPtr->update(deltaTime);
+        currentTime += deltaTime;
+        person->autoAttackPtr->setTimer() += deltaTime;
+    }
+
+    person->calculateDamageStatistics();
+    return person->damageStatsMap;
+}
+
+//==============================================================================
+// ComparisonWorker 实现
+//==============================================================================
+ComparisonWorker::~ComparisonWorker()
+{
+    // 确保移除日志回调，避免悬挂指针
+    Logger::setLogCallback(nullptr);
+}
+
+void ComparisonWorker::run()
+{
+    auto callback = [this](const std::string &msg) {
+        emit logMessage(QString::fromStdString(msg));
+    };
+    Logger::setLogCallback(callback);
+
+    emit logMessage(QString("开始配对对比：基准 + %1 个候选，%2 对，种子 %3..%4")
+                        .arg(m_candidates.size())
+                        .arg(m_pairs)
+                        .arg(m_seed)
+                        .arg(m_seed + m_pairs - 1));
+
+    auto results = runPairedComparison(m_base, m_candidates, m_seed, m_pairs,
+                                       m_maxTime, m_deltaTime, m_simulate);
+
+    QVector<QVector<QVariant>> rows;
+    rows.reserve(results.size());
+    for (const auto& r : results)
+    {
+        QVector<QVariant> row;
+        row << QString::fromStdString(r.label)
+            << r.baseDps << r.candDps << r.deltaDps << r.deltaPercent
+            << r.deltaStd << r.tValue;
+        rows.append(row);
+    }
+
+    emit comparisonFinished(rows, m_pairs);
+
+    // 移除日志回调
+    Logger::setLogCallback(nullptr);
+}
+
+//==============================================================================
 // MainWindow 实现
 //==============================================================================
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_workerThread(nullptr), m_worker(nullptr)
+    : QMainWindow(parent), m_workerThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
 {
     setupUI();
     connect(m_professionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -376,6 +448,24 @@ QWidget *MainWindow::createInputPanel()
     layout->addWidget(m_runButton, row, 0, 1, 2); // 跨两列
     row++; // 可选，后续不再使用
 
+    // 22: 对比模式（同种子配对）
+    m_compareCheck = new QCheckBox("启用对比模式（同种子配对）");
+    layout->addWidget(m_compareCheck, row, 0, 1, 2);
+    row++;
+    layout->addWidget(new QLabel("配对次数"), row, 0);
+    m_comparePairsEdit = new QLineEdit("20");
+    layout->addWidget(m_comparePairsEdit, row++, 1);
+    layout->addWidget(new QLabel("候选配置(每行一个)"), row, 0);
+    m_candidatesEdit = new QPlainTextEdit;
+    m_candidatesEdit->setPlainText(
+        "# 每行一个候选：关键词 增量\n"
+        "暴击 +5\n"
+        "攻击 +100\n"
+        "精通 +10\n"
+        "# 幻想用绝对值，如：幻想 0");
+    m_candidatesEdit->setFixedHeight(90);
+    layout->addWidget(m_candidatesEdit, row++, 1);
+
     // 连接随机种子复选框与种子输入框的启用状态
     connect(m_randomSeedCheck, &QCheckBox::toggled, [this](bool checked){
         m_seedEdit->setEnabled(!checked);
@@ -461,11 +551,117 @@ void MainWindow::updateDefaultsForProfession(const QString &prof)
     appendLog("[CONFIG] 已切换至 射线 默认参数");
 }
 
+// 从输入面板构建基准配置（SimConfig）
+SimConfig MainWindow::buildBaseConfig()
+{
+    SimConfig cfg;
+    cfg.label = "基准";
+    cfg.primaryAttributes = m_primaryAttrEdit->text().toDouble();
+    cfg.critical = m_critEdit->text().toDouble();
+    cfg.quickness = m_quicknessEdit->text().toDouble();
+    cfg.lucky = m_luckyEdit->text().toDouble();
+    cfg.proficient = m_proficientEdit->text().toDouble();
+    cfg.almighty = m_almightyEdit->text().toDouble();
+    cfg.atk = m_atkEdit->text().toInt();
+    cfg.refineATK = m_refineAtkEdit->text().toInt();
+    cfg.elementATK = m_elementAtkEdit->text().toInt();
+    cfg.attackSpeed = m_attackSpeedEdit->text().toDouble();
+    cfg.castingSpeed = m_castingSpeedEdit->text().toDouble();
+    cfg.critialdamage_set = m_critDmgSetEdit->text().toDouble();
+    cfg.increasedamage_set = m_incSetEdit->text().toDouble();
+    cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
+    int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 0=无幻想 → -1 → 999
+    cfg.fantasyConfig = (fantasyConfig < 0) ? 999 : fantasyConfig;
+    return cfg;
+}
+
+// 解析候选配置文本框：每行 "关键词 增量"，# 开头为注释
+// 关键词：三维/primary、暴击/crit、急速/quickness、幸运/lucky、精通/proficient、全能/almighty、
+//        攻击/atk、精炼/refineAtk、元素/elementAtk、攻速/attackSpeed、施速/castingSpeed、
+//        爆伤/critDmgSet、增伤/incSet、元素增伤/eleIncSet、幻想/fantasy(绝对值)
+std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const QString& text)
+{
+    std::vector<SimConfig> out;
+    const QStringList lines = text.split('\n');
+    for (QString line : lines)
+    {
+        line = line.trimmed();
+        int hash = line.indexOf('#');
+        if (hash >= 0) line = line.left(hash).trimmed();
+        if (line.isEmpty()) continue;
+
+        const QStringList parts = line.split(QRegularExpression("\\s+"));
+        if (parts.size() < 2) continue;
+        const QString& key = parts[0];
+        bool ok = false;
+        double value = parts[1].toDouble(&ok);
+        if (!ok) continue;
+
+        SimConfig c = base;
+        if      (key == "三维"    || key == "primary")     c.primaryAttributes += value;
+        else if (key == "暴击"    || key == "crit")        c.critical += value;
+        else if (key == "急速"    || key == "quickness")   c.quickness += value;
+        else if (key == "幸运"    || key == "lucky")       c.lucky += value;
+        else if (key == "精通"    || key == "proficient")  c.proficient += value;
+        else if (key == "全能"    || key == "almighty")    c.almighty += value;
+        else if (key == "攻击"    || key == "atk")         c.atk += static_cast<int>(value);
+        else if (key == "精炼"    || key == "refineAtk")   c.refineATK += static_cast<int>(value);
+        else if (key == "元素"    || key == "elementAtk")  c.elementATK += static_cast<int>(value);
+        else if (key == "攻速"    || key == "attackSpeed") c.attackSpeed += value;
+        else if (key == "施速"    || key == "castingSpeed")c.castingSpeed += value;
+        else if (key == "爆伤"    || key == "critDmgSet")  c.critialdamage_set += value;
+        else if (key == "增伤"    || key == "incSet")      c.increasedamage_set += value;
+        else if (key == "元素增伤"|| key == "eleIncSet")   c.elementdamage_set += value;
+        else if (key == "幻想"    || key == "fantasy")     c.fantasyConfig = static_cast<int>(value);
+        else continue;  // 未知关键词，跳过该行
+
+        c.label = line.toStdString();
+        out.push_back(std::move(c));
+    }
+    return out;
+}
+
 void MainWindow::onRunClicked()
 {
     if (m_workerThread && m_workerThread->isRunning())
     {
         QMessageBox::warning(this, "模拟中", "已有模拟正在运行，请等待完成。");
+        return;
+    }
+
+    // 对比模式：基准 = 当前输入面板，候选 = 下方候选配置文本框
+    if (m_compareCheck->isChecked())
+    {
+        SimConfig base = buildBaseConfig();
+        std::vector<SimConfig> candidates = parseCandidates(base, m_candidatesEdit->toPlainText());
+        if (candidates.empty())
+        {
+            QMessageBox::warning(this, "对比", "没有有效的候选配置，请检查候选配置文本框（每行：关键词 增量）。");
+            return;
+        }
+        int pairs = m_comparePairsEdit->text().toInt();
+        if (pairs <= 0) pairs = 20;
+        int maxTime = m_maxTimeEdit->text().toInt();
+        int deltaTime = m_deltaTimeEdit->text().toInt();
+        uint32_t seed = m_randomSeedCheck->isChecked() ? std::random_device{}() : m_seedEdit->text().toUInt();
+
+        m_logText->clear();
+        m_resultTable->setRowCount(0);
+
+        m_workerThread = new QThread(this);
+        m_compareWorker = new ComparisonWorker(base, std::move(candidates), pairs, seed,
+                                               maxTime, deltaTime, beamSimulateOnce);
+        m_compareWorker->moveToThread(m_workerThread);
+
+        connect(m_workerThread, &QThread::started, m_compareWorker, &ComparisonWorker::run);
+        connect(m_compareWorker, &ComparisonWorker::logMessage, this, &MainWindow::appendLog);
+        connect(m_compareWorker, &ComparisonWorker::comparisonFinished, this, &MainWindow::onComparisonFinished);
+        connect(m_compareWorker, &ComparisonWorker::comparisonFinished, m_workerThread, &QThread::quit);
+        connect(m_workerThread, &QThread::finished, m_compareWorker, &QObject::deleteLater);
+        connect(m_workerThread, &QThread::finished, m_workerThread, &QObject::deleteLater);
+
+        m_workerThread->start();
+        m_runButton->setEnabled(false);
         return;
     }
 
@@ -544,6 +740,11 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
 {
     m_runButton->setEnabled(true);
 
+    // 恢复普通伤害统计的列头（对比模式可能改过列头）
+    QStringList headers = {"技能", "总伤害", "攻击次数", "幸运伤害", "幸运次数", "DPS", "暴击率"};
+    m_resultTable->setColumnCount(7);
+    m_resultTable->setHorizontalHeaderLabels(headers);
+
     m_resultTable->setRowCount(stats.size());
     for (int i = 0; i < stats.size(); ++i)
     {
@@ -583,4 +784,32 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
     // 清空指针，防止下次点击时访问已销毁对象
     m_workerThread = nullptr;
     m_worker = nullptr;
+}
+
+void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs)
+{
+    m_runButton->setEnabled(true);
+
+    QStringList headers = {"候选配置", "基准DPS", "候选DPS", "ΔDPS", "Δ%", "配对σ", "t值"};
+    m_resultTable->setColumnCount(7);
+    m_resultTable->setHorizontalHeaderLabels(headers);
+    m_resultTable->setRowCount(rows.size());
+    for (int i = 0; i < rows.size(); ++i)
+    {
+        const auto &row = rows[i];
+        for (int j = 0; j < row.size(); ++j)
+        {
+            QTableWidgetItem *item = new QTableWidgetItem(row[j].toString());
+            if (j >= 1)
+            {
+                item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            }
+            m_resultTable->setItem(i, j, item);
+        }
+    }
+    appendLog(QString("对比完成：%1 对。配对σ远小于基准DPS表示CRN生效；|t值|≥2视为差异显著。").arg(pairs));
+
+    // 清空指针，防止下次点击时访问已销毁对象
+    m_workerThread = nullptr;
+    m_compareWorker = nullptr;
 }

@@ -108,7 +108,7 @@ std::string NaturalEnergyRegenBuff::name = "NaturalEnergyRegenBuff";
 NaturalEnergyRegenBuff::NaturalEnergyRegenBuff(Person *p, double) : Buff(p)
 {
     this->number = 2; // 自然回能数
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerInterval = 100 / (1 + this->p->Quickness);// 寒流效果
@@ -133,7 +133,7 @@ std::string IcePromiseBuff::name = "IcePromiseBuff";
 IcePromiseBuff::IcePromiseBuff(Person *p, double) : Buff(p)
 {
     this->number = 2;
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -329,7 +329,7 @@ IntellectCrystalBuff::IntellectCrystalBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 50; // 智力转能量数
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -386,7 +386,7 @@ IceTideBuff::IceTideBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.2; // 射线回玄冰概率
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -463,7 +463,7 @@ IceInfiniteBuff::IceInfiniteBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.05; // 每玄冰增伤数
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -539,7 +539,7 @@ std::string BeamMagnumOpusBuff::name = "BeamMagnumOpusBuff";
 BeamMagnumOpusBuff::BeamMagnumOpusBuff(Person *p, double)
     : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -696,7 +696,7 @@ FrostCrystalPowerBuff::FrostCrystalPowerBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.08; // 增加的元素增伤
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -745,7 +745,7 @@ EnergySurgeLawBuff::EnergySurgeLawBuff(Person *p, double)
     : Buff(p)
 {
     this->number = 0.08; // 增加的元素增伤
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -851,7 +851,7 @@ std::string EquipmentSetEffectBuff_Beam::name = "EquipmentSetEffectBuff_Beam";
 
 EquipmentSetEffectBuff_Beam::EquipmentSetEffectBuff_Beam(Person *p, double) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -891,14 +891,14 @@ std::string IllusoryDreamBuff::name = "IllusoryDreamBuff";
 
 IllusoryDreamBuff::IllusoryDreamBuff(Person *p, double) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerCount = 12;
     this->simulateAttackTriggerInterval = 50;
 
     // 无视防御效果，粗记为2%
-    this->p->chanageDamageReduce(-0.02);
+    this->p->changeDamageReduce(-0.02);
     // 精炼攻击增加10%
     this->number = this->p->getRefineATK();
     this->p->triggerAction<RefineATKCountModifyAction>(this->number * 0.1);
@@ -996,7 +996,7 @@ FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_
     : Buff(p)
 {
     this->number = 0.035; // 百分比
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -1184,7 +1184,7 @@ std::string FrostDecreePulseBuff::name = "FrostDecreePulseBuff";
 
 FrostDecreePulseBuff::FrostDecreePulseBuff(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerCount = 50;
@@ -1222,7 +1222,7 @@ std::string InstantCooldownBuff_Beam::name = "InstantCooldownBuff_Beam";
 
 InstantCooldownBuff_Beam::InstantCooldownBuff_Beam(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerNum = 35;
@@ -1257,7 +1257,7 @@ std::string ExtensiveArrow::name = "ExtensiveArrow";
 
 ExtensiveArrow::ExtensiveArrow(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerNum = 10;       // 专精技能10次伤害触发1次冰箭
@@ -1305,7 +1305,7 @@ std::string WaterSpoutRealBuff::name = "WaterSpoutRealBuff";
 
 WaterSpoutRealBuff::WaterSpoutRealBuff(Person *p, double n) : RealFactor(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerNum = 720;
@@ -1358,7 +1358,7 @@ std::string IceRealBuff::name = "IceRealBuff";
 
 IceRealBuff::IceRealBuff(Person *p, double n) : Factor(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerNum = 15;
@@ -1436,7 +1436,7 @@ std::string IceArrowLuckyRealBuff::name = "IceArrowLuckyRealBuff";
 
 IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Factor(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -1484,7 +1484,7 @@ std::string FloodLuckyBuff::name = "FloodLuckyBuff";
 
 FloodLuckyBuff::FloodLuckyBuff(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->p->luckyDreamIncrease += 0.35;
 }
@@ -1616,7 +1616,7 @@ std::string InfiniteMindBuff::name = "InfiniteMindBuff";
 
 InfiniteMindBuff::InfiniteMindBuff(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -1666,7 +1666,7 @@ std::string OccupationalFactorBuff_Beam::name = "OccupationalFactorBuff_Beam";
 
 OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Factor(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -1824,7 +1824,7 @@ std::string ExtremeLuckBuff_Beam::getBuffName() const { return ExtremeLuckBuff_B
 
 ExtremeLuckBuff_Beam::~ExtremeLuckBuff_Beam()
 {
-    // this->p->changePrimaryAttributesByPersent(-this->number);
+    // this->p->changePrimaryAttributesByPercent(-this->number);
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-this->number);
 }
 
@@ -1834,7 +1834,7 @@ std::string CoefficientAdjustmentBuff_Beam::name = "CoefficientAdjustmentBuff_Be
 CoefficientAdjustmentBuff_Beam::CoefficientAdjustmentBuff_Beam(Person *p, double) : Buff(p)
 {
     this->isInherent = true;
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
 
     auto info = std::make_unique<DamageListener>(

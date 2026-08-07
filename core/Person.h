@@ -96,10 +96,10 @@ public:
     double ProficientCount = 0;              // 精通属性点数
     double QuicknessCount = 0;               // 急速属性点数
 	double CriticalExtraPercent = 0;         // 额外暴击百分比（来自buff等）
-	double LuckyExtraPersent = 0;            // 额外幸运百分比
-	double QuicknessExtraPersent = 0;        // 额外急速百分比
-	double ProficientExtraPersent = 0;       // 额外精通百分比
-	double AlmightyExtraPersent = 0;         // 额外全能百分比
+	double LuckyExtraPercent = 0;            // 额外幸运百分比
+	double QuicknessExtraPercent = 0;        // 额外急速百分比
+	double ProficientExtraPercent = 0;       // 额外精通百分比
+	double AlmightyExtraPercent = 0;         // 额外全能百分比
     
     // ==== 攻击属性 ====
 	double baseATK = 0;                      // 基础攻击力（不包含属性转化）
@@ -122,8 +122,8 @@ public:
     double damageIncrease = 0;               // 通用增伤百分比 (1 + 百分比)
     double elementIncrease = 0;              // 元素增伤百分比 (1 + 百分比)
     double almightyIncrease = 0;             // 全能增伤百分比 (1 + 百分比)
-    double criticicalDamage = 0.5;           // 暴击伤害加成（基础+50%）
-    double enhenceIncrease = 0;              // 增效效果增加百分比 (1 + 百分比)
+    double criticalDamage = 0.5;           // 暴击伤害加成（基础+50%）
+    double enhanceIncrease = 0;              // 增效效果增加百分比 (1 + 百分比)
     double damageReduce = 0;                 // 减伤百分比（1 - 百分比）
     double finalIncrease = 0;                // 最终伤害增加百分比 (1 + 百分比)
     double dreamIncrease = 0;                // 梦境增伤百分比 (1 + 百分比)
@@ -188,14 +188,14 @@ public:
 	
 	/**
 	 * @brief 增加属性百分比（直接修改百分比）
-	 * @param persent 增加的百分比（如0.05表示+5%）
+	 * @param percent 增加的百分比（如0.05表示+5%）
 	 * @return 更新后的属性百分比
 	 */
-	virtual double changeCritialPersent(double persent);
-	virtual double changeQuicknessPersent(double persent);
-	virtual double changeLuckyPersent(double persent);
-	virtual double changeProficientPersent(double persent);
-	virtual double changeAlmightyPersent(double persent);
+	virtual double changeCritialPercent(double percent);
+	virtual double changeQuicknessPercent(double percent);
+	virtual double changeLuckyPercent(double percent);
+	virtual double changeProficientPercent(double percent);
+	virtual double changeAlmightyPercent(double percent);
 
 	// ==== 核心战斗接口 ====
 
@@ -232,13 +232,13 @@ public:
 	int getAlmightyCount(double almighty);				
 
 	// ==== 速度加成 ====
-	void addCastingSpeed(double persent);  // 增加施法速度百分比
-	void addAttackSpeed(double persent);   // 增加攻击速度百分比
+	void addCastingSpeed(double percent);  // 增加施法速度百分比
+	void addAttackSpeed(double percent);   // 增加攻击速度百分比
 
 	// ==== 乘区初始化与修改 ====
 	void initializeIncrease();					  	  				// 初始化乘区
 	virtual double changePrimaryAttributesByCount(double PrimaryAttributesCount);					// 通过属性点数修改主属性
-	virtual double changePrimaryAttributesByPersent(double PrimaryAttributesPersent);				// 通过百分比修改主属性
+	virtual double changePrimaryAttributesByPercent(double PrimaryAttributesPercent);				// 通过百分比修改主属性
 	virtual double setATK(double atk);                        						// 设置基础攻击力
 	virtual double resetATK();								  						// 重新计算攻击力（基于主属性）
 	virtual double changeATKCount(double count);			  		// 修改攻击力数值
@@ -274,10 +274,10 @@ public:
 	virtual double setDreamIncrease();						   						// 初始化梦境增伤乘区
 	virtual double changeDreamIncrease(double dreamIncrease); 						// 修改梦境增伤乘区
 
-	virtual double changeCastingSpeedByPersent(const double castingSpeedPersent);	// 修改施法速度
-	virtual double changeAttackSpeedByPersent(const double attackSpeedPersent);		// 修改攻击速度
+	virtual double changeCastingSpeedByPercent(const double castingSpeedPercent);	// 修改施法速度
+	virtual double changeAttackSpeedByPercent(const double attackSpeedPercent);		// 修改攻击速度
 
-	virtual double chanageDamageReduce(const double n);								// 修改减伤区
+	virtual double changeDamageReduce(const double n);								// 修改减伤区
 
 	// ==== 技能管理 ====
 	void createSkill(std::unique_ptr<Skill> newSkill);				// 创建并开始释放一个技能
@@ -399,7 +399,7 @@ public:
     Skill* const getNowReleasingSkill() const;
 	void clearNowReleasingSkill();
 
-	const Skill* getCurtainPointerForAction(std::string skillName) const;
+	const Skill* getCertainPointerForAction(std::string skillName) const;
 };
 
 // ============================================================================

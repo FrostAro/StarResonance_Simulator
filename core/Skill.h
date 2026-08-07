@@ -87,7 +87,7 @@ public:
     // 伤害计算
     double multiplying = 0;         // 基础倍率（百分比加成）
     double fixedValue = 0;          // 基础固定值（固定伤害）
-    double luckyFiexedValue = 0;    // 幸运伤害固定值（固定幸运伤害）
+    double luckyFixedValue = 0;    // 幸运伤害固定值（固定幸运伤害）
     
     // 时间系统
     double duration = 0;                // 持续时间（毫秒）

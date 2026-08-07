@@ -741,7 +741,7 @@ std::string ExtremeLuckFactor::getBuffName() const { return ExtremeLuckFactor::n
 
 ExtremeLuckFactor::~ExtremeLuckFactor()
 {
-    // this->p->changePrimaryAttributesByPersent(-this->number);
+    // this->p->changePrimaryAttributesByPercent(-this->number);
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-this->number);
 }
 
@@ -751,7 +751,7 @@ std::string OccupationalFactor_Icicle::name = "OccupationalFactor_Icicle";
 OccupationalFactor_Icicle::OccupationalFactor_Icicle(Person *p, double) : Factor(p)
 {
     this->stack = 0;
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 
@@ -802,7 +802,7 @@ std::string InstantCooldownBuff_Icicle::name = "InstantCooldownBuff";
 
 InstantCooldownBuff_Icicle::InstantCooldownBuff_Icicle(Person *p, double n) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
     this->triggerNum = 35;
@@ -839,7 +839,7 @@ FloatingExtraSecondaryAttributesBuff_Icicle::FloatingExtraSecondaryAttributesBuf
     : Buff(p)
 {
     this->number = 800; // 数值
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 

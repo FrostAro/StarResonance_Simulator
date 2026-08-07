@@ -16,9 +16,11 @@
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QLabel>
+#include <QPlainTextEdit>
 #include <memory>
 #include "core/Person.h"
 #include "core/AutoAttack.h"
+#include "core/Comparison.h"
 
 // 在 MainWindow 类前定义幻想配置枚举
 enum class FantasyBeamConfig {
@@ -91,6 +93,39 @@ private:
     int m_fantasyConfig;  // 保存幻想配置索引
 };
 
+class ComparisonWorker : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ComparisonWorker(const SimConfig& base,
+                              std::vector<SimConfig> candidates,
+                              int pairs,
+                              std::uint32_t seed,
+                              int maxTime,
+                              int deltaTime,
+                              SimulateFn simulate)
+        : m_base(base), m_candidates(std::move(candidates)), m_pairs(pairs),
+          m_seed(seed), m_maxTime(maxTime), m_deltaTime(deltaTime),
+          m_simulate(std::move(simulate)) {}
+    ~ComparisonWorker();
+
+public slots:
+    void run();  // 在子线程中执行配对对比
+
+signals:
+    void logMessage(const QString& msg);
+    void comparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs);
+
+private:
+    SimConfig m_base;
+    std::vector<SimConfig> m_candidates;
+    int m_pairs;
+    std::uint32_t m_seed;
+    int m_maxTime;
+    int m_deltaTime;
+    SimulateFn m_simulate;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -104,6 +139,7 @@ private slots:
     void onProfessionChanged(int index);
     void appendLog(const QString& msg);
     void onSimulationFinished(const QVector<QVector<QVariant>>& stats, int totalTime);
+    void onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs);
 
 private:
     void setupUI();
@@ -111,6 +147,10 @@ private:
     QWidget* createInputPanel();
     QWidget* createDebugPanel();
     QWidget* createResultPanel();
+
+    // 对比模式：从界面输入构建基准配置 / 解析候选配置
+    SimConfig buildBaseConfig();
+    std::vector<SimConfig> parseCandidates(const SimConfig& base, const QString& text);
 
     // 输入控件
     QComboBox* m_professionCombo;
@@ -136,11 +176,17 @@ private:
     QLineEdit* m_seedEdit;
     QPushButton* m_runButton;
 
+    // 对比模式控件
+    QCheckBox* m_compareCheck;
+    QLineEdit* m_comparePairsEdit;
+    QPlainTextEdit* m_candidatesEdit;
+
     QTextEdit* m_logText;
     QTableWidget* m_resultTable;
 
     QThread* m_workerThread;
     SimulationWorker* m_worker;
+    ComparisonWorker* m_compareWorker;
 
     // 职业默认值映射
     QMap<QString, QMap<QString, double>> m_defaults;

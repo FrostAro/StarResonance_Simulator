@@ -82,7 +82,7 @@ std::string SkillReleasedTimesStatistics::name = "SkillReleasedTimeStatistics";
 
 SkillReleasedTimesStatistics::SkillReleasedTimesStatistics(Person *p, double) : Buff(p)
 {
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
 

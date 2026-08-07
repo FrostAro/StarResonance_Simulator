@@ -349,7 +349,7 @@ int Skill::getStackValue() const { return this->stack; }
 int Skill::getMaxStack() const { return this->maxStack; }
 double Skill::getMutiplying() const { return this->multiplying; }
 double Skill::getFixedValue() const { return this->fixedValue; }
-double Skill::getLuckyFiexedValue() const { return this->luckyFiexedValue; }
+double Skill::getLuckyFiexedValue() const { return this->luckyFixedValue; }
 double Skill::getReleasingTime() const { return this->releasingTime; }
 double Skill::getDuration() const { return this->duration; }
 double Skill::getDamageTriggerInterval() const { return this->damageTriggerInterval; }

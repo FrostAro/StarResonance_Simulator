@@ -28,7 +28,7 @@ Beam::Beam(Person* p)
     this->damageIncreaseAdd = 0.16; 
 
     this->energyReduce = 12 * (this->damageTriggerInterval / 30);
-    this->duration = 999999;
+    this->duration = kPermanentBuffDuration;
     this->noEnergyConsumeTime = 5;
 
     this->setSkillType();

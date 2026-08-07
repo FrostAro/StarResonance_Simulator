@@ -17,7 +17,7 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
 
     Logger::debugBuff(AutoAttack::getTimer(),
                         this->getBuffName(),
-                        " - before person Crit Count + 4480, persent: " +
+                        " - before person Crit Count + 4480, percent: " +
                         std::to_string(p->Critical));
 
     //p->changeCriticalCount(11200);
@@ -25,7 +25,7 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
 
     Logger::debugBuff(AutoAttack::getTimer(),
                         this->getBuffName(),
-                        " - after person Crit Count + 4480, persent: " +
+                        " - after person Crit Count + 4480, percent: " +
                         std::to_string(p->Critical));
 
     this->p->triggerAction<CriticalDamageModifyAction>(0.4);
@@ -156,7 +156,7 @@ void SXMQBuff::listenerCallback(Skill *const skill)
     }
     if(skill->getCanTriggerLucky())
     {
-        skill->luckyFiexedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
+        skill->luckyFixedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
     }
 }
 
@@ -175,7 +175,7 @@ std::string SXMQBuff_Passive::name = "SXMQBuff_Passive";
 SXMQBuff_Passive::SXMQBuff_Passive(Person *p, double) : Buff(p)
 {
     this->number = 10; // 用作触发层数
-    this->duration = 9999999;
+    this->duration = kPermanentBuffDurationLarge;
     this->maxDuration = this->duration;
 
     this->tempPerson = std::make_unique<temp_Person>();

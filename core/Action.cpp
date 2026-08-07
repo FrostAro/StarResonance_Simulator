@@ -337,7 +337,7 @@ CriticalPercentModifyAction::CriticalPercentModifyAction() = default;
 
 void CriticalPercentModifyAction::execute(double n, Person *p)
 {
-    p->changeCritialPersent(n);
+    p->changeCritialPercent(n);
 
     for (const auto &listener : CriticalPercentModifyAction::listeners)
     {
@@ -372,7 +372,7 @@ QuicknessPercentModifyAction::QuicknessPercentModifyAction() = default;
 
 void QuicknessPercentModifyAction::execute(double n, Person *p)
 {
-    p->changeQuicknessPersent(n);
+    p->changeQuicknessPercent(n);
     // 遍历监听，触发回调
     for (const auto &listener : QuicknessPercentModifyAction::listeners)
     {
@@ -407,7 +407,7 @@ LuckyPercentModifyAction::LuckyPercentModifyAction() = default;
 
 void LuckyPercentModifyAction::execute(double n, Person *p)
 {
-    p->changeLuckyPersent(n);
+    p->changeLuckyPercent(n);
 
     // 遍历监听，触发回调
     for (const auto &listener : LuckyPercentModifyAction::listeners)
@@ -443,7 +443,7 @@ ProficientPercentModifyAction::ProficientPercentModifyAction() = default;
 
 void ProficientPercentModifyAction::execute(double n, Person *p)
 {
-    p->changeProficientPersent(n);
+    p->changeProficientPercent(n);
 
     // 遍历监听，触发回调
     for (const auto &listener : ProficientPercentModifyAction::listeners)
@@ -479,7 +479,7 @@ AlmightyPercentModifyAction::AlmightyPercentModifyAction() = default;
 
 void AlmightyPercentModifyAction::execute(double n, Person *p)
 {
-    p->changeAlmightyPersent(n);
+    p->changeAlmightyPercent(n);
 
     // 遍历监听，触发回调
     for (const auto &listener : AlmightyPercentModifyAction::listeners)
@@ -514,7 +514,7 @@ PrimaryAttributesPercentModifyAction::PrimaryAttributesPercentModifyAction() = d
 
 void PrimaryAttributesPercentModifyAction::execute(double n, Person *p)
 {
-    p->changePrimaryAttributesByPersent(n);
+    p->changePrimaryAttributesByPercent(n);
     // 遍历监听，触发回调
     for (const auto &listener : PrimaryAttributesPercentModifyAction::listeners)
     {

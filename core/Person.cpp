@@ -17,8 +17,8 @@ Person::Person(){};
 Person::Person(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
                const double criticaldamage_set, const double increase_set, const double elementincrease_set, const int totalTime)
-    : propertyTransformationCoeffcient_General(200000),     // 一般属性转化系数
-      propertyTransformationCoeffcient_Almighty(89600),    // 全能属性转化系数
+    : propertyTransformationCoeffcient_General(kPropertyTransformCoeffGeneral),     // 一般属性转化系数
+      propertyTransformationCoeffcient_Almighty(kPropertyTransformCoeffAlmighty),    // 全能属性转化系数
       totalTime(totalTime),                                // 总模拟时间
       proficientRatio(0),                                  // 精通转化率（子类设置）
       almightyRatio(0),                                    // 全能转化率（子类设置）
@@ -39,7 +39,7 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
       maxResourceNum(0),                                   // 最大玄冰资源数量
       castingSpeedExtra(castingSpeed / 100),               // 施法速度加成
       attackSpeedExtra(attackSpeed / 100),                 // 攻击速度加成
-      criticicalDamage(0.5),                               // 基础暴击伤害加成（+50%）
+      criticalDamage(0.5),                               // 基础暴击伤害加成（+50%）
       damageReduce(0),                                     // 基础减伤率
       criticaldamage_set(criticaldamage_set),              // 额外暴击伤害（调试用）
       increase_set(increase_set),                          // 额外增伤（调试用）
@@ -49,10 +49,10 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
       //uniformDist(0.1,1.0)
 {
     // 计算属性数值（将百分比转换为属性点数）
-    this->CriticalCount = getCriticalCount(this->Critical - 0.05);
+    this->CriticalCount = getCriticalCount(this->Critical - kBaseCriticalPercent);
     this->QuicknessCount = getQuicknessCount(this->Quickness);
-    this->LuckyCount = getLuckyCount(this->Lucky - 0.05);
-    this->ProficientCount = getProficientCount(this->Proficient - 0.06);
+    this->LuckyCount = getLuckyCount(this->Lucky - kBaseLuckyPercent);
+    this->ProficientCount = getProficientCount(this->Proficient - kBaseProficientPercent);
     this->AlmightyCount = getAlmightyCount(this->Almighty);
 
     // 设置幸运倍率
@@ -88,7 +88,7 @@ DamageInfo Person::Damage(const Skill *skill)
             /*增伤区*/
             * (1 + this->damageIncrease + skill->damageIncreaseAdd)
             /*增效区*/
-            * (1 + this->enhenceIncrease)
+            * (1 + this->enhanceIncrease)
             /*元素增伤区*/
             * (1 + this->elementIncrease + skill->elementIncreaseAdd)
             /*全能增伤区*/
@@ -108,12 +108,12 @@ DamageInfo Person::Damage(const Skill *skill)
             crit = this->Critical + skill->criticalAdd;
         if(!skill->getCanTriggerCrit())
             crit = 0.0;
-        damage *= 1 + (this->criticicalDamage + skill->criticalIncreaseAdd) * crit;
+        damage *= 1 + (this->criticalDamage + skill->criticalIncreaseAdd) * crit;
         // 实际暴击模拟
         // double isCrit = this->isSuccess(this->Critical + skill->criticalAdd);
         // if (isCrit)
         // {
-        //     damage *= 1 + this->criticicalDamage + skill->criticalIncreaseAdd;
+        //     damage *= 1 + this->criticalDamage + skill->criticalIncreaseAdd;
         // }
 
         double luckyDamage = 0;
@@ -148,12 +148,12 @@ double Person::luckyDamage(const Skill *skill) const
                         * (1 + this->damageIncrease + this->Lucky + skill->getLuckyIncreaseAdd()) 
                         * (1 + this->almightyIncrease)
                         * (1 + this->dreamIncrease + this->luckyDreamIncrease)
-                        * (1 + this->enhenceIncrease)
+                        * (1 + this->enhanceIncrease)
                         * (1 + this->luckyFinalIncrease)
                         * this->Lucky;
 
     // 幸运伤害也可暴击
-    damage *= 1 + (this->criticicalDamage + skill->criticalIncreaseAdd) * this->Critical;
+    damage *= 1 + (this->criticalDamage + skill->criticalIncreaseAdd) * this->Critical;
     return damage;
 }
 
@@ -395,6 +395,10 @@ void Person::clearBuffs()
 
 void Person::cleanupFinishedBuffs()
 {
+    // 要移除的buff先移出（不触发析构）到临时列表，迭代结束后统一销毁。
+    // 原因：buff的析构函数可能触发创建新buff（如BreakThroughBuff::~），
+    // 若在erase迭代期间执行会修改正在遍历的buffList，造成迭代器/索引失效（UB）。
+    std::vector<std::unique_ptr<Buff>> toDestroy;
     for (auto it = buffList.begin(); it != buffList.end();)
     {
         if (!(*it))
@@ -406,6 +410,7 @@ void Person::cleanupFinishedBuffs()
             Logger::debugBuff(AutoAttack::getTimer(),
                                 (*it)->getBuffName(),
                                 " - is being removed.");
+            toDestroy.push_back(std::move(*it));  // 移出所有权，此时不执行析构
             it = buffList.erase(it);
         }
         else
@@ -413,6 +418,7 @@ void Person::cleanupFinishedBuffs()
             ++it;
         }
     }
+    toDestroy.clear();  // 迭代已结束，此时析构即使再创建buff也是安全的
 }
 
 void Person::updateAction(int  deltaTime)
@@ -668,32 +674,32 @@ double Person::changeDamageIncrease(const double increase)
 
 double Person::setEnhenceIncrease()
 {
-    this->enhenceIncrease = 0.0;
-    return this->enhenceIncrease;
+    this->enhanceIncrease = 0.0;
+    return this->enhanceIncrease;
 }
 
 double Person::changeEnhenceIncrease(const double increase)
 {
-    this->enhenceIncrease += increase;
-    return this->enhenceIncrease;
+    this->enhanceIncrease += increase;
+    return this->enhanceIncrease;
 }
 
 double Person::setCriticalDamage()
 {
-    this->criticicalDamage = 0.5;
-    return this->criticicalDamage;
+    this->criticalDamage = 0.5;
+    return this->criticalDamage;
 }
 
 double Person::changeCriticalDamage(const double criticalDamage)
 {
-    this->criticicalDamage += criticalDamage;
-    return this->criticicalDamage;
+    this->criticalDamage += criticalDamage;
+    return this->criticalDamage;
 }
 
 double Person::setLuckyMultiplying()
 {
     // 41.25为基础倍率，0.75为幸运每增加1%增加的倍率
-    this->luckyMultiplying = (41.25 + (this->Lucky - 0.05) * 100 * 0.25) / 100;
+    this->luckyMultiplying = (41.25 + (this->Lucky - kBaseLuckyPercent) * 100 * 0.25) / 100;
     return this->luckyMultiplying;
 }
 
@@ -739,7 +745,7 @@ double Person::changeDreamIncrease(const double dreamIncrease)
     return this->dreamIncrease;
 }
 
-double Person::chanageDamageReduce(const double n)
+double Person::changeDamageReduce(const double n)
 {
     this->damageReduce += n;
     return this->damageReduce;
@@ -749,7 +755,7 @@ double Person::changeCriticalCount(const int addCount)
 {
     // 1. 获取当前的数值部分（去除额外百分比的影响）
     // 注意：基础暴击率是5%，所以要先减去基础5%和额外百分比
-    double basePercent = 0.05;
+    double basePercent = kBaseCriticalPercent;
     double currentCriticalWithoutExtraAndBase = this->Critical - this->CriticalExtraPercent - basePercent;
 
     // 如果当前暴击率小于基础5%+额外百分比，说明数值部分为0
@@ -781,7 +787,7 @@ double Person::changeCriticalCount(const int addCount)
 double Person::changeQuicknessCount(const int addCount)
 {
         // 获取当前数值部分对应的点数（剔除固定百分比）
-    double numericPercent = this->Quickness - this->QuicknessExtraPersent;
+    double numericPercent = this->Quickness - this->QuicknessExtraPercent;
     if (numericPercent < 0.0) numericPercent = 0.0;
     
     double currentCount = this->getQuicknessCount(numericPercent);
@@ -796,7 +802,7 @@ double Person::changeQuicknessCount(const int addCount)
     
     // 更新数值点数与面板百分比
     this->QuicknessCount = newCount;
-    this->Quickness = convertedPercent + this->QuicknessExtraPersent;
+    this->Quickness = convertedPercent + this->QuicknessExtraPercent;
     
     // 重新计算施法速度和攻击速度
     recalcSpeedFromQuickness();
@@ -807,8 +813,8 @@ double Person::changeQuicknessCount(const int addCount)
 double Person::changeLuckyCount(const int addCount)
 {
     // 幸运基础百分比为5%
-    double basePercent = 0.05;
-    double currentLuckyWithoutExtraAndBase = this->Lucky - this->LuckyExtraPersent - basePercent;
+    double basePercent = kBaseLuckyPercent;
+    double currentLuckyWithoutExtraAndBase = this->Lucky - this->LuckyExtraPercent - basePercent;
 
     if (currentLuckyWithoutExtraAndBase < 0)
     {
@@ -825,7 +831,7 @@ double Person::changeLuckyCount(const int addCount)
     }
 
     this->LuckyCount = newCount;
-    this->Lucky = basePercent + convertedPercent + this->LuckyExtraPersent;
+    this->Lucky = basePercent + convertedPercent + this->LuckyExtraPercent;
 
     // 更新幸运相关属性
     this->luckyDamageIncrease = this->Lucky;
@@ -842,8 +848,8 @@ double Person::changeLuckyCount(const int addCount)
 double Person::changeProficientCount(const int addCount)
 {
     // 精通基础百分比为6%
-    double basePercent = 0.06;
-    double currentProficientWithoutExtraAndBase = this->Proficient - this->ProficientExtraPersent - basePercent;
+    double basePercent = kBaseProficientPercent;
+    double currentProficientWithoutExtraAndBase = this->Proficient - this->ProficientExtraPercent - basePercent;
 
     if (currentProficientWithoutExtraAndBase < 0)
     {
@@ -861,9 +867,9 @@ double Person::changeProficientCount(const int addCount)
 
     this->ProficientCount = newCount;
     // 更新元素增伤
-    this->changeElementIncreaseByProficient(basePercent + convertedPercent + this->ProficientExtraPersent);
+    this->changeElementIncreaseByProficient(basePercent + convertedPercent + this->ProficientExtraPercent);
 
-    this->Proficient = basePercent + convertedPercent + this->ProficientExtraPersent;
+    this->Proficient = basePercent + convertedPercent + this->ProficientExtraPercent;
 
     // 确保百分比在合理范围内
     if (this->Proficient < basePercent)
@@ -877,7 +883,7 @@ double Person::changeProficientCount(const int addCount)
 double Person::changeAlmightyCount(const int addCount)
 {
     // 全能没有基础百分比，且使用不同的转换系数
-    double currentAlmightyWithoutExtra = this->Almighty - this->AlmightyExtraPersent;
+    double currentAlmightyWithoutExtra = this->Almighty - this->AlmightyExtraPercent;
 
     if (currentAlmightyWithoutExtra < 0)
     {
@@ -895,9 +901,9 @@ double Person::changeAlmightyCount(const int addCount)
 
     this->AlmightyCount = newCount;
     // 更新全能增伤
-    this->changeAlmightyIncrease(convertedPercent + this->AlmightyExtraPersent);
+    this->changeAlmightyIncrease(convertedPercent + this->AlmightyExtraPercent);
 
-    this->Almighty = convertedPercent + this->AlmightyExtraPersent;
+    this->Almighty = convertedPercent + this->AlmightyExtraPercent;
 
     // 确保百分比不为负数
     if (this->Almighty < 0)
@@ -907,13 +913,13 @@ double Person::changeAlmightyCount(const int addCount)
     return this->Almighty;
 }
 
-double Person::changeCritialPersent(const double persent)
+double Person::changeCritialPercent(const double percent)
 {
     // 1. 增加额外百分比
-    this->CriticalExtraPercent += persent;
+    this->CriticalExtraPercent += percent;
 
     // 2. 直接增加面板百分比
-    this->Critical += persent;
+    this->Critical += percent;
 
     // 确保额外百分比不为负数
     if (this->CriticalExtraPercent < 0)
@@ -929,21 +935,21 @@ double Person::changeCritialPersent(const double persent)
     return this->Critical;
 }
 
-double Person::changeQuicknessPersent(const double persent)
+double Person::changeQuicknessPercent(const double percent)
 {
         // 更新固定百分比
-    this->QuicknessExtraPersent += persent;
+    this->QuicknessExtraPercent += percent;
     // 确保固定部分不为负（但可正可负）
     
     // 重新计算面板百分比（数值部分不变，仅固定部分变化）
-    double numericPercent = this->Quickness - (this->QuicknessExtraPersent - persent); // 旧数值部分
+    double numericPercent = this->Quickness - (this->QuicknessExtraPercent - percent); // 旧数值部分
     if (numericPercent < 0.0) numericPercent = 0.0;
     double numericCount = this->getQuicknessCount(numericPercent);
     double convertedPercent = 0.0;
     if (numericCount > 0.0) {
         convertedPercent = numericCount / (numericCount + this->propertyTransformationCoeffcient_General);
     }
-    this->Quickness = convertedPercent + this->QuicknessExtraPersent;
+    this->Quickness = convertedPercent + this->QuicknessExtraPercent;
     
     // 重新计算速度
     recalcSpeedFromQuickness();
@@ -951,14 +957,14 @@ double Person::changeQuicknessPersent(const double persent)
     return this->Quickness;
 }
 
-double Person::changeLuckyPersent(const double persent)
+double Person::changeLuckyPercent(const double percent)
 {
-    this->LuckyExtraPersent += persent;
-    this->Lucky += persent;
+    this->LuckyExtraPercent += percent;
+    this->Lucky += percent;
 
-    if (this->LuckyExtraPersent < 0)
+    if (this->LuckyExtraPercent < 0)
     {
-        this->LuckyExtraPersent = 0;
+        this->LuckyExtraPercent = 0;
     }
 
     // 更新幸运相关属性
@@ -966,7 +972,7 @@ double Person::changeLuckyPersent(const double persent)
     this->setLuckyMultiplying();
 
     // 确保幸运不低于基础5%
-    double basePercent = 0.05;
+    double basePercent = kBaseLuckyPercent;
     if (this->Lucky < basePercent)
     {
         this->Lucky = basePercent;
@@ -974,21 +980,21 @@ double Person::changeLuckyPersent(const double persent)
     return this->Lucky;
 }
 
-double Person::changeProficientPersent(const double persent)
+double Person::changeProficientPercent(const double percent)
 {
-    this->ProficientExtraPersent += persent;
+    this->ProficientExtraPercent += percent;
     // 更新元素增伤
-    this->changeElementIncreaseByProficient(this->Proficient + persent);
+    this->changeElementIncreaseByProficient(this->Proficient + percent);
 
-    this->Proficient += persent;
+    this->Proficient += percent;
 
-    if (this->ProficientExtraPersent < 0)
+    if (this->ProficientExtraPercent < 0)
     {
-        this->ProficientExtraPersent = 0;
+        this->ProficientExtraPercent = 0;
     }
 
     // 确保精通不低于基础6%
-    double basePercent = 0.06;
+    double basePercent = kBaseProficientPercent;
     if (this->Proficient < basePercent)
     {
         this->Proficient = basePercent;
@@ -997,16 +1003,16 @@ double Person::changeProficientPersent(const double persent)
     return this->Proficient;
 }
 
-double Person::changeAlmightyPersent(const double persent)
+double Person::changeAlmightyPercent(const double percent)
 {
-    this->AlmightyExtraPersent += persent;
+    this->AlmightyExtraPercent += percent;
     // 更新全能增伤
-    this->changeAlmightyIncrease(this->Almighty + persent);
-    this->Almighty += persent;
+    this->changeAlmightyIncrease(this->Almighty + percent);
+    this->Almighty += percent;
 
-    if (this->AlmightyExtraPersent < 0)
+    if (this->AlmightyExtraPercent < 0)
     {
-        this->AlmightyExtraPersent = 0;
+        this->AlmightyExtraPercent = 0;
     }
 
     // 确保全能不为负数
@@ -1017,16 +1023,16 @@ double Person::changeAlmightyPersent(const double persent)
     return this->Almighty;
 }
 
-void Person::addCastingSpeed(double persent)
+void Person::addCastingSpeed(double percent)
 {
-    this->castingSpeedExtra += persent;
+    this->castingSpeedExtra += percent;
     // 重新计算最终施法速度（基础部分不变）
     this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
 }
 
-void Person::addAttackSpeed(double persent)
+void Person::addAttackSpeed(double percent)
 {
-    this->attackSpeedExtra += persent;
+    this->attackSpeedExtra += percent;
     // 重新计算最终攻击速度（基础部分不变）
     this->attackSpeed = this->baseAttackSpeed + this->attackSpeedExtra;
 }
@@ -1040,17 +1046,17 @@ double Person::changePrimaryAttributesByCount(const double primaryAttributesCoun
     return this->primaryAttributes;
 }
 
-double Person::changePrimaryAttributesByPersent(const double primaryAttributesPersent)
+double Person::changePrimaryAttributesByPercent(const double primaryAttributesPercent)
 {
     this->ATK -= (1 + this->primaryAttributesIncrease)  * this->primaryAttributes * this->primaryAttributeRatio;
-    this->primaryAttributesIncrease += primaryAttributesPersent;
+    this->primaryAttributesIncrease += primaryAttributesPercent;
     this->resetATK();
     return this->primaryAttributesIncrease;
 }
 
-double Person::changeCastingSpeedByPersent(const double castingSpeedPersent)
+double Person::changeCastingSpeedByPercent(const double castingSpeedPercent)
 {
-    this->castingSpeedExtra += castingSpeedPersent;
+    this->castingSpeedExtra += castingSpeedPercent;
     this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
     return this->castingSpeedExtra;
 }
@@ -1083,9 +1089,9 @@ double Person::changeRefineATKCount(double n)
     return this->refineATK;
 }
 
-double Person::changeAttackSpeedByPersent(const double attackSpeedPersent)
+double Person::changeAttackSpeedByPercent(const double attackSpeedPercent)
 {
-    this->attackSpeedExtra += attackSpeedPersent;
+    this->attackSpeedExtra += attackSpeedPercent;
     this->attackSpeed = this->baseAttackSpeed + this->attackSpeedExtra;
     return this->attackSpeedExtra;
 }
@@ -1182,7 +1188,7 @@ void Person::equipInherentBuff(std::string buffName)
     auto it = BuffCreator::createBuff(buffName, this);
     if (it)
     {
-        it->duration = 999999;
+        it->duration = kPermanentBuffDuration;
         it->maxDuration = it->duration;
         this->createBuff(std::move(it));
     }
@@ -1236,8 +1242,8 @@ double Person::getAttackIncrease() const { return attackIncrease; }
 double Person::getDamageIncrease() const { return damageIncrease; }
 double Person::getElementIncrease() const { return elementIncrease; }
 double Person::getAlmightyIncrease() const { return almightyIncrease; }
-double Person::getCriticicalDamage() const { return criticicalDamage; }
-double Person::getEnhenceIncrease() const { return enhenceIncrease; }
+double Person::getCriticicalDamage() const { return criticalDamage; }
+double Person::getEnhenceIncrease() const { return enhanceIncrease; }
 double Person::getDamageReduce() const { return damageReduce; }
 double Person::getFinalIncrease() const { return finalIncrease; }
 double Person::getDreamIncrease() const { return dreamIncrease; }
@@ -1265,7 +1271,7 @@ const AutoAttack *Person::getAutoAttack() const { return this->autoAttackPtr.get
 Skill* const Person::getNowReleasingSkill() const { return this->nowReleasingSkill.get(); }
 void Person::clearNowReleasingSkill() { this->nowReleasingSkill.reset(); }
 
-const Skill* Person::getCurtainPointerForAction(std::string skillName) const 
+const Skill* Person::getCertainPointerForAction(std::string skillName) const 
 {
     for (const auto& skillPtr : this->pointerListForAction) 
     {
