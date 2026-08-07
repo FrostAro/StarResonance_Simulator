@@ -292,6 +292,9 @@ static const char* kLightStyle = R"(
     QPushButton:pressed { background: #1e40af; }
     QPushButton:disabled { background: #9ca3af; }
     QCheckBox { spacing: 6px; color: #374151; }
+    QCheckBox::indicator { width: 18px; height: 18px; border: 2px solid #2563eb; border-radius: 4px; background: #ffffff; }
+    QCheckBox::indicator:checked { background: #2563eb; }
+    QCheckBox#accentCheck { color: #1f2937; font-weight: bold; background-color: #e2e8f0; border: 1px solid #94a3b8; border-radius: 6px; padding: 5px 8px; }
     QTableWidget { background: #ffffff; border: 1px solid #dfe3ea; border-radius: 6px; gridline-color: #eef1f6; selection-background-color: #dbeafe; selection-color: #111827; }
     QHeaderView::section { background: #f3f4f6; border: none; border-bottom: 1px solid #dfe3ea; padding: 6px 8px; font-weight: bold; color: #374151; }
     QScrollArea { border: none; background: transparent; }
@@ -321,6 +324,9 @@ static const char* kDarkStyle = R"(
     QPushButton:pressed { background: #1d4ed8; }
     QPushButton:disabled { background: #374151; }
     QCheckBox { spacing: 6px; color: #9ca3af; }
+    QCheckBox::indicator { width: 18px; height: 18px; border: 2px solid #3b82f6; border-radius: 4px; background: #232830; }
+    QCheckBox::indicator:checked { background: #3b82f6; }
+    QCheckBox#accentCheck { color: #e5e7eb; font-weight: bold; background-color: #2a303c; border: 1px solid #4b5563; border-radius: 6px; padding: 5px 8px; }
     QTableWidget { background: #1e2229; border: 1px solid #2c313a; border-radius: 6px; gridline-color: #232830; color: #e5e7eb; selection-background-color: #1e40af; selection-color: #ffffff; }
     QHeaderView::section { background: #232830; border: none; border-bottom: 1px solid #2c313a; padding: 6px 8px; font-weight: bold; color: #9ca3af; }
     QScrollArea { border: none; background: transparent; }
@@ -480,6 +486,7 @@ QWidget *MainWindow::createInputPanel()
     addField(simLayout, 1, "最大运行时间 (0.01s)", m_maxTimeEdit = new QLineEdit("18000"));
     addField(simLayout, 2, "deltaTime (0.01s)", m_deltaTimeEdit = new QLineEdit("1"));
     m_randomSeedCheck = new QCheckBox("使用随机种子");
+    m_randomSeedCheck->setObjectName("accentCheck");
     simLayout->addWidget(m_randomSeedCheck, 3, 0, 1, 2);
     addField(simLayout, 4, "固定种子", m_seedEdit = new QLineEdit("42"));
     m_seedEdit->setEnabled(false); // 初始禁用，因为随机种子默认未勾选
@@ -493,6 +500,7 @@ QWidget *MainWindow::createInputPanel()
     // ---- 对比模式（同种子配对）----
     auto [compareBox, compareLayout] = makeGroup("对比模式（同种子配对）");
     m_compareCheck = new QCheckBox("启用对比模式");
+    m_compareCheck->setObjectName("accentCheck");
     m_compareCheck->setToolTip(
         "勾选后：以当前输入面板为基准，按下方候选配置逐行对比DPS提升。\n"
         "基准与每个候选在相同随机种子下配对模拟，程序随机互相抵消，1%级提升也能测出。");
