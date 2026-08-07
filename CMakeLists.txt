@@ -30,6 +30,7 @@ set(CORE_SOURCES
     ./core/Skill.cpp
     ./core/Logger.cpp
     ./core/Statistics.cpp
+    ./core/Comparison.cpp
     ./FightingFantasy/Skill.cpp
     ./FightingFantasy/Buff.cpp
 )
@@ -91,6 +92,14 @@ set_target_properties(dps_simulator_beam PROPERTIES
 add_executable(dps_simulator_gui ${ICICLE_SOURCES} ${BEAM_SOURCES} ${GUI_SOURCES})
 target_link_libraries(dps_simulator_gui PRIVATE core_lib Qt6::Core Qt6::Widgets Qt6::Gui)
 set_target_properties(dps_simulator_gui PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# ===== 5. 创建配对对比程序（CRN 同种子） =====
+# 对比"基准配置"与多个"候选配置"的提升，见 core/Comparison.h
+add_executable(dps_simulator_compare ${ICICLE_SOURCES} ${BEAM_SOURCES} ./main_compare.cpp)
+target_link_libraries(dps_simulator_compare PRIVATE core_lib)
+set_target_properties(dps_simulator_compare PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 

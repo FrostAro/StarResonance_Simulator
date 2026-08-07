@@ -66,6 +66,7 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
 
 Person::~Person()
 {
+    isTearingDown = true;  // 标记正在销毁：析构期间禁止再触发创建buff/技能（防止销毁中修改buffList）
     clearSkills();  // 清理所有技能
     clearBuffs();   // 清理所有buff
     this->pointerListForAction.clear();  // 清理动作指针列表
@@ -1254,6 +1255,7 @@ double Person::getAttackSpeedRatio() const { return attackSpeedRatio; }
 double Person::getProficientAmplification() const { return proficientAmplification; }
 
 bool Person::getIsReleasingSkill() const { return isReleasingSkill; }
+bool Person::getIsTearingDown() const { return this->isTearingDown; }
 
 double Person::getEnergyAddIncrease() const { return energyAddIncrease; }
 double Person::getEnergyReduceUP() const { return energyReduceUP; }

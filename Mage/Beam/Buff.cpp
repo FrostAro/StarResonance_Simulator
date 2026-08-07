@@ -1599,12 +1599,16 @@ void BreakThroughBuff::update(const double) {}
 bool BreakThroughBuff::shouldBeRemoved() { return this->duration < 0; }
 std::string BreakThroughBuff::getBuffName() const { return BreakThroughBuff::name; }
 
-BreakThroughBuff::~BreakThroughBuff() 
+BreakThroughBuff::~BreakThroughBuff()
 {
     this->p->triggerAction<AttackCountModifyAction>(-this->number * this->enhance);
     this->p->triggerAction<AttackIncreaseModifyAction>(-0.08 * this->enhance);
     this->p->triggerAction<DreamIncreaseModifyAction>(-0.1 * this->enhance);
-    this->p->triggerAction<CreateBuffAction>(2,StackMometumeBuff::name);
+    // 仅当角色存活时生成叠势buff；Person析构期间禁止修改正在销毁的buffList
+    if (!this->p->getIsTearingDown())
+    {
+        this->p->triggerAction<CreateBuffAction>(2, StackMometumeBuff::name);
+    }
 }
 
 // 无尽思维

@@ -47,6 +47,7 @@ private:
 
 	// ==== 状态 ====
     bool isReleasingSkill = false;                                  // 是否正在释放技能
+    bool isTearingDown = false;                                     // 是否正在销毁（析构中），析构期间禁止再创建buff/技能
     
     // ==== 数据容器 ====
     std::queue<ActionInfo> actionQueue{};                           // 动作事件队列
@@ -388,6 +389,7 @@ public:
 	double getProficientAmplification() const;
     
     bool getIsReleasingSkill() const;
+    bool getIsTearingDown() const;
     
     double getEnergyAddIncrease() const;
     double getEnergyReduceUP() const;
