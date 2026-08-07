@@ -104,16 +104,22 @@ YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
 }
 
 void YGLWSBuff::listenerCallback(const DamageInfo &) {}
-void YGLWSBuff::update(const double) 
+void YGLWSBuff::update(const double)
 {
-    static double lastCritical = 0;
-    lastCritical = this->p->getCritical();
-    if(this->p->getCritical() > 0.6)
+    // 暴击上限：超过60%的部分按30%折算为负暴击修正，暴击回落到60%以下时还原
+    const double currentCritical = this->p->getCritical();
+    const double targetReduction = (currentCritical > 0.6) ? (currentCritical - 0.6) * 0.3 : 0.0;
+    if (targetReduction != this->lastReduction)
     {
-        double lastAdd = (lastCritical - 0.6) * 0.3;
-        this->p->triggerAction<CriticalPercentModifyAction>(-lastAdd);
-        double add = (this->p->getCritical() - 0.6) * 0.3; 
-        this->p->triggerAction<CriticalPercentModifyAction>(add);
+        if (this->lastReduction != 0.0)
+        {
+            this->p->triggerAction<CriticalPercentModifyAction>(-this->lastReduction);
+        }
+        if (targetReduction != 0.0)
+        {
+            this->p->triggerAction<CriticalPercentModifyAction>(targetReduction);
+        }
+        this->lastReduction = targetReduction;
     }
 }
 bool YGLWSBuff::shouldBeRemoved() { return this->duration < 0; }

@@ -1526,6 +1526,7 @@ void ConquerorBuff::listenerCallback(DamageInfo &info)
     if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CreateBuffAction>(1, StackMometumeBuff::name);
+        this->count -= this->triggerNum;
     }
 }
 
@@ -1546,9 +1547,13 @@ StackMometumeBuff::StackMometumeBuff(Person *p, double n) : Buff(p)
     this->duration = 800;
     this->maxDuration = this->duration;
     this->isInherent = true;
+    this->isStackable = true;
+    this->maxStack = 5;
 
     this->number = 96.8;
-    this->stack = 0;
+    this->stack = n;  // 使用传入的叠层数（CreateBuffAction 的 n）
+    if (this->stack > this->maxStack) this->stack = this->maxStack;
+    if (this->stack < 0) this->stack = 0;
     this->triggerNum = 5;
 }
 
@@ -1558,6 +1563,7 @@ void StackMometumeBuff::update(const double)
     if(this->stack >= this->triggerNum)
     {
         this->duration = 0;
+        this->p->triggerAction<CreateBuffAction>(1, BreakThroughBuff::name);
     }
 
     if(this->stack != this->lastStack)
@@ -1588,7 +1594,7 @@ BreakThroughBuff::BreakThroughBuff(Person *p, double n) : Buff(p)
     this->isInherent = true;
 
     this->enhance = 1.5;
-    this->number = 580 * this->enhance;
+    this->number = 580;
     this->p->triggerAction<AttackCountModifyAction>(this->number * this->enhance);
     this->p->triggerAction<AttackIncreaseModifyAction>(0.08 * this->enhance);
     this->p->triggerAction<DreamIncreaseModifyAction>(0.1 * this->enhance);

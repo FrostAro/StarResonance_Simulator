@@ -155,6 +155,14 @@ void CDRefreshAction::execute(const double n, Person *p)
 
     Skill *skill = nullptr;
     int index = p->findSkillInSkillCDList(this->skillName);
+    if(index == -1)
+    {
+        Logger::debugAction(AutoAttack::getTimer(),
+                            this->getActionName(),
+                            "Failed to refresh CD: " + this->skillName +
+                                ", because no skill founded");
+        return;
+    }
     skill = p->getSkillCDListRef().at(index).get();
     if (skill)
     {

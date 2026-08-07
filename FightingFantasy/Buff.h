@@ -60,6 +60,9 @@ public:
     // 伊戈雷乌斯
     static std::string name;
 
+private:
+    double lastReduction = 0;  // 上一次施加的暴击修正量（实例级，避免static串扰）
+
 public:
     void listenerCallback(const DamageInfo &info);
     void update(double deltaTime) override;

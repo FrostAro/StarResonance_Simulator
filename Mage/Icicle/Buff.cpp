@@ -296,6 +296,7 @@ ConsumedEnergyCountBuff::ConsumedEnergyCountBuff(Person *p, const double n)
     : Buff(p)
 {
     this->stack = n;
+    this->number = 100;  // 每攒满25能量，减少水球CD的毫秒数（恢复被注释掉的旧构造函数的数值）
     this->duration = 99999;
     this->maxDuration = this->duration;
     this->isStackable = true;

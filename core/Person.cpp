@@ -637,8 +637,12 @@ double Person::setElementIncrease()
 
 double Person::changeElementIncreaseByProficient(const double proficient)
 {
-    this->elementIncrease -= this->getProficient() * this->proficientRatio * (1 + this->proficientAmplification * this->getProficient());
-    this->elementIncrease += this->getProficient() * this->proficientRatio * (1 + this->proficientAmplification * this->getProficient());
+    // 移除旧精通对应的元素增伤，再按新精通值加入（形参 proficient 为新的精通值；
+    // 调用方在更新 this->Proficient 之前传入，故 getProficient() 仍是旧值）
+    const double ratioLast = this->proficientRatio * (1 + this->proficientAmplification * this->getProficient());
+    const double ratioNew = this->proficientRatio * (1 + this->proficientAmplification * proficient);
+    this->elementIncrease -= this->getProficient() * ratioLast;
+    this->elementIncrease += proficient * ratioNew;
     return this->elementIncrease;
 }
 
