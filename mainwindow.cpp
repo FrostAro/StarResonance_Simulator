@@ -298,6 +298,14 @@ static const char* kLightStyle = R"(
     QScrollBar:vertical { background: transparent; width: 10px; }
     QScrollBar::handle:vertical { background: #cbd5e1; border-radius: 5px; min-height: 30px; }
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+    QMenuBar { background-color: #ffffff; color: #111827; }
+    QMenuBar::item:selected { background-color: #eef1f6; }
+    QMenu { background-color: #ffffff; color: #111827; border: 1px solid #dfe3ea; }
+    QMenu::item:selected { background-color: #2563eb; color: #ffffff; }
+    QStatusBar { background-color: #f3f4f6; color: #374151; }
+    QComboBox QAbstractItemView { background-color: #ffffff; color: #111827; selection-background-color: #dbeafe; }
+    #centralArea { background-color: #eef1f6; }
+    #inputViewport, #inputPanel { background-color: transparent; }
 )";
 
 static const char* kDarkStyle = R"(
@@ -319,6 +327,14 @@ static const char* kDarkStyle = R"(
     QScrollBar:vertical { background: transparent; width: 10px; }
     QScrollBar::handle:vertical { background: #374151; border-radius: 5px; min-height: 30px; }
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+    QMenuBar { background-color: #1e2229; color: #e5e7eb; }
+    QMenuBar::item:selected { background-color: #374151; }
+    QMenu { background-color: #232830; color: #e5e7eb; border: 1px solid #37404c; }
+    QMenu::item:selected { background-color: #1e40af; color: #ffffff; }
+    QStatusBar { background-color: #1e2229; color: #9ca3af; }
+    QComboBox QAbstractItemView { background-color: #232830; color: #e5e7eb; selection-background-color: #1e40af; }
+    #centralArea { background-color: #16181d; }
+    #inputViewport, #inputPanel { background-color: transparent; }
 )";
 
 //==============================================================================
@@ -373,6 +389,7 @@ void MainWindow::setupUI()
     setMinimumSize(1280, 840);
 
     QWidget *central = new QWidget(this);
+    central->setObjectName("centralArea");
     setCentralWidget(central);
 
     // 主垂直布局：上部分左右两栏，下部分表格
@@ -384,6 +401,7 @@ void MainWindow::setupUI()
     // 输入面板行数较多，套入滚动区域避免底部（对比模式等）被窗口高度裁掉
     QHBoxLayout *topHorizontalLayout = new QHBoxLayout();
     QScrollArea *inputScroll = new QScrollArea;
+    inputScroll->viewport()->setObjectName("inputViewport");
     inputScroll->setWidgetResizable(true);
     inputScroll->setWidget(createInputPanel());
     topHorizontalLayout->addWidget(inputScroll, 3);
@@ -398,6 +416,7 @@ QWidget *MainWindow::createInputPanel()
 {
     // 面板容器（子分组自带标题，外层不再套 GroupBox）
     QWidget *panel = new QWidget;
+    panel->setObjectName("inputPanel");
     QVBoxLayout *mainLayout = new QVBoxLayout(panel);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(8);
