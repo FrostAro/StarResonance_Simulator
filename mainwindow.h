@@ -34,6 +34,8 @@ enum class FantasyBeamConfig {
 // ============================================================================
 // 模拟循环实现
 
+class QAction;
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -147,6 +149,7 @@ private:
     QWidget* createInputPanel();
     QWidget* createDebugPanel();
     QWidget* createResultPanel();
+    void applyTheme(bool dark);  // 切换明/暗主题
 
     // 对比模式：从界面输入构建基准配置 / 解析候选配置
     SimConfig buildBaseConfig();
@@ -183,7 +186,8 @@ private:
 
     QTextEdit* m_logText;
     QTableWidget* m_resultTable;
-    QLabel* m_statusLabel;  // 状态栏文字
+    QLabel* m_statusLabel;   // 状态栏文字
+    QAction* m_darkModeAction;  // 暗色主题切换
 
     QThread* m_workerThread;
     SimulationWorker* m_worker;

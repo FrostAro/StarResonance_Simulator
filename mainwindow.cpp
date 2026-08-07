@@ -16,6 +16,9 @@
 #include <QRegularExpression>
 #include <QScrollArea>
 #include <QStatusBar>
+#include <QMenu>
+#include <QMenuBar>
+#include <QAction>
 #include <random>
 #include <utility>
 #include <QDebug>
@@ -274,34 +277,68 @@ void ComparisonWorker::run()
 }
 
 //==============================================================================
+// 明/暗两套主题样式
+//==============================================================================
+static const char* kLightStyle = R"(
+    QMainWindow { background-color: #eef1f6; }
+    QGroupBox { background-color: #ffffff; border: 1px solid #dfe3ea; border-radius: 8px; margin-top: 14px; padding: 10px 12px 12px 12px; }
+    QGroupBox::title { subcontrol-origin: margin; left: 10px; top: 0px; padding: 0 4px; color: #111827; font-weight: bold; font-size: 13px; }
+    QLabel { color: #374151; }
+    QLineEdit, QComboBox, QPlainTextEdit { background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 8px; selection-background-color: #2563eb; }
+    QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #2563eb; }
+    QLineEdit:disabled, QComboBox:disabled, QPlainTextEdit:disabled { background: #f3f4f6; color: #9ca3af; }
+    QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; }
+    QPushButton:hover { background: #1d4ed8; }
+    QPushButton:pressed { background: #1e40af; }
+    QPushButton:disabled { background: #9ca3af; }
+    QCheckBox { spacing: 6px; color: #374151; }
+    QTableWidget { background: #ffffff; border: 1px solid #dfe3ea; border-radius: 6px; gridline-color: #eef1f6; selection-background-color: #dbeafe; selection-color: #111827; }
+    QHeaderView::section { background: #f3f4f6; border: none; border-bottom: 1px solid #dfe3ea; padding: 6px 8px; font-weight: bold; color: #374151; }
+    QScrollArea { border: none; background: transparent; }
+    QScrollBar:vertical { background: transparent; width: 10px; }
+    QScrollBar::handle:vertical { background: #cbd5e1; border-radius: 5px; min-height: 30px; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+)";
+
+static const char* kDarkStyle = R"(
+    QMainWindow { background-color: #16181d; }
+    QGroupBox { background-color: #1e2229; border: 1px solid #2c313a; border-radius: 8px; margin-top: 14px; padding: 10px 12px 12px 12px; }
+    QGroupBox::title { subcontrol-origin: margin; left: 10px; top: 0px; padding: 0 4px; color: #e5e7eb; font-weight: bold; font-size: 13px; }
+    QLabel { color: #9ca3af; }
+    QLineEdit, QComboBox, QPlainTextEdit { background: #232830; border: 1px solid #37404c; border-radius: 6px; padding: 5px 8px; color: #e5e7eb; selection-background-color: #2563eb; }
+    QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #3b82f6; }
+    QLineEdit:disabled, QComboBox:disabled, QPlainTextEdit:disabled { background: #1a1d23; color: #4b5563; }
+    QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; }
+    QPushButton:hover { background: #3b82f6; }
+    QPushButton:pressed { background: #1d4ed8; }
+    QPushButton:disabled { background: #374151; }
+    QCheckBox { spacing: 6px; color: #9ca3af; }
+    QTableWidget { background: #1e2229; border: 1px solid #2c313a; border-radius: 6px; gridline-color: #232830; color: #e5e7eb; selection-background-color: #1e40af; selection-color: #ffffff; }
+    QHeaderView::section { background: #232830; border: none; border-bottom: 1px solid #2c313a; padding: 6px 8px; font-weight: bold; color: #9ca3af; }
+    QScrollArea { border: none; background: transparent; }
+    QScrollBar:vertical { background: transparent; width: 10px; }
+    QScrollBar::handle:vertical { background: #374151; border-radius: 5px; min-height: 30px; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+)";
+
+//==============================================================================
 // MainWindow 实现
 //==============================================================================
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_workerThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
 {
-    // 全局样式：简洁浅色主题 + 蓝色强调
-    setStyleSheet(R"(
-        QMainWindow { background-color: #eef1f6; }
-        QGroupBox { background-color: #ffffff; border: 1px solid #dfe3ea; border-radius: 8px; margin-top: 14px; padding: 10px 12px 12px 12px; }
-        QGroupBox::title { subcontrol-origin: margin; left: 10px; top: 0px; padding: 0 4px; color: #111827; font-weight: bold; font-size: 13px; }
-        QLabel { color: #374151; }
-        QLineEdit, QComboBox, QPlainTextEdit { background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 8px; selection-background-color: #2563eb; }
-        QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #2563eb; }
-        QLineEdit:disabled, QComboBox:disabled, QPlainTextEdit:disabled { background: #f3f4f6; color: #9ca3af; }
-        QPushButton { background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px 16px; font-weight: bold; }
-        QPushButton:hover { background: #1d4ed8; }
-        QPushButton:pressed { background: #1e40af; }
-        QPushButton:disabled { background: #9ca3af; }
-        QCheckBox { spacing: 6px; color: #374151; }
-        QTableWidget { background: #ffffff; border: 1px solid #dfe3ea; border-radius: 6px; gridline-color: #eef1f6; selection-background-color: #dbeafe; selection-color: #111827; }
-        QHeaderView::section { background: #f3f4f6; border: none; border-bottom: 1px solid #dfe3ea; padding: 6px 8px; font-weight: bold; color: #374151; }
-        QScrollArea { border: none; background: transparent; }
-        QScrollBar:vertical { background: transparent; width: 10px; }
-        QScrollBar::handle:vertical { background: #cbd5e1; border-radius: 5px; min-height: 30px; }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-    )");
+    // 默认浅色主题 + 更大默认窗口
+    setStyleSheet(kLightStyle);
+    resize(1400, 900);
 
     setupUI();
+
+    // 视图菜单：暗色主题切换
+    m_darkModeAction = new QAction("暗色主题", this);
+    m_darkModeAction->setCheckable(true);
+    connect(m_darkModeAction, &QAction::toggled, [this](bool dark) { applyTheme(dark); });
+    QMenu *viewMenu = menuBar()->addMenu("视图");
+    viewMenu->addAction(m_darkModeAction);
 
     // 状态栏
     m_statusLabel = new QLabel("就绪");
@@ -333,7 +370,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupUI()
 {
     setWindowTitle("DPS Simulator (Beta)  by 星玥");
-    setMinimumSize(1200, 800);
+    setMinimumSize(1280, 840);
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
@@ -821,4 +858,9 @@ void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, in
     // 清空指针，防止下次点击时访问已销毁对象
     m_workerThread = nullptr;
     m_compareWorker = nullptr;
+}
+
+void MainWindow::applyTheme(bool dark)
+{
+    setStyleSheet(dark ? kDarkStyle : kLightStyle);
 }
