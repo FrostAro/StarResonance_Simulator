@@ -495,7 +495,7 @@ QWidget *MainWindow::createInputPanel()
         "暴击 +5\n"
         "攻击 +100\n"
         "精通 +10\n"
-        "# 幻想用绝对值，如：幻想 0");
+        "# 幻想用绝对值：-1=无幻想，0-5=具体幻想(见上面板)，如：幻想 -1");
     m_candidatesEdit->setFixedHeight(80);
     compareLayout->addWidget(m_candidatesEdit, 2, 1);
     mainLayout->addWidget(compareBox);
@@ -613,8 +613,8 @@ SimConfig MainWindow::buildBaseConfig()
     cfg.criticaldamage_set = m_critDmgSetEdit->text().toDouble();
     cfg.increasedamage_set = m_incSetEdit->text().toDouble();
     cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
-    int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 0=无幻想 → -1 → 999
-    cfg.fantasyConfig = (fantasyConfig < 0) ? 999 : fantasyConfig;
+    int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 面板index：0=无幻想 → -1，1..6 → 0..5
+    cfg.fantasyConfig = fantasyConfig;  // -1 = 无幻想，直接命中 Person.cpp 的 default 分支
     return cfg;
 }
 
@@ -672,6 +672,18 @@ void MainWindow::onRunClicked()
         return;
     }
 
+    // 输入校验：空输入 toInt()=0 会引发死循环(deltaTime=0)或除零(maxTime=0)
+    if (m_maxTimeEdit->text().toInt() <= 0)
+    {
+        QMessageBox::warning(this, "参数错误", "「最大运行时间」必须大于 0。");
+        return;
+    }
+    if (m_deltaTimeEdit->text().toInt() <= 0)
+    {
+        QMessageBox::warning(this, "参数错误", "「deltaTime」必须 ≥ 1。");
+        return;
+    }
+
     // 对比模式：基准 = 当前输入面板，候选 = 下方候选配置文本框
     if (m_compareCheck->isChecked())
     {
@@ -726,12 +738,17 @@ void MainWindow::onRunClicked()
     double incSet = m_incSetEdit->text().toDouble();
     double eleIncSet = m_eleIncSetEdit->text().toDouble();
     int times = m_timesEdit->text().toInt();
+    if (times <= 0)
+    {
+        QMessageBox::warning(this, "参数错误", "「模拟循环次数」必须 ≥ 1。");
+        return;
+    }
     int maxTime = m_maxTimeEdit->text().toInt();
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
-    int fantasyConfig = m_fantasyCombo->currentIndex() - 1; // 偏移：0=无幻想 → -1，1=姆头尖兵 → 0...
-    if (fantasyConfig < 0) fantasyConfig = 999;             // 无幻想走 default 分支
+    int fantasyConfig = m_fantasyCombo->currentIndex() - 1; // 面板index：0=无幻想 → -1，1..6 → 0..5
+    // -1 = 无幻想，直接传给 Person.cpp 的 default 分支（无需再转 999）
 
     // 清空之前的日志和表格
     m_logText->clear();
@@ -816,7 +833,7 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
         totalCount += stats[i][2].toInt();
         totalLuckyCount += stats[i][4].toInt();
     }
-    double totalDps = (totalDamage + totalLucky) / (totalTime / 100.0);
+    double totalDps = (totalTime > 0) ? (totalDamage + totalLucky) / (totalTime / 100.0) : 0.0;  // 防御除零
     int row = m_resultTable->rowCount();
     m_resultTable->insertRow(row);
     m_resultTable->setItem(row, 0, new QTableWidgetItem("🔥 总计"));
