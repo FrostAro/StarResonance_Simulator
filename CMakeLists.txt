@@ -33,6 +33,7 @@ set(CORE_SOURCES
     ./core/Logger.cpp
     ./core/Statistics.cpp
     ./core/Comparison.cpp
+    ./core/SimulationLog.cpp
     ./FightingFantasy/Skill.cpp
     ./FightingFantasy/Buff.cpp
 )

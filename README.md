@@ -222,6 +222,42 @@ Total Damage Count: XXXX, Total Lucky Damage Count: XXX, Lucky rate: XX.XX%, Cri
 **减少DEBUG输出：**如需提高性能，可注释掉各cpp文件中的日志打印，或将日志类型改为INFO
 **批量模拟：**在main.cpp中使用循环进行多次模拟，比较属性提升（更推荐使用"对比模式"，见上文，同种子配对可直接消除程序随机）
 
+## 调试日志（SimulationLog）
+
+程序会把**完整 debug 信息**（技能触发、Buff 创建/移除、爆发阶段、能量变化等）实时写入 `log/` 文件夹下的 txt 文件，方便离线分析一轮模拟的详细过程。
+
+### 行为
+
+- **位置**：`log/` 文件夹在 **exe 同目录**下（无论从哪个目录启动 exe，日志都固定写到 exe 旁边，不会因为启动目录不同而找不到）
+- **文件名**：`log-YYYYMMDD-HHMMSS-beam.txt`（射线；冰矛为 `-icicle`）
+- **多次模拟只取第一次**：只有首次模拟的 debug 会写入文件，避免文件爆炸
+- 文件开头先写**模拟配置头**，再写调试日志，便于对照：
+  - Person 构造参数（站街面板）
+  - 注册的技能名
+  - 注册的Buff名
+  - 使用的 AutoAttack 类
+- 日志**同步实时写入**（每行即刷），模拟结束后关闭
+
+### 使用
+
+运行 `dps_simulator_beam.exe` 后，到 **exe 同目录的 `log/` 文件夹**下用任意文本编辑器打开最新文件：
+
+```text
+==== 模拟配置 ====
+职业: beam
+Person 构造参数: 三维=6760, 暴击=5, 急速=30, ...
+注册技能: WaterSpout, IceArrow_Beam, Flood_Beam, ...
+注册Buff: SkillReleasedTimeStatistics, ...
+AutoAttack: class AutoAttack_Mage_Beam_LSZZ
+==== 调试日志 ====
+[DEBUG,timer=1]: Auto    - outBurst1 started
+[DEBUG,timer=1]: Action  - CreateSkillAction - Skill Created: SXMQ ...
+```
+
+典型用途：分析**爆发时间轴**（`outBurstN started` / `Buff Created: FloodBuff_Beam` 的时间戳）、技能释放顺序、能量收支。
+
+> 注意：debug 信息依赖 Logger 的 **DEBUG 级别**（`main_beam.cpp` 已设为 DEBUG）。若关掉 DEBUG，文件里只有配置头、没有调试日志。日志行带 ANSI 颜色码属正常。
+
 ## 如何拓展
 
 详见ExtendExample文件夹

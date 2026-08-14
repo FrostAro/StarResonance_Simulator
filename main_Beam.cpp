@@ -12,8 +12,10 @@
 #include "Mage/Beam/Initializer.hpp"
 #include "core/Logger.h"
 #include "core/Statistics.h"
+#include "core/SimulationLog.h"
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 #include <random>
 
@@ -52,6 +54,12 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
 
         int fantasyConfig = 5; // 幻想配置参数（0-5），控制装备的幻想技能组合
 
+        // Person 构造参数描述（用于日志配置头）
+        const std::string personParams =
+            "三维=6760, 暴击=5, 急速=30, 幸运=5, 精通=45, 全能=10, "
+            "攻击=5000, 精炼=1000, 元素=230, 攻速=0, 施速=0, "
+            "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(fantasyConfig);
+
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
         /*三维属性*/ 6760,
         /*暴击(%)*/ 5,/*例如51.63*/
@@ -83,19 +91,29 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 初始化角色（装备技能、设置buff等）
         auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime,fantasyConfig);
         Initializer->Initialize();
-        
+
+        // 记录首次模拟的调试日志（多次模拟只取第一次）
+        bool loggedFirst = SimulationLog::begin("beam", p.get(), personParams);
+
         // 开始模拟运行
         std::cout << "Starting simulation..." << std::endl;
         while (currentTime < maxTime)
         {
             // 更新自动攻击系统
             p->autoAttackPtr->update(deltaTime);
-            
+
             // 更新当前时间
             currentTime += deltaTime;
             p->autoAttackPtr->setTimer() += deltaTime;
         }
-        
+
+        // 首次模拟结束：收尾日志文件，后续模拟恢复 INFO 级别避免刷屏
+        if (loggedFirst)
+        {
+            SimulationLog::end();
+            Logger::setLevel(Logger::Level::INFO);
+        }
+
         // 计算伤害统计信息
         p->calculateDamageStatistics();
         std::cout << "Simulation ended." << std::endl;
@@ -124,7 +142,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
 int main()
 {
     // 1. 初始化日志系统，设置日志级别为DEBUG
-    Logger::initialize(Logger::Level::INFO);
+    Logger::initialize(Logger::Level::DEBUG);
     
     // 2. 伤害统计结果列表（用于存储多次模拟的结果）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
