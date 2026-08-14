@@ -17,6 +17,19 @@
 std::ofstream SimulationLog::m_file;
 bool SimulationLog::m_started = false;
 bool SimulationLog::m_active = false;
+std::function<void(const std::string&)> SimulationLog::m_prevCallback;
+
+// 编译方式（Debug/Release），用于文件名
+static std::string buildType()
+{
+#if defined(_DEBUG)
+    return "Debug";
+#elif defined(NDEBUG)
+    return "Release";
+#else
+    return "Release";
+#endif
+}
 
 // 获取 exe 所在目录（含结尾分隔符），用于把 log 固定到 exe 旁边，与启动目录无关
 static std::string getExecutableDir()
@@ -64,7 +77,8 @@ bool SimulationLog::begin(const std::string& profession, const Person* person, c
     const std::string logBase = getExecutableDir();  // 未定义时退回 exe 目录
 #endif
     std::filesystem::create_directories(logBase + "/log");
-    const std::string filename = logBase + "/log/log-" + currentTimestamp() + "-" + profession + ".txt";
+    // 命名：log-时间-入口(beam/icicle/gui)-编译方式(Debug/Release).txt
+    const std::string filename = logBase + "/log/log-" + currentTimestamp() + "-" + profession + "-" + buildType() + ".txt";
     m_file.open(filename, std::ios::out | std::ios::trunc);
     if (!m_file.is_open())
         return false;
@@ -112,8 +126,14 @@ bool SimulationLog::begin(const std::string& profession, const Person* person, c
     // Logger 的 setLogCallback 只在异步模式下触发，故启用异步日志
     Logger::enableAsync(true);
 
-    // 把 Logger 输出实时写入文件
-    Logger::setLogCallback([](const std::string& msg) { SimulationLog::writeLine(msg); });
+    // 保存原回调（如GUI日志面板），组合：写文件 + 转发原回调，互不冲突
+    m_prevCallback = Logger::getLogCallback();
+    Logger::setLogCallback([](const std::string& msg)
+    {
+        SimulationLog::writeLine(msg);
+        if (SimulationLog::m_prevCallback)
+            SimulationLog::m_prevCallback(msg);
+    });
     m_active = true;
     return true;
 }
@@ -131,7 +151,8 @@ void SimulationLog::end()
 {
     if (!m_active)
         return;
-    Logger::setLogCallback(nullptr);  // 恢复（控制台原本无回调）
+    Logger::setLogCallback(m_prevCallback);  // 恢复原回调（控制台为 null，GUI 恢复面板回调）
+    m_prevCallback = nullptr;
     m_file.flush();
     m_file.close();
     m_active = false;

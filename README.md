@@ -229,7 +229,10 @@ Total Damage Count: XXXX, Total Lucky Damage Count: XXX, Lucky rate: XX.XX%, Cri
 ### 行为
 
 - **位置**：`log/` 文件夹固定在**项目根目录**（`StarResonance_Simulator/log/`），Debug/Release 所有模式、从任何目录启动 exe 都统一写到这里
-- **文件名**：`log-YYYYMMDD-HHMMSS-beam.txt`（射线；冰矛为 `-icicle`）
+- **文件名**：`log-YYYYMMDD-HHMMSS-<入口>-<编译方式>.txt`
+  - 入口：`beam`（射线控制台）、`icicle`（冰矛控制台）、`gui`（图形界面）
+  - 编译方式：`Debug` / `Release`
+  - 例：`log-20260814-130705-beam-Release.txt`、`log-20260814-130959-icicle-Debug.txt`、`log-20260814-131000-gui-Release.txt`
 - **多次模拟只取第一次**：只有首次模拟的 debug 会写入文件，避免文件爆炸
 - 文件开头先写**模拟配置头**，再写调试日志，便于对照：
   - Person 构造参数（站街面板）

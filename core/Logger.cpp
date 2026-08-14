@@ -707,3 +707,8 @@ void Logger::setLogCallback(LogCallback cb) {
     std::lock_guard<std::mutex> lock(s_callbackMutex);
     s_callback = cb;
 }
+
+Logger::LogCallback Logger::getLogCallback() {
+    std::lock_guard<std::mutex> lock(s_callbackMutex);
+    return s_callback;
+}

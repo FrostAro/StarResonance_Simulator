@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <functional>
 #include <string>
 
 class Person;
@@ -33,4 +34,5 @@ private:
     static std::ofstream m_file;
     static bool m_started;   // 进程内是否已创建过（首次模拟专用）
     static bool m_active;    // 当前是否正在记录
+    static std::function<void(const std::string&)> m_prevCallback;  // 保存的原回调（如GUI日志面板）
 };

@@ -12,8 +12,10 @@
 #include "Mage/Icicle/Initializer.hpp"
 #include "core/Logger.h"
 #include "core/Statistics.h"
+#include "core/SimulationLog.h"
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 #include <random>
 
@@ -48,6 +50,14 @@ void executeSimulation_Icicle(std::vector<std::unordered_map<std::string, Damage
         // 创建冰法师角色对象，并设置基础属性
         // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
+        const int fantasyConfig = 0;  // 冰矛幻想配置（0=无/尖兵等，见构造函数switch）
+
+        // Person 构造参数描述（用于日志配置头）
+        const std::string personParams =
+            "三维=4593, 暴击=45.00, 急速=1.05, 幸运=66.70, 精通=6.00, 全能=14.58, "
+            "攻击=3111, 精炼=820, 元素=35, 攻速=0, 施速=0, "
+            "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(fantasyConfig);
+
         std::unique_ptr<Mage_Icicle> p = std::make_unique<Mage_Icicle>(
         /*三维属性*/ 4593,
         /*暴击(%)*/ 45.00,/*例如51.63*/
@@ -64,7 +74,7 @@ void executeSimulation_Icicle(std::vector<std::unordered_map<std::string, Damage
         /*增伤额外值*/ 0,
         /*元素增伤额外值*/ 0,
         /*程序运行总tick*/ maxTime,
-        /*幻想配置*/ 0);
+        /*幻想配置*/ fantasyConfig);
         // 设置随机种子
         if (isRandomSeed) {
             // 使用真随机数种子
@@ -75,21 +85,31 @@ void executeSimulation_Icicle(std::vector<std::unordered_map<std::string, Damage
         }
         
         // 初始化角色（装备技能、设置buff等）
-        auto Initializer = std::make_unique<Initializer_Mage_Icicle>(p.get(), deltaTime,0);
+        auto Initializer = std::make_unique<Initializer_Mage_Icicle>(p.get(), deltaTime, fantasyConfig);
         Initializer->Initialize();
-        
+
+        // 记录首次模拟的调试日志（多次模拟只取第一次）
+        bool loggedFirst = SimulationLog::begin("icicle", p.get(), personParams);
+
         // 开始模拟运行
         std::cout << "Starting simulation(times:" << times << ")..." << std::endl;
         while (currentTime < maxTime)
         {
             // 更新自动攻击系统
             p->autoAttackPtr->update(deltaTime);
-            
+
             // 更新当前时间
             currentTime += deltaTime;
             p->autoAttackPtr->setTimer() += deltaTime;
         }
-        
+
+        // 首次模拟结束：收尾日志文件，后续模拟恢复 INFO 级别避免刷屏
+        if (loggedFirst)
+        {
+            SimulationLog::end();
+            Logger::setLevel(Logger::Level::INFO);
+        }
+
         // 计算伤害统计信息
         p->calculateDamageStatistics();
         std::cout << "Simulation ended." << std::endl;
@@ -118,7 +138,7 @@ void executeSimulation_Icicle(std::vector<std::unordered_map<std::string, Damage
 int main()
 {
     // 1. 初始化日志系统，设置日志级别为DEBUG
-    Logger::initialize(Logger::Level::INFO);
+    Logger::initialize(Logger::Level::DEBUG);
     
     // 2. 伤害统计结果列表（用于存储多次模拟的结果）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;

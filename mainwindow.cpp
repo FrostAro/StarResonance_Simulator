@@ -30,6 +30,8 @@
 #include "core/Logger.h"
 #include "core/Statistics.h"
 #include "core/Action.h"
+#include "core/SimulationLog.h"
+#include <sstream>
 
 //==============================================================================
 // SimulationWorker 实现
@@ -98,6 +100,7 @@ void SimulationWorker::run()
 
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
 
+    bool loggedFirst = false;
     for (int i = 0; i < m_times; ++i) {
         // 重置自动攻击计时器
         AutoAttack::setTimer() = 0;
@@ -121,6 +124,20 @@ void SimulationWorker::run()
         auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig);
         init->Initialize();
 
+        // 首次模拟：开启DEBUG供调试日志文件捕获（命名含 -gui-编译方式）
+        if (i == 0)
+        {
+            Logger::setLevel(Logger::Level::DEBUG);
+            std::ostringstream params;
+            params << "三维=" << m_primaryAttr << ", 暴击=" << m_crit << ", 急速=" << m_quickness
+                   << ", 幸运=" << m_lucky << ", 精通=" << m_proficient << ", 全能=" << m_almighty
+                   << ", 攻击=" << m_atk << ", 精炼=" << m_refineAtk << ", 元素=" << m_elementAtk
+                   << ", 攻速=" << m_attackSpeed << ", 施速=" << m_castingSpeed
+                   << ", 爆伤=" << m_critDmgSet << ", 增伤=" << m_incSet << ", 元素增伤=" << m_eleIncSet
+                   << ", fantasyConfig=" << m_fantasyConfig;
+            loggedFirst = SimulationLog::begin("gui", person.get(), params.str());
+        }
+
         emit logMessage(QString("开始第 %1 次模拟...").arg(i + 1));
 
         int currentTime = 0;
@@ -128,6 +145,13 @@ void SimulationWorker::run()
             person->autoAttackPtr->update(m_deltaTime);
             currentTime += m_deltaTime;
             AutoAttack::setTimer() += m_deltaTime;
+        }
+
+        // 首次模拟结束：收尾日志文件并恢复 WARNING 级别
+        if (i == 0 && loggedFirst)
+        {
+            SimulationLog::end();
+            Logger::setLevel(Logger::Level::WARNING);
         }
 
         // 收集统计

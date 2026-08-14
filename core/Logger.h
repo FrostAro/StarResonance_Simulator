@@ -419,6 +419,7 @@ public:
                      const std::string& format, Args... args);
 
     static void setLogCallback(LogCallback cb);
+    static LogCallback getLogCallback();
 };
 
 // ============================================================================
