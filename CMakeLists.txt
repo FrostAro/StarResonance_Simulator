@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(dps_simulator)
 
+# 把项目根目录路径传给代码（SimulationLog 用于固定 log/ 输出位置，Debug/Release/各构建目录一致）
+add_compile_definitions(PROJECT_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

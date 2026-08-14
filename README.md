@@ -228,7 +228,7 @@ Total Damage Count: XXXX, Total Lucky Damage Count: XXX, Lucky rate: XX.XX%, Cri
 
 ### 行为
 
-- **位置**：`log/` 文件夹在 **exe 同目录**下（无论从哪个目录启动 exe，日志都固定写到 exe 旁边，不会因为启动目录不同而找不到）
+- **位置**：`log/` 文件夹固定在**项目根目录**（`StarResonance_Simulator/log/`），Debug/Release 所有模式、从任何目录启动 exe 都统一写到这里
 - **文件名**：`log-YYYYMMDD-HHMMSS-beam.txt`（射线；冰矛为 `-icicle`）
 - **多次模拟只取第一次**：只有首次模拟的 debug 会写入文件，避免文件爆炸
 - 文件开头先写**模拟配置头**，再写调试日志，便于对照：
@@ -240,7 +240,7 @@ Total Damage Count: XXXX, Total Lucky Damage Count: XXX, Lucky rate: XX.XX%, Cri
 
 ### 使用
 
-运行 `dps_simulator_beam.exe` 后，到 **exe 同目录的 `log/` 文件夹**下用任意文本编辑器打开最新文件：
+运行 `dps_simulator_beam.exe` 后，到 **项目根目录的 `log/` 文件夹**下用任意文本编辑器打开最新文件：
 
 ```text
 ==== 模拟配置 ====

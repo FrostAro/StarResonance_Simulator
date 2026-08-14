@@ -32,3 +32,5 @@ temp.text
 text.text
 .vs
 compile_commands.json
+*.bak
+log/

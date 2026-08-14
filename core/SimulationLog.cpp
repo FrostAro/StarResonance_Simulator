@@ -57,10 +57,14 @@ bool SimulationLog::begin(const std::string& profession, const Person* person, c
 
     m_started = true;
 
-    // 存入 exe 旁的 log/ 子目录（与启动目录无关）
-    const std::string exeDir = getExecutableDir();
-    std::filesystem::create_directories(exeDir + "log");
-    const std::string filename = exeDir + "log/log-" + currentTimestamp() + "-" + profession + ".txt";
+    // 统一写到【项目根目录】的 log/（CMake 传入 PROJECT_ROOT_PATH，Debug/Release/各构建目录一致）
+#ifdef PROJECT_ROOT_PATH
+    const std::string logBase = PROJECT_ROOT_PATH;
+#else
+    const std::string logBase = getExecutableDir();  // 未定义时退回 exe 目录
+#endif
+    std::filesystem::create_directories(logBase + "/log");
+    const std::string filename = logBase + "/log/log-" + currentTimestamp() + "-" + profession + ".txt";
     m_file.open(filename, std::ios::out | std::ios::trunc);
     if (!m_file.is_open())
         return false;
