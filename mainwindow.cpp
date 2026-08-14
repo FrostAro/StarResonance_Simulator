@@ -92,12 +92,8 @@ void SimulationWorker::run()
     const Logger::Level oldLevel = Logger::getLevel();
     Logger::setLevel(Logger::Level::WARNING);
 
-    // 设置日志回调
-    auto callback = [this](const std::string &msg) {
-        emit logMessage(QString::fromStdString(msg));
-    };
-    Logger::setLogCallback(callback);
-
+    // 不把 Logger 输出转发到实时日志面板：面板只显示本 worker 的"开始/完成"提示，
+    // 详细 debug 信息仅由 SimulationLog 写入文件（如有）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
 
     bool loggedFirst = false;
@@ -222,8 +218,7 @@ void SimulationWorker::run()
 
     emit simulationFinished(tableData, m_maxTime);
 
-    // 移除日志回调并恢复日志级别
-    Logger::setLogCallback(nullptr);
+    // 恢复日志级别
     Logger::setLevel(oldLevel);
 }
 
@@ -245,11 +240,7 @@ void ComparisonWorker::run()
     const Logger::Level oldLevel = Logger::getLevel();
     Logger::setLevel(Logger::Level::WARNING);
 
-    auto callback = [this](const std::string &msg) {
-        emit logMessage(QString::fromStdString(msg));
-    };
-    Logger::setLogCallback(callback);
-
+    // 不把 Logger 输出转发到实时日志面板：面板只显示本 worker 的"开始/完成"提示
     emit logMessage(QString("开始配对对比：基准 + %1 个候选，%2 对，种子 %3..%4")
                         .arg(m_candidates.size())
                         .arg(m_pairs)
@@ -277,8 +268,7 @@ void ComparisonWorker::run()
 
     emit comparisonFinished(rows, m_pairs);
 
-    // 移除日志回调并恢复日志级别
-    Logger::setLogCallback(nullptr);
+    // 恢复日志级别
     Logger::setLevel(oldLevel);
 }
 
