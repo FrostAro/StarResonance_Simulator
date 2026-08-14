@@ -25,6 +25,9 @@ public:
     static bool begin(const std::string& profession, const Person* person, const std::string& personParams);
     // 结束记录：清 Logger 回调、关闭文件
     static void end();
+    // 重置"已创建"标志，允许下一次 begin() 重新创建文件
+    // （GUI 每次点击"运行模拟"前调用，实现每次点击出一个文件；控制台无需调用）
+    static void reset();
     // 是否正在记录
     static bool isActive();
 

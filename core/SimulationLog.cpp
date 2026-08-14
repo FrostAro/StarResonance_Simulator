@@ -158,6 +158,18 @@ void SimulationLog::end()
     m_active = false;
 }
 
+void SimulationLog::reset()
+{
+    if (m_file.is_open())
+    {
+        m_file.flush();
+        m_file.close();
+    }
+    m_started = false;
+    m_active = false;
+    m_prevCallback = nullptr;
+}
+
 bool SimulationLog::isActive()
 {
     return m_active;

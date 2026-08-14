@@ -696,6 +696,9 @@ void MainWindow::onRunClicked()
         return;
     }
 
+    // 每次点击运行都重新允许生成日志文件（一次点击内多次模拟仍只取第一次）
+    SimulationLog::reset();
+
     // 输入校验：空输入 toInt()=0 会引发死循环(deltaTime=0)或除零(maxTime=0)
     if (m_maxTimeEdit->text().toInt() <= 0)
     {
