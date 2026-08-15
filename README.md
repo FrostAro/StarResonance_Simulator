@@ -36,18 +36,50 @@ Visual C++ 2015-2022 Redistributable
 ### 环境要求
 
 支持C++17 或更高版本  
-CMake 3.10+  
+CMake 3.16+  
 (补充：若不使用cmake等构建工具而使用vscode的某些runner插件，例如compile runner，需自行修改程序链接，或者怕麻烦也可以include对应的.cpp文件(bushi))  
 GCC/Clang/MSVC 支持C++17  
-Qt 6.10.2及以上  
+Qt 6.10.2及以上（**必须与编译器匹配**：MSVC 编译器配 MSVC 版 Qt，MinGW 编译器配 MinGW 版 Qt）  
+（控制台程序已在 MinGW-w64 GCC 8.1.0 下验证通过；GUI 需配套的 MinGW 版 Qt）
 
 ### 编译运行
 
-```bash
-# 创建构建目录
-mkdir build && cd build
+#### Windows / MSVC
 
-# 配置和编译
+```powershell
+# 在项目根目录
+cmake -S . -B build -G "Visual Studio 17 2022"
+cmake --build build --config Release --target all --parallel 4
+
+# 运行程序
+# 冰矛
+./build/bin/Release/dps_simulator_icicle.exe
+```
+
+#### Windows / MinGW-w64 GCC
+
+```powershell
+# 在项目根目录
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --target all --parallel 4
+
+# 运行程序
+# 冰矛
+./build/bin/dps_simulator_icicle.exe
+```
+
+> **注意**：Qt 库必须与编译器配套。如果使用 MinGW 编译器，请安装 MinGW 版 Qt
+> （路径通常形如 `E:/Qt/6.10.2/mingw_64`），并在配置时通过 `-DCMAKE_PREFIX_PATH=E:/Qt/6.10.2/mingw_64` 指定。
+> 若 CMake 找到的是 MSVC 版 Qt，会**自动跳过 GUI 目标**并给出警告，仅构建控制台程序
+> （icicle/beam/compare），此时不需要 Qt 也能编译。
+>
+> 不要混用构建目录：同一 `build` 目录只能使用一种生成器。若之前用 VS 生成器配置过，
+> 再切换到 MinGW Makefiles 前请删除 `build/` 后重新配置。
+
+#### Linux / macOS
+
+```bash
+mkdir build && cd build
 cmake ..
 make
 

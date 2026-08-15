@@ -34,3 +34,5 @@ text.text
 compile_commands.json
 *.bak
 log/
+.cache/
+.dsh-downloads/
