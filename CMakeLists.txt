@@ -12,8 +12,17 @@ set(CMAKE_AUTOMOC ON)
 
 # Qt6 仅 GUI 目标需要；控制台程序（icicle/beam/compare）不依赖 Qt
 find_package(Qt6 COMPONENTS Core Widgets)
+set(BUILD_GUI FALSE)
 if(Qt6_FOUND)
-    message(STATUS "Found Qt6: ${Qt6_DIR}")
+    # Qt 分为 MSVC 版与 MinGW 版，二者不能混用。若 MinGW/GCC 构建时误找到
+    # MSVC 版 Qt，GUI 编译会失败，此时自动跳过 GUI，仅构建控制台程序。
+    if(NOT MSVC AND Qt6_DIR MATCHES "msvc")
+        message(WARNING "Qt6 found at ${Qt6_DIR} is an MSVC build, incompatible with the current compiler. "
+                        "GUI target will be skipped; set CMAKE_PREFIX_PATH to a MinGW/GCC Qt to build the GUI.")
+    else()
+        set(BUILD_GUI TRUE)
+        message(STATUS "Found Qt6: ${Qt6_DIR}")
+    endif()
 else()
     message(WARNING "Qt6 not found (可设置 CMAKE_PREFIX_PATH 指向 Qt 安装目录)。GUI 目标将跳过，仅构建控制台程序。")
 endif()
@@ -69,14 +78,15 @@ set(GUI_SOURCES
 add_library(core_lib STATIC ${CORE_SOURCES})
 
 # 为库设置编译选项（沿用原可执行文件的通用选项）
-target_compile_options(core_lib PRIVATE
-    $<$<CONFIG:Debug>:/Od /Zi /RTC1>
-    $<$<CONFIG:Release>:/O2>
-    $<$<CONFIG:RelWithDebInfo>:/O2 /Zi>
-    $<$<CONFIG:MinSizeRel>:/O1>
-)
+# 这些选项为 MSVC 专用，GCC/Clang 无法识别，因此必须包在 if(MSVC) 中
 if(MSVC)
-    target_compile_options(core_lib PRIVATE /utf-8)
+    target_compile_options(core_lib PRIVATE
+        $<$<CONFIG:Debug>:/Od /Zi /RTC1>
+        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:RelWithDebInfo>:/O2 /Zi>
+        $<$<CONFIG:MinSizeRel>:/O1>
+        /utf-8
+    )
 endif()
 
 # ===== 2. 创建冰矛控制台程序 =====
@@ -95,7 +105,7 @@ set_target_properties(dps_simulator_beam PROPERTIES
 
 # ===== 4. 创建 GUI 程序（需要 Qt6）=====
 # GUI 需要包含所有职业的实现源文件
-if(Qt6_FOUND)
+if(BUILD_GUI)
     add_executable(dps_simulator_gui ${ICICLE_SOURCES} ${BEAM_SOURCES} ${GUI_SOURCES})
     target_link_libraries(dps_simulator_gui PRIVATE core_lib Qt6::Core Qt6::Widgets Qt6::Gui)
     set_target_properties(dps_simulator_gui PROPERTIES

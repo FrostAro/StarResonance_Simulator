@@ -276,7 +276,9 @@ public:
 class ActionInfo : public Info
 {
 public:
-    std::unique_ptr<Action> actionPtr = nullptr;  // Action对象的智能指针
+    // 注意：不要给 unique_ptr<Action> 加 = nullptr 的默认成员初始化器。
+    // GCC 8.1 会因此过早实例化 unique_ptr 析构，而此处 Action 只有前向声明。
+    std::unique_ptr<Action> actionPtr;  // Action对象的智能指针
     double number = 0;                             // 动作相关数值参数
 
     /**
@@ -292,8 +294,10 @@ public:
     ActionInfo& operator=(const ActionInfo&) = delete;
     
     // 允许移动语义（转移所有权）
-    ActionInfo(ActionInfo&&) = default;
-    ActionInfo& operator=(ActionInfo&&) = default;
-    
-    ~ActionInfo() = default;
+    // 注意：这三个函数定义在 Info.cpp，因为 std::unique_ptr<Action> 的析构/移动
+    // 需要 Action 完整类型；若在头文件内联定义，GCC/Clang 会在 Action 只被前向
+    // 声明时实例化 unique_ptr 析构，导致 incomplete type 错误。
+    ActionInfo(ActionInfo&&) noexcept;
+    ActionInfo& operator=(ActionInfo&&) noexcept;
+    ~ActionInfo();
 };

@@ -3,15 +3,17 @@
 #include "Person.h"
 #include "AutoAttack.h"
 #include "creators.hpp"
+#include <cerrno>
 #include <chrono>
 #include <ctime>
-#include <filesystem>
 #include <iomanip>
 #include <sstream>
 #include <typeinfo>
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/stat.h>
 #endif
 
 std::ofstream SimulationLog::m_file;
@@ -47,6 +49,46 @@ static std::string getExecutableDir()
 #endif
 }
 
+// 创建单级目录，已存在视为成功
+static bool createSingleDirectory(const std::string& path)
+{
+#ifdef _WIN32
+    return CreateDirectoryA(path.c_str(), nullptr) != 0 ||
+           GetLastError() == ERROR_ALREADY_EXISTS;
+#else
+    return ::mkdir(path.c_str(), 0755) == 0 || errno == EEXIST;
+#endif
+}
+
+// 递归创建多级目录（替代 std::filesystem::create_directories，
+// GCC 8.1/MinGW 的 <filesystem> 头存在编译错误，且 MSVC 下也更轻量）
+static void createDirectoriesRecursively(const std::string& path)
+{
+    if (path.empty())
+        return;
+
+    std::string prefix;
+    for (size_t i = 0; i < path.size(); ++i)
+    {
+        const char ch = path[i];
+        prefix += ch;
+
+        if (ch == '/' || ch == '\\' || i + 1 == path.size())
+        {
+            // 跳过根目录与盘符根（如 "/"、"C:"、"C:/"）
+            if (prefix == "/" || prefix == "\\")
+                continue;
+            if (prefix.size() == 2 && prefix[1] == ':')
+                continue;
+            if (prefix.size() == 3 && prefix[1] == ':' &&
+                (prefix[2] == '/' || prefix[2] == '\\'))
+                continue;
+
+            createSingleDirectory(prefix);
+        }
+    }
+}
+
 // 生成时间戳：YYYYMMDD-HHMMSS（用于文件名）
 static std::string currentTimestamp()
 {
@@ -76,7 +118,7 @@ bool SimulationLog::begin(const std::string& profession, const Person* person, c
 #else
     const std::string logBase = getExecutableDir();  // 未定义时退回 exe 目录
 #endif
-    std::filesystem::create_directories(logBase + "/log");
+    createDirectoriesRecursively(logBase + "/log");
     // 命名：log-时间-入口(beam/icicle/gui)-编译方式(Debug/Release).txt
     const std::string filename = logBase + "/log/log-" + currentTimestamp() + "-" + profession + "-" + buildType() + ".txt";
     m_file.open(filename, std::ios::out | std::ios::trunc);

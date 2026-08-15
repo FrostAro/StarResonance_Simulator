@@ -3,6 +3,7 @@
 #include "Action.h"
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 // 前向声明
 class Skill;
@@ -57,6 +58,7 @@ DamageInfo &DamageInfo::operator=(const DamageInfo &other)
     this->luckyNum = other.luckyNum;
     this->isCritical = other.isCritical;
     this->isLucky = other.isLucky;
+    this->time = other.time;
     return *this;
 }
 
@@ -276,3 +278,8 @@ ActionInfo::ActionInfo(double number, std::unique_ptr<Action> actionPtr)
             : actionPtr(std::move(actionPtr)),  // 转移所有权
               number(number)
             {}
+
+// 以下三个特殊成员函数必须在 Action 完整类型可用处定义
+ActionInfo::ActionInfo(ActionInfo&&) noexcept = default;
+ActionInfo& ActionInfo::operator=(ActionInfo&&) noexcept = default;
+ActionInfo::~ActionInfo() = default;

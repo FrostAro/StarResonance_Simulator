@@ -8,9 +8,9 @@
 #include "Buff.h"
 #include "Skill.h"
 #include "Info.h"
+#include "AutoAttack.h"
+#include "Statistics.h"
 
-class AutoAttack;
-class DamageStatistics;
 class Skill;
 class Buff;
 class FightingFantasy;
@@ -59,9 +59,6 @@ private:
 	mutable std::mt19937 randomEngine;                              // 随机数引擎（线程安全）
 	mutable std::uniform_int_distribution<int> intDist{0, 9999};    
 
-	// 根据当前急速面板重新计算施法速度和攻击速度
-    void recalcSpeedFromQuickness();
-
 protected:
     // ==== 受保护成员：子类可以访问 ====
     std::vector<std::unique_ptr<Buff>> buffList{};                  // 生效中的buff列表
@@ -77,6 +74,9 @@ protected:
 	double primaryAttributeRatio = 0;	// 主属性转化率：主属性 → 攻击力
 	double coolDownReduce = 0;			// 冷却缩减
 	double proficientAmplification = 0;	// 精通增效
+
+	// 根据当前急速面板重新计算施法速度和攻击速度
+    void recalcSpeedFromQuickness();
 	
 public:
 	friend class Initializer;

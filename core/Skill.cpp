@@ -1,6 +1,8 @@
 #include "Skill.h"
 #include "AutoAttack.h"
 #include <iostream>
+#include <algorithm>
+#include <cctype>
 
 // ============================================================================
 // 静态成员初始化

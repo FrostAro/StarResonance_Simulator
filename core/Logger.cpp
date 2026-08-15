@@ -1,5 +1,7 @@
 #include "Logger.h"
 #include <algorithm>
+#include <cctype>
+#include <ctime>
 
 // ============================================================================
 // 静态成员初始化
