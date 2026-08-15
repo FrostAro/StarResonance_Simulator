@@ -552,7 +552,7 @@ BeamMagnumOpusBuff::BeamMagnumOpusBuff(Person *p, double)
 
 void BeamMagnumOpusBuff::listenerCallback(DamageInfo &info)
 {
-    // 射线出伤10%概率使精通翻倍
+    // 射线出伤使精通翻倍
     if (info.skillName == Beam::name)
     {
         
@@ -1219,7 +1219,7 @@ void InstantCooldownBuff_Beam::listenerCallback(double n)
     this->count += n;
     if(this->count >= this->triggerNum)
     {
-        this->p->triggerAction<CDReduceAction>(1.3,FrostWind::name);
+        this->p->triggerAction<CDReduceAction>(130,FrostWind::name);
         this->count -= triggerNum;
     }
 }
@@ -1289,13 +1289,7 @@ WaterSpoutRealBuff::WaterSpoutRealBuff(Person *p, double n) : RealFactor(p)
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
-    this->triggerNum = 720;
-    this->number = 0.0573; // 龙卷伤害增加
-
-    auto info = std::make_unique<FactorEnergyListener>(
-        this->getBuffID(), [this](double n)
-        { this->listenerCallback(n); });
-    AddFactorEnergyAction::addListener(std::move(info));
+    this->number = 0.0; // 龙卷伤害增加
 
     auto info2 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
@@ -1303,24 +1297,14 @@ WaterSpoutRealBuff::WaterSpoutRealBuff(Person *p, double n) : RealFactor(p)
     CreateSkillAction::addListener(std::move(info2));
 }
 
-void WaterSpoutRealBuff::listenerCallback(double n)
-{
-    this->changeEnergy(n);
-    if(this->presentEnergy >= this->triggerNum)
-    {
-        this->canTrigger = true;
-    }
-}
-
 void WaterSpoutRealBuff::listenerCallback2(Skill* const skill)
 {
-    if(skill->getSkillName() == WaterSpout::name && this->canTrigger)
+    if(skill->getSkillName() == WaterSpout::name)
     {
         //this->p->triggerAction<CDRefreshAction>(0,WaterSpout::name);
-        skill->damageTriggerInterval /= 2;
-        skill->dreamIncreaseAdd += this->number / 2;
-        this->changeEnergy(-this->triggerNum);
-        this->canTrigger = false;
+        // 3风
+        skill->damageTriggerInterval /= 3;
+        skill->dreamIncreaseAdd += this->number / 3;
     }
 }
 
@@ -1330,7 +1314,6 @@ std::string WaterSpoutRealBuff::getBuffName() const { return WaterSpoutRealBuff:
 
 WaterSpoutRealBuff::~WaterSpoutRealBuff()
 {
-    AddFactorEnergyAction::deleteListener(this->getBuffID());
     CreateSkillAction::deleteListener(this->getBuffID());
 }
 
@@ -1368,7 +1351,7 @@ std::string IceRealBuff::getBuffName() const { return IceRealBuff::name; }
 
 IceRealBuff::~IceRealBuff()
 {
-    AddFactorEnergyAction::deleteListener(this->getBuffID());
+    AttackAction::deleteListener(this->getBuffID());
 }
 
 // 9冰
@@ -1851,4 +1834,51 @@ std::string CoefficientAdjustmentBuff_Beam::getBuffName() const { return Coeffic
 CoefficientAdjustmentBuff_Beam::~CoefficientAdjustmentBuff_Beam() 
 {
     AttackAction::deleteListener(this->getBuffID());
+}
+
+// 其他额外杂项增益
+std::string OtherExtraEnhanceBuff::name = "OtherExtraEnhanceBuff";
+
+OtherExtraEnhanceBuff::OtherExtraEnhanceBuff(Person *p, double) : Buff(p)
+{
+    this->isInherent = true;
+    this->duration = kPermanentBuffDuration;
+    this->maxDuration = this->duration;
+
+    // 属性部分
+    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.0125);
+    this->p->elementATK += 120;
+    this->p->triggerAction<DreamIncreaseModifyAction>(0.014*2+0.016+0.012);
+    this->p->triggerAction<AttackIncreaseModifyAction>(0.025+0.016*2);
+
+    auto info = std::make_unique<CreateSkillListener>(
+        this->getBuffID(), [this](Skill* const skill)
+        { this->listenerCallback(skill); });
+    CreateSkillAction::addListener(std::move(info));
+}
+
+void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill) 
+{
+    if(skill->getSkillName() == WaterSpout::name)
+    {
+        skill->dreamIncreaseAdd += 0.0523*2 + 0.0597*3 + 0.0933;
+    }
+    if(skill->getSkillName() == Beam::name)
+    {
+        skill->dreamIncreaseAdd += 0.0288*2 + 0.0384*2;
+    }
+}
+
+void OtherExtraEnhanceBuff::update(double) {}
+bool OtherExtraEnhanceBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string OtherExtraEnhanceBuff::getBuffName() const { return OtherExtraEnhanceBuff::name; }
+
+OtherExtraEnhanceBuff::~OtherExtraEnhanceBuff() 
+{
+    CreateSkillAction::deleteListener(this->getBuffID());
+    // 属性部分
+    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.0125);
+    this->p->elementATK -= 120;
+    this->p->triggerAction<DreamIncreaseModifyAction>(-(0.014*2+0.016+0.012));
+    this->p->triggerAction<AttackIncreaseModifyAction>(-(0.025+0.016*2));
 }

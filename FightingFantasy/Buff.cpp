@@ -107,18 +107,18 @@ YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
 void YGLWSBuff::listenerCallback(const DamageInfo &) {}
 void YGLWSBuff::update(const double)
 {
-    // 暴击上限：超过60%的部分按30%折算为负暴击修正，暴击回落到60%以下时还原
+    // 暴击上限：超过60%的部分按30%折算为爆伤修正，暴击回落到60%以下时还原
     const double currentCritical = this->p->getCritical();
     const double targetReduction = (currentCritical > 0.6) ? (currentCritical - 0.6) * 0.3 : 0.0;
     if (targetReduction != this->lastReduction)
     {
         if (this->lastReduction != 0.0)
         {
-            this->p->triggerAction<CriticalPercentModifyAction>(-this->lastReduction);
+            this->p->triggerAction<CriticalDamageModifyAction>(-this->lastReduction);
         }
         if (targetReduction != 0.0)
         {
-            this->p->triggerAction<CriticalPercentModifyAction>(targetReduction);
+            this->p->triggerAction<CriticalDamageModifyAction>(targetReduction);
         }
         this->lastReduction = targetReduction;
     }
@@ -130,6 +130,7 @@ YGLWSBuff::~YGLWSBuff()
 {
     this->p->triggerAction<CriticalCountModifyAction>(-14000);
     this->p->triggerAction<CriticalPercentModifyAction>(-0.14);
+    this->p->triggerAction<CriticalDamageModifyAction>(-this->lastReduction);
 }
 
 // 嗜血毛球

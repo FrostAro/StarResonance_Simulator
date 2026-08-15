@@ -531,11 +531,8 @@ class WaterSpoutRealBuff : public RealFactor
 {
 public:   
     static std::string name;
-    double triggerNum = 720;
-    bool canTrigger = false;
 
 public:
-    void listenerCallback(double n);
     void listenerCallback2(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -669,4 +666,19 @@ public:
 
     ExtremeLuckBuff_Beam(Person *p, double n);
     ~ExtremeLuckBuff_Beam();
+};
+
+class OtherExtraEnhanceBuff : public Buff  //极运
+{
+public:
+    static std::string name;
+
+public:
+    void listenerCallback(Skill* const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    OtherExtraEnhanceBuff(Person *p, double n);
+    ~OtherExtraEnhanceBuff();
 };

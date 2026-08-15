@@ -30,7 +30,7 @@ class SimulationWorker;
  * 
  * 工作流程：
  * 1. Person调用triggerAction()触发事件
- * 2. triggerAction()创建Action对象并推入队列
+ * 2. triggerAction()创建Action对象并调用execute()
  * 3. Person::updateAction()调用execute()
  * 4. execute()遍历监听器并触发回调
  * 

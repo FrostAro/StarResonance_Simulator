@@ -65,9 +65,10 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     this->triggerAction<AttackIncreaseModifyAction>(0.0000001);
     initializeIncrease();
     changeDamageIncrease(0.08);
-    changeElementIncreaseByElementIncrease(0.1);
-    changeEnhenceIncrease(0.06);
+    changeElementIncreaseByElementIncrease(0.15);
+    //changeEnhenceIncrease(0.06);
     // changeLuckyMultiplyingByAddMultiplying(0.1);
+    this->recalcSpeedFromQuickness();
 
 }
 

@@ -31,8 +31,8 @@ void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
     if (timer > 5400 && timer < 6500)      tryTriggerStage(3);
     if (timer > 8100 && timer < 9500)      tryTriggerStage(4);
     if (timer > 10800 && timer < 12800)    tryTriggerStage(5);
-    if (timer > 13500 && timer < 14500)    tryTriggerStage(6);
-    if (timer > 16300 && timer < 17500)    tryTriggerStage(7);
+    if (timer > 13500 && timer < 18000)    tryTriggerStage(6);
+    if (timer > 16300 && timer < 17500)    tryTriggerStage(7);  // 触发受幻想CD(8000ms)约束，实际≈16525就绪
 
     windowPeriodLogic();
     checkAndFinishOutBurst();
@@ -73,7 +73,7 @@ void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
         maniAddPriorSkillList(Vortex::name);
         maniAddPriorSkillList(FrostWind::name);
         maniAddPriorSkillList(Beam::name);
-        maniAddPriorSkillList(WaterSpout::name);
+        //maniAddPriorSkillList(WaterSpout::name);
         windowSkillTriggered = true;
     }
 
@@ -289,14 +289,14 @@ AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
         { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段6
-        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段7
         { { {Ultimate_Beam::name, false}, {SXMQ::name, false}, {LSZZ::name, false}, {Vortex::name, false},
             {FrostWind::name, false}, {Flood_Beam::name, false} },
           {SXMQ::name, LSZZ::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
            Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 阶段7
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+     }) {}
 
 // -------------------- 无幻想版本 --------------------
 // 无幻想 AutoAttack - 仅使用基础技能，不依赖任何 FightingFantasy 技能

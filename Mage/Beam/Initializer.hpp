@@ -95,10 +95,14 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();
+        registerCertainBuff<OtherExtraEnhanceBuff>();
 
         //心相仪与装备套装效果
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
-        registerCertainBuff<IceArrowLuckyRealBuff>();
+        //registerCertainBuff<IceArrowLuckyRealBuff>();
+        registerCertainBuff<WaterSpoutRealBuff>();
+        registerCertainBuff<NineIceBuff>();
+        registerCertainBuff<IceRealBuff>();
         registerCertainBuff<ConquerorBuff>();
         registerCertainBuff<StackMomentumBuff>();
         registerCertainBuff<BreakThroughBuff>();

@@ -97,7 +97,7 @@ DamageInfo Person::Damage(const Skill *skill)
             /*梦境增伤区*/
             * (1 + this->dreamIncrease + skill->dreamIncreaseAdd)
             /*技能最终伤害提升区*/
-            * (1 + skill->finalIncreaseAdd);
+            * (1 + skill->finalIncreaseAdd + this->finalIncrease);
 
         // 暴击期望
         double crit = 0;
@@ -148,9 +148,9 @@ double Person::luckyDamage(const Skill *skill) const
                         * (1 + this->elementIncrease) 
                         * (1 + this->damageIncrease + this->Lucky + skill->getLuckyIncreaseAdd()) 
                         * (1 + this->almightyIncrease)
-                        * (1 + this->dreamIncrease + this->luckyDreamIncrease)
+                        * (1 + this->dreamIncrease + this->luckyDreamIncrease + skill->getLuckyDreamIncreaseAdd())
                         * (1 + this->enhanceIncrease)
-                        * (1 + this->luckyFinalIncrease)
+                        * (1 + this->luckyFinalIncrease + skill->getLuckyFinalIncreaseAdd())
                         * this->Lucky;
 
     // 幸运伤害也可暴击
@@ -568,7 +568,7 @@ void Person::createSkill(std::unique_ptr<Skill> newSkill)
     { // 如果为CD技能，则更新CD和层数
         // 更新技能的层数和CD
         this->skillCDList.at(a)->getStackRef() -= 1;
-        if (this->skillCDList.at(a)->getMaxStack() > 1)
+        //if (this->skillCDList.at(a)->getMaxStack() > 1)
         {
             if (this->skillCDList.at(a)->getStackRef() == this->skillCDList.at(a)->getMaxStack() - 1)
             {
@@ -703,7 +703,7 @@ double Person::changeCriticalDamage(const double criticalDamage)
 
 double Person::setLuckyMultiplying()
 {
-    // 41.25为基础倍率，0.75为幸运每增加1%增加的倍率
+    // 41.25为基础倍率，0.25为幸运每增加1%增加的倍率
     this->luckyMultiplying = (41.25 + (this->Lucky - kBaseLuckyPercent) * 100 * 0.25) / 100;
     return this->luckyMultiplying;
 }
