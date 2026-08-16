@@ -317,6 +317,13 @@ class EquipmentSetEffectBuff_Beam : public Buff
 {
 public:   
     static std::string name;
+    int timer = 0; // 计时器
+    int triggerInterval = 0; // 触发间隔
+    double totalChange = 0; // 上次修改的值
+    bool addedAttribute = false; // 是否已添加属性
+    bool canForWSpt = false; // 是否可以触发水花喷涌
+    int count = 0; // 计数器
+    int triggerNum = 0; // 触发所需次数
 
 public:
     void listenerCallback(Skill* const skill);
@@ -504,11 +511,29 @@ public:
     static std::string name;
 
 public:
+    void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
     FloodLuckyBuff(Person *p, double n);
     ~FloodLuckyBuff() override;
+};
+
+// 水圈幸运
+class VortexLuckyDoubledBuff : public Buff
+{
+public:   
+    static std::string name;
+    int timer = 0;
+
+public:
+    void update(double deltaTime) override;
+    void listenerCallback(double n);
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    VortexLuckyDoubledBuff(Person *p, double n);
+    ~VortexLuckyDoubledBuff() override;
 };
 
 class CoefficientAdjustmentBuff_Beam : public Buff  //系数调整

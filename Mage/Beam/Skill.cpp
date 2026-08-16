@@ -281,7 +281,7 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
 
     this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
-    this->finalIncreaseAdd = 1;
+    this->finalIncreaseAdd = p->getProficient() * 2;
 
     this->IceArrow_Beam::setSkillType();
     p->triggerAction<ResourceRevertAction>(1);
@@ -325,7 +325,7 @@ FrostBurst::FrostBurst(Person *p) : InstantSkill()
 
     this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
-    this->finalIncreaseAdd = 1;
+    this->finalIncreaseAdd = p->getProficient() * 2;
 
     this->FrostBurst::setSkillType();
 }

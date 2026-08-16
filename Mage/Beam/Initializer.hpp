@@ -105,14 +105,20 @@ class Initializer_Mage_Beam : public Initializer
 
         //心相仪与装备套装效果
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
-        //registerCertainBuff<IceArrowLuckyRealBuff>();
-        registerCertainBuff<WaterSpoutRealBuff>();
-        registerCertainBuff<NineIceBuff>();
-        registerCertainBuff<IceRealBuff>();
         registerCertainBuff<ConquerorBuff>();
         registerCertainBuff<StackMomentumBuff>();
         registerCertainBuff<BreakThroughBuff>();
         registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
+        registerCertainBuff<EquipmentSetEffectBuff_Beam>();
+
+        // 急速精通选择
+        registerCertainBuff<WaterSpoutRealBuff>();
+        registerCertainBuff<NineIceBuff>();
+        registerCertainBuff<IceRealBuff>();
+        // 幸运选择
+        // registerCertainBuff<IceArrowLuckyRealBuff>();
+        // registerCertainBuff<FloodLuckyBuff>();
+        // registerCertainBuff<VortexLuckyDoubledBuff>();
     }
 
 public:
