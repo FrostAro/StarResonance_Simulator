@@ -1,5 +1,6 @@
 #include "Action.h"
 #include "../../core/Person.h"
+#include "../../core/Logger.h"
 #include "Person.h"
 
 // 射线部分
@@ -17,6 +18,8 @@ void EnergyRevertAction_Beam::execute(double n, Person *p)
     double proficient = p->getProficient();
     Mage_Beam* Beam_p = static_cast<Mage_Beam*>(p);
     n *= (1 + proficient * Beam_p->proficientToEnergyRatio);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                        "proficient energy bonus applied, value: " + std::to_string(n));
     EnergyRevertAction::execute(n,p);
 }
 

@@ -16,6 +16,10 @@ AttackAction::AttackAction(const Skill* const skill)
 void AttackAction::execute(const double, Person *p)
 {
     auto damageInfo = p->Damage(skill);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                        "attack executed, skill: " + damageInfo.skillName +
+                            ", damage: " + std::to_string(damageInfo.damageNum) +
+                            ", lucky: " + std::to_string(damageInfo.luckyNum));
     // 遍历监听，触发回调
     for (const auto &listener : AttackAction::listeners)
     {
@@ -34,6 +38,9 @@ std::string ResourceConsumeAction::name = "ResourceConsumeAction";
 void ResourceConsumeAction::execute(const double n, Person *p)
 {
     p->consumeResource(static_cast<int>(n));
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                        "triggered, consumed resource: " + std::to_string(n) +
+                            ", current resource: " + std::to_string(p->resourceNum));
     // 遍历监听，触发回调
     for (const auto &listener : ResourceConsumeAction::listeners)
     {
@@ -134,6 +141,9 @@ CDReduceAction::CDReduceAction(std::string skillName)
 void CDReduceAction::execute(const double n, Person *p)
 {
     p->reduceSkillCD(this->skillName, n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                        "triggered, reduced CD of " + this->skillName +
+                            " by " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : CDReduceAction::listeners)
     {
@@ -183,6 +193,10 @@ void CDRefreshAction::execute(const double n, Person *p)
         {
             skill->getCurrentCD_Ref() = skill->getMaxCD();
         }
+        Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                            "triggered, refreshed CD of " + this->skillName +
+                                ", Stack: " + std::to_string(skill->getStackRef()) +
+                                "/" + std::to_string(skill->getMaxStack()));
         // 遍历监听，触发回调
         for (const auto &listener : CDRefreshAction::listeners)
         {
@@ -312,6 +326,8 @@ std::string AddFactorEnergyAction::name = "AddFactorEnergyAction";
 
 void AddFactorEnergyAction::execute(double n, Person *p)
 {
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
+                        "triggered, add factor energy: " + std::to_string(n));
     for (const auto &listener : AddFactorEnergyAction::listeners)
     {
         if (listener && listener->callback)
@@ -329,6 +345,7 @@ CriticalCountModifyAction::CriticalCountModifyAction() = default;
 void CriticalCountModifyAction::execute(double n, Person *p)
 {
     p->changeCriticalCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     for (const auto &listener : CriticalCountModifyAction::listeners)
     {
@@ -346,6 +363,7 @@ CriticalPercentModifyAction::CriticalPercentModifyAction() = default;
 void CriticalPercentModifyAction::execute(double n, Person *p)
 {
     p->changeCritialPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     for (const auto &listener : CriticalPercentModifyAction::listeners)
     {
@@ -363,6 +381,7 @@ QuicknessCountModifyAction::QuicknessCountModifyAction() = default;
 void QuicknessCountModifyAction::execute(double n, Person *p)
 {
     p->changeQuicknessCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : QuicknessCountModifyAction::listeners)
@@ -381,6 +400,7 @@ QuicknessPercentModifyAction::QuicknessPercentModifyAction() = default;
 void QuicknessPercentModifyAction::execute(double n, Person *p)
 {
     p->changeQuicknessPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : QuicknessPercentModifyAction::listeners)
     {
@@ -398,6 +418,7 @@ LuckyCountModifyAction::LuckyCountModifyAction() = default;
 void LuckyCountModifyAction::execute(double n, Person *p)
 {
     p->changeLuckyCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : LuckyCountModifyAction::listeners)
@@ -416,6 +437,7 @@ LuckyPercentModifyAction::LuckyPercentModifyAction() = default;
 void LuckyPercentModifyAction::execute(double n, Person *p)
 {
     p->changeLuckyPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : LuckyPercentModifyAction::listeners)
@@ -434,6 +456,7 @@ ProficientCountModifyAction::ProficientCountModifyAction() = default;
 void ProficientCountModifyAction::execute(double n, Person *p)
 {
     p->changeProficientCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : ProficientCountModifyAction::listeners)
@@ -452,6 +475,7 @@ ProficientPercentModifyAction::ProficientPercentModifyAction() = default;
 void ProficientPercentModifyAction::execute(double n, Person *p)
 {
     p->changeProficientPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : ProficientPercentModifyAction::listeners)
@@ -470,6 +494,7 @@ AlmightyCountModifyAction::AlmightyCountModifyAction() = default;
 void AlmightyCountModifyAction::execute(double n, Person *p)
 {
     p->changeAlmightyCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : AlmightyCountModifyAction::listeners)
@@ -488,6 +513,7 @@ AlmightyPercentModifyAction::AlmightyPercentModifyAction() = default;
 void AlmightyPercentModifyAction::execute(double n, Person *p)
 {
     p->changeAlmightyPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
     for (const auto &listener : AlmightyPercentModifyAction::listeners)
@@ -506,6 +532,7 @@ PrimaryAttributesCountModifyAction::PrimaryAttributesCountModifyAction() = defau
 void PrimaryAttributesCountModifyAction::execute(double n, Person *p)
 {
     p->changePrimaryAttributesByCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : PrimaryAttributesCountModifyAction::listeners)
     {
@@ -523,6 +550,7 @@ PrimaryAttributesPercentModifyAction::PrimaryAttributesPercentModifyAction() = d
 void PrimaryAttributesPercentModifyAction::execute(double n, Person *p)
 {
     p->changePrimaryAttributesByPercent(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : PrimaryAttributesPercentModifyAction::listeners)
     {
@@ -540,6 +568,7 @@ CastingSpeedPercentModifyAction::CastingSpeedPercentModifyAction() = default;
 void CastingSpeedPercentModifyAction::execute(double n, Person *p)
 {
     p->addCastingSpeed(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : CastingSpeedPercentModifyAction::listeners)
     {
@@ -557,6 +586,7 @@ AttackSpeedPercentModifyAction::AttackSpeedPercentModifyAction() = default;
 void AttackSpeedPercentModifyAction::execute(double n, Person *p)
 {
     p->addAttackSpeed(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : AttackSpeedPercentModifyAction::listeners)
     {
@@ -574,6 +604,7 @@ AttackCountModifyAction::AttackCountModifyAction() = default;
 void AttackCountModifyAction::execute(double n, Person *p)
 {
     p->changeATKCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : AttackCountModifyAction::listeners)
     {
@@ -591,6 +622,7 @@ AttackIncreaseModifyAction::AttackIncreaseModifyAction() = default;
 void AttackIncreaseModifyAction::execute(double n, Person *p)
 {
     p->changeAattackIncrease(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : AttackIncreaseModifyAction::listeners)
     {
@@ -608,6 +640,7 @@ RefineATKCountModifyAction::RefineATKCountModifyAction() = default;
 void RefineATKCountModifyAction::execute(double n, Person *p)
 {
     p->changeRefineATKCount(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : RefineATKCountModifyAction::listeners)
     {
@@ -625,6 +658,7 @@ DamageIncreaseModifyAction::DamageIncreaseModifyAction() = default;
 void DamageIncreaseModifyAction::execute(double n, Person *p)
 {
     p->changeDamageIncrease(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : DamageIncreaseModifyAction::listeners)
     {
@@ -642,6 +676,7 @@ ElementIncreaseModifyAction::ElementIncreaseModifyAction() = default;
 void ElementIncreaseModifyAction::execute(double n, Person *p)
 {
     p->changeElementIncreaseByElementIncrease(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : ElementIncreaseModifyAction::listeners)
     {
@@ -659,6 +694,7 @@ AlmightyIncreaseModifyAction::AlmightyIncreaseModifyAction() = default;
 void AlmightyIncreaseModifyAction::execute(double n, Person *p)
 {
     p->changeAlmightyIncrease(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : AlmightyIncreaseModifyAction::listeners)
     {
@@ -676,6 +712,7 @@ CriticalDamageModifyAction::CriticalDamageModifyAction() = default;
 void CriticalDamageModifyAction::execute(double n, Person *p)
 {
     p->changeCriticalDamage(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : CriticalDamageModifyAction::listeners)
     {
@@ -693,6 +730,7 @@ DreamIncreaseModifyAction::DreamIncreaseModifyAction() = default;
 void DreamIncreaseModifyAction::execute(double n, Person *p)
 {
     p->changeDreamIncrease(n);
+    Logger::debugAction(AutoAttack::getTimer(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
     for (const auto &listener : DreamIncreaseModifyAction::listeners)
     {

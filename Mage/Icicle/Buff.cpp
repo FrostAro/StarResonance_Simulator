@@ -127,7 +127,12 @@ IceCountBuff::~IceCountBuff()
     ResourceConsumeAction::deleteListener(this->getBuffID());
 }
 
-void IceCountBuff::listenerCallback(const double n) { this->addStack(n); }
+void IceCountBuff::listenerCallback(const double n)
+{
+    this->addStack(n);
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+                      "resource consumed, stack: " + std::to_string(this->stack));
+}
 
 void IceCountBuff::update(const double)
 {
@@ -170,6 +175,7 @@ void FloodBuff_Icicle::update(double)
     if (static_cast<int>(duration) % 100 == 0)
     {
         this->p->triggerAction<EnergyRevertAction>(this->number);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "energy reverted");
     }
 }
 
@@ -234,11 +240,14 @@ void IceRevertBuff::update(const double)
         if (static_cast<int>(duration) % 300 == 0)
         {
             this->p->triggerAction<ResourceRevertAction>(this->number);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "resource reverted");
+            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "resource reverted");
         }
     }
     if (this->duration == 0)
     {
         this->p->triggerAction<ResourceRevertAction>(this->number);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "resource reverted");
     }
 }
 bool IceRevertBuff::shouldBeRemoved() { return this->duration < 0; }
@@ -319,6 +328,7 @@ void EndlessColdBuff::listenerCallback(double) {}
 void EndlessColdBuff::update(double)
 {
     this->p->triggerAction<CDRefreshAction>(0, Meteorite::name);
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Meteorite CD refreshed");
     // Logger::debugBuff(AutoAttack::getTimer(),
     //                     this->getBuffName(),
     //                     " - triggered ");
@@ -376,6 +386,7 @@ void MeteoriteRefreshBuff::listenerCallback(DamageInfo &info) const
             (info.skillName == Spear::name))
         {
             this->p->triggerAction<CDRefreshAction>(0, Meteorite::name);
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Meteorite CD refreshed");
             Logger::debugBuff(AutoAttack::getTimer(),
                               this->getBuffName(),
                               " - triggered by skill: " + info.skillName);
@@ -482,6 +493,7 @@ void MeteoriteSynergyBuff::listenerCallback(DamageInfo &info) const
 
     // 6. 触发创建技能
     this->p->triggerAction<CreateSkillAction>(0, SynergyMeteorite::name);
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "SynergyMeteorite created");
 }
 
 void MeteoriteSynergyBuff::update(const double) {}
@@ -617,6 +629,7 @@ void EquipmentSetEffectBuff_Icicle::update(const double)
     {
         this->stack -= 25;
         this->p->triggerAction<CreateBuffAction>(0, IceRevertBuff::name);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "IceRevertBuff created");
     }
 }
 
@@ -667,6 +680,7 @@ void FantasyImpactBuff::listenerCallback(DamageInfo &info)
             this->triggerTimer >= this->triggerInterval)
         {
             this->p->triggerAction<CreateSkillAction>(0, FantasyImpact::name);
+            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "FantasyImpact created");
             // 触发幻想冲击
             // 时阶加伤效果写在对应skill中
             this->triggerTimer -= this->triggerInterval;
@@ -675,6 +689,7 @@ void FantasyImpactBuff::listenerCallback(DamageInfo &info)
         if (static_cast<int>(this->stack) % this->extremeLuckTriggerStack == 0)
         {
             this->p->triggerAction<CreateBuffAction>(0, ExtremeLuckFactor::name);
+            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "ExtremeLuckFactor created");
         }
     }
 }
@@ -747,6 +762,7 @@ void OccupationalFactor_Icicle::listenerCallback(DamageInfo &info)
     {
         // 幸运伤害增加58.3%
         info.luckyNum *= (1 + 0.583);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "lucky damage increased 58.3%");
     }
 }
 
@@ -755,6 +771,8 @@ void OccupationalFactor_Icicle::listenerCallback2(Skill *const skill)
     if (skill->getSkillName() == FrostComet::name || skill->getSkillName() == PierceSpear::name)
     {
         skill->dreamIncreaseAdd += 0.35;
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+                          "skill dreamIncreaseAdd +0.35, skill: " + skill->getSkillName());
     }
 }
 
@@ -790,6 +808,7 @@ void InstantCooldownBuff_Icicle::listenerCallback(double n)
     if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CDReduceAction>(1.3,Meteorite::name);
+        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Meteorite CD reduced");
         this->count -= triggerNum;
     }
 }
