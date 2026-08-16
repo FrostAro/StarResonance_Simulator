@@ -448,6 +448,7 @@ QWidget *MainWindow::createInputPanel()
     m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
     m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
+    m_fantasyCombo->addItem("游子 + 嗜血毛球");
     mainLayout->addWidget(classBox);
 
     // ---- 基础属性 ----

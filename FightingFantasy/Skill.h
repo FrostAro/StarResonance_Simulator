@@ -98,3 +98,17 @@ public:
 
 	explicit LSZZ(Person *p);
 };
+
+class YZ : public FightingFantasy, public InstantSkill
+{ // 游子
+public:
+	static std::string name;
+
+	void setSkillType() override;
+	void trigger(Person *p) override;
+	std::string getSkillName() const override;
+	void setPassiveEffect(Person *p) override;
+    void removePassiveEffect(Person *p) override;
+
+	explicit YZ(Person *p);
+};

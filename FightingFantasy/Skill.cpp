@@ -271,12 +271,12 @@ std::string HYXZ::getSkillName() const
 
 void HYXZ::setPassiveEffect(Person *p)
 {
-    p->triggerAction<ProficientCountModifyAction>(8960);
+    //p->triggerAction<ProficientCountModifyAction>(89600);
 }
 
 void HYXZ::removePassiveEffect(Person *p)
 {
-    p->triggerAction<ProficientCountModifyAction>(-8960);
+    //p->triggerAction<ProficientCountModifyAction>(-89600);
 }
 
 // 掠食蜘蛛
@@ -324,4 +324,51 @@ void LSZZ::setPassiveEffect(Person *p)
 void LSZZ::removePassiveEffect(Person *p)
 {
     p->triggerAction<AttackIncreaseModifyAction>(-0.21);
+}
+
+// 游子
+std::string YZ::name = "YZ";
+
+YZ::YZ(Person *p) : FightingFantasy(), InstantSkill()
+{
+
+    this->maxStack = 1;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 8000;
+    this->MaxchargeCD = 100;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 10;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->YZ::setSkillType();
+}
+
+void YZ::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void YZ::trigger(Person *p)
+{
+    p->triggerAction<CreateBuffAction>(0, YZBuff::name);
+}
+
+std::string YZ::getSkillName() const
+{
+    return YZ::name;
+}
+
+void YZ::setPassiveEffect(Person *p)
+{
+    //p->triggerAction<LuckyCountModifyAction>(89600);
+}
+
+void YZ::removePassiveEffect(Person *p)
+{
+    //p->triggerAction<LuckyCountModifyAction>(-89600);
 }

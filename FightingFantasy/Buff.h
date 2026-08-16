@@ -141,3 +141,20 @@ public:
     LSZZBuff(Person *p, double n);
     ~LSZZBuff() override;
 };
+
+class YZBuff : public Buff
+{
+public:
+    // 游子
+    static std::string name;
+    bool inCallback = false;
+
+public:
+    void listenerCallback(Skill *const skill);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    YZBuff(Person *p, double n);
+    ~YZBuff() override;
+};
