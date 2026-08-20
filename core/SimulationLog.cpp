@@ -180,11 +180,38 @@ bool SimulationLog::begin(const std::string& profession, const Person* person, c
     return true;
 }
 
+// 去除 ANSI 颜色转义码（\033[...m），保证日志文件无颜色、无方框，
+// 控制台仍由 Logger 原样输出颜色。
+static std::string stripAnsiEscapeCodes(const std::string& line)
+{
+    std::string result;
+    result.reserve(line.size());
+    for (size_t i = 0; i < line.size(); ++i)
+    {
+        if (line[i] == '\033' && i + 1 < line.size() && line[i + 1] == '[')
+        {
+            size_t j = i + 2;
+            while (j < line.size() &&
+                   ((line[j] >= '0' && line[j] <= '9') || line[j] == ';'))
+            {
+                ++j;
+            }
+            if (j < line.size() && line[j] == 'm')
+            {
+                i = j;  // 跳过整个转义序列
+                continue;
+            }
+        }
+        result.push_back(line[i]);
+    }
+    return result;
+}
+
 void SimulationLog::writeLine(const std::string& line)
 {
     if (m_file.is_open())
     {
-        m_file << line << "\n";
+        m_file << stripAnsiEscapeCodes(line) << "\n";
         m_file.flush();  // 同步写入
     }
 }
