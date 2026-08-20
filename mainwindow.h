@@ -64,7 +64,8 @@ public:
                               int deltaTime,
                               bool randomSeed,
                               uint32_t seed,
-                              int fantasyConfig);
+                              int fantasyConfig,
+                              int flowConfig);
     ~SimulationWorker(); 
 public slots:
     void run();  // 在子线程中执行模拟循环
@@ -93,6 +94,7 @@ private:
     bool m_randomSeed;
     uint32_t m_seed;
     int m_fantasyConfig;  // 保存幻想配置索引
+    int m_flowConfig;     // 保存流派配置：0=急速精通流，1=幸运流
 };
 
 class ComparisonWorker : public QObject

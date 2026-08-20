@@ -48,6 +48,7 @@ struct SimConfig
     double increasedamage_set = 0;  // 增伤额外值
     double elementdamage_set = 0;   // 元素增伤额外值
     int fantasyConfig = 0;          // 幻想配置
+    int flowConfig = 0;             // 流派配置：0=急速精通流，1=幸运流
 };
 
 // ============================================================================

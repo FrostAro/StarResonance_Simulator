@@ -56,7 +56,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
                                    int deltaTime,
                                    bool randomSeed,
                                    uint32_t seed,
-                                   int fantasyConfig)
+                                   int fantasyConfig,
+                                   int flowConfig)
     : m_profession(profession),
       m_primaryAttr(primaryAttr),
       m_crit(crit),
@@ -77,7 +78,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
       m_deltaTime(deltaTime),
       m_randomSeed(randomSeed),
       m_seed(seed),
-      m_fantasyConfig(fantasyConfig)
+      m_fantasyConfig(fantasyConfig),
+      m_flowConfig(flowConfig)
 {}
 
 SimulationWorker::~SimulationWorker()
@@ -117,7 +119,7 @@ void SimulationWorker::run()
         }
 
         // 初始化角色（装备技能、Buff等）
-        auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig);
+        auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig, m_flowConfig);
         init->Initialize();
 
         // 首次模拟：开启DEBUG供调试日志文件捕获（命名含 -gui-编译方式）
@@ -436,10 +438,11 @@ QWidget *MainWindow::createInputPanel()
         return std::make_pair(box, gl);
     };
 
-    // ---- 职业与幻想 ----
-    auto [classBox, classLayout] = makeGroup("职业");
-    addField(classLayout, 0, "职业", m_professionCombo = new QComboBox);
-    m_professionCombo->addItem("射线 · Beam");
+    // ---- 流派与幻想 ----
+    auto [classBox, classLayout] = makeGroup("流派");
+    addField(classLayout, 0, "流派", m_professionCombo = new QComboBox);
+    m_professionCombo->addItem("急速精通流");
+    m_professionCombo->addItem("幸运流");
     addField(classLayout, 1, "幻想配置", m_fantasyCombo = new QComboBox);
     m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
@@ -630,6 +633,7 @@ SimConfig MainWindow::buildBaseConfig()
     cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
     int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 面板index：0=无幻想 → -1，1..6 → 0..5
     cfg.fantasyConfig = fantasyConfig;  // -1 = 无幻想，直接命中 Person.cpp 的 default 分支
+    cfg.flowConfig = m_professionCombo->currentIndex();  // 0=急速精通流，1=幸运流
     return cfg;
 }
 
@@ -766,6 +770,7 @@ void MainWindow::onRunClicked()
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
     int fantasyConfig = m_fantasyCombo->currentIndex() - 1; // 面板index：0=无幻想 → -1，1..6 → 0..5
+    int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
     // -1 = 无幻想，直接传给 Person.cpp 的 default 分支（无需再转 999）
 
     // 清空之前的日志和表格
@@ -794,7 +799,8 @@ void MainWindow::onRunClicked()
                                     deltaTime,
                                     randomSeed,
                                     seed,
-                                    fantasyConfig);
+                                    fantasyConfig,
+                                    flowConfig);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &SimulationWorker::run);

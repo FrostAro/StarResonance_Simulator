@@ -19,7 +19,7 @@ inline std::unordered_map<std::string, DamageStatistics> runBeamSimulationOnce(
         maxTime, cfg.fantasyConfig);
     person->setRandomSeed(seed);
 
-    auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig);
+    auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig, cfg.flowConfig);
     init->Initialize();
 
     int currentTime = 0;

@@ -5,8 +5,16 @@
 #include "Buff.h"
 #include "Skill.h"
 
+// 射线流派：仅影响 Buff 选择，不影响职业/幻想配置
+enum class BeamFlow
+{
+    QuicknessProficient = 0,  // 急速精通流
+    Lucky = 1                 // 幸运流
+};
+
 class Initializer_Mage_Beam : public Initializer
 {
+    int m_flowConfig = 0;  // 0=急速精通流，1=幸运流
     void equipSkills() override
     {   
         //配置技能:射线
@@ -101,26 +109,32 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();
-        registerCertainBuff<OtherExtraEnhanceBuff>();
+        //registerCertainBuff<OtherExtraEnhanceBuff>();
 
         //心相仪与装备套装效果
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
         registerCertainBuff<ConquerorBuff>();
         registerCertainBuff<StackMomentumBuff>();
         registerCertainBuff<BreakThroughBuff>();
-        registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
+        //registerCertainBuff<CoefficientAdjustmentBuff_Beam>();
         registerCertainBuff<EquipmentSetEffectBuff_Beam>();
 
-        // 急速精通选择
-        registerCertainBuff<WaterSpoutRealBuff>();
-        registerCertainBuff<NineIceBuff>();
-        registerCertainBuff<IceRealBuff>();
-        // 幸运选择
-        // registerCertainBuff<IceArrowLuckyRealBuff>();
-        // registerCertainBuff<FloodLuckyBuff>();
-        // registerCertainBuff<VortexLuckyDoubledBuff>();
+        // 流派专属 Buff：急速精通流 / 幸运流
+        if (m_flowConfig == static_cast<int>(BeamFlow::QuicknessProficient))
+        {
+            registerCertainBuff<WaterSpoutRealBuff>();
+            registerCertainBuff<NineIceBuff>();
+            registerCertainBuff<IceRealBuff>();
+        }
+        else if (m_flowConfig == static_cast<int>(BeamFlow::Lucky))
+        {
+            registerCertainBuff<IceArrowLuckyRealBuff>();
+            registerCertainBuff<FloodLuckyBuff>();
+            registerCertainBuff<VortexLuckyDoubledBuff>();
+        }
     }
 
 public:
-    Initializer_Mage_Beam(Person* p, double deltaTime, int fantasyConfig) : Initializer(p,deltaTime,fantasyConfig){}
+    Initializer_Mage_Beam(Person* p, double deltaTime, int fantasyConfig, int flowConfig = 0)
+        : Initializer(p, deltaTime, fantasyConfig), m_flowConfig(flowConfig) {}
 };
