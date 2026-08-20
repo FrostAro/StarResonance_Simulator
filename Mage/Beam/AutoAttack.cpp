@@ -25,14 +25,26 @@ AutoAttack_Mage_Beam_Base::AutoAttack_Mage_Beam_Base(Person* p, const std::vecto
     : AutoAttack(p), m_stages(stages) {}
 
 void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
-    // 时间窗口完全复制原代码
-    if (timer > 0 && timer < 500)          tryTriggerStage(1);
-    if (timer > 2700 && timer < 4000)      tryTriggerStage(2);
-    if (timer > 5400 && timer < 6500)      tryTriggerStage(3);
-    if (timer > 8100 && timer < 9500)      tryTriggerStage(4);
-    if (timer > 10800 && timer < 12800)    tryTriggerStage(5);
-    if (timer > 13500 && timer < 18000)    tryTriggerStage(6);
-    if (timer > 16300 && timer < 17500)    tryTriggerStage(7);  // 触发受幻想CD(8000ms)约束，实际≈16525就绪
+    if (m_stages.size() == 6) {
+        // LSZZ 六阶段轴：按实测 CD 就绪时点设置。
+        // Flood_Beam 基础 CD 为 4230ms（冷却缩减后约 3807ms），
+        // 第 6 个 Flood 约 16387 启动，接近 16400 上限。
+        if (timer > 0 && timer < 1000)          tryTriggerStage(1);
+        if (timer > 3000 && timer < 4000)       tryTriggerStage(2);
+        if (timer > 6000 && timer < 6800)       tryTriggerStage(3);
+        if (timer > 8900 && timer < 9600)       tryTriggerStage(4);
+        if (timer > 11600 && timer < 12400)     tryTriggerStage(5);
+        if (timer > 16000 && timer < 18000)     tryTriggerStage(6);
+    } else {
+        // 七阶段轴保留原时间窗口
+        if (timer > 0 && timer < 500)           tryTriggerStage(1);
+        if (timer > 2700 && timer < 4000)       tryTriggerStage(2);
+        if (timer > 5400 && timer < 6500)       tryTriggerStage(3);
+        if (timer > 8100 && timer < 9500)       tryTriggerStage(4);
+        if (timer > 10800 && timer < 12800)     tryTriggerStage(5);
+        if (timer > 13500 && timer < 18000)     tryTriggerStage(6);
+        if (timer > 16300 && timer < 17500)     tryTriggerStage(7);
+    }
 
     windowPeriodLogic();
     checkAndFinishOutBurst();
@@ -47,6 +59,10 @@ void AutoAttack_Mage_Beam_Base::tryTriggerStage(int stageIdx) {
     const auto& stage = m_stages[stageIdx - 1];
     if (checkSkills(stage.checkSkills)) {
         Logger::debugAutoAttack(timer, ("outBurst" + std::to_string(stageIdx) + " started").c_str());
+        if (this->p->getNowReleasingSkill() &&
+            this->p->getNowReleasingSkill()->getSkillName() == Beam::name) {
+            (dynamic_cast<Beam*>(this->p->getNowReleasingSkill()))->stop();
+        }
         addSkillsToList(stage.addSkills);
         nextOutBurstSignal = stageIdx + 1;
         isOutBurst = true;
@@ -70,8 +86,13 @@ void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
     if (!nextIsWindow) return;
 
     if (!windowSkillTriggered) {
-        maniAddPriorSkillList(Vortex::name);
-        maniAddPriorSkillList(FrostWind::name);
+        // LSZZ 六阶段轴：窗口期只打射线刷 Flood_Beam CD，
+        // 保留 Vortex/FrostWind CD 供下一阶段爆发使用。
+        //if (m_stages.size() != 6) 
+        {
+            maniAddPriorSkillList(Vortex::name);
+            maniAddPriorSkillList(FrostWind::name);
+        }
         maniAddPriorSkillList(Beam::name);
         //maniAddPriorSkillList(WaterSpout::name);
         windowSkillTriggered = true;
@@ -294,8 +315,8 @@ AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
           {SXMQ::name, LSZZ::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
            Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
      }) {}
 
      // 游子

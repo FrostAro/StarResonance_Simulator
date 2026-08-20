@@ -77,8 +77,8 @@ Vortex::Vortex(Person* p) : ContinuousSkill()
     this->fixedValue = 120;
     this->damageTriggerInterval = 50;
     this->duration = 1000;
-    this->MaxCD = 1500;
-    this->releasingTime = 20;
+    this->MaxCD = 10;
+    this->releasingTime = 5;
 
     this->energyAdd = 2;
 
@@ -148,10 +148,10 @@ FrostWind::FrostWind(Person* p) : InstantSkill()
     this->canTriggerLucky = true;
     this->multiplying = 1.75L;
     this->fixedValue = 1050;
-    this->MaxCD = 3000;
+    this->MaxCD = 100;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 100;
+    this->releasingTime = 16;
 
     this->setSkillType();
 }
@@ -184,7 +184,7 @@ std::string Flood_Beam::name = "Flood_Beam";
 
 Flood_Beam::Flood_Beam(Person* p) : InstantSkill()
 {
-    this->MaxCD = 4500;
+    this->MaxCD = 4229;
 
     // 无视吟唱时间，默认满玄冰释放
     this->releasingTime = 75;
