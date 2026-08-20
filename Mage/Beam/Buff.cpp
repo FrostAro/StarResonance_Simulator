@@ -2004,6 +2004,7 @@ void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill)
     if(skill->getSkillName() == WaterSpout::name)
     {
         skill->dreamIncreaseAdd += 0.0523*2 + 0.0597*3 + 0.0933;
+        //skill->dreamIncreaseAdd += 0.0933*10;
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout dreamIncreaseAdd applied");
     }
     if(skill->getSkillName() == Beam::name)
