@@ -166,7 +166,7 @@ void SimulationWorker::run()
         const auto& statsMap = damageStatisticsList[0];
         for (const auto& [skillName, stat] : statsMap) {
             double totalDmg = stat.damage + stat.luckyDamage;
-            double dps = totalDmg / (m_maxTime / 100.0);
+            double dps = totalDmg / (m_maxTime / 1000.0);
             double critRate = stat.damageCount > 0 ? (stat.CritDamageCount / stat.damageCount) * 100.0 : 0.0;
             QVector<QVariant> row;
             row << QString::fromStdString(skillName)
@@ -203,7 +203,7 @@ void SimulationWorker::run()
         // 转换为表格数据
         for (const auto& [skillName, acc] : accumulatedMap) {
             double totalDmg = acc.damage + acc.luckyDamage;
-            double dps = totalDmg / (m_maxTime / 100.0);
+            double dps = totalDmg / (m_maxTime / 1000.0);
             double critRate = acc.damageCount > 0 ? (acc.CritDamageCount / acc.damageCount) * 100.0 : 0.0;
             QVector<QVariant> row;
             row << QString::fromStdString(skillName)
@@ -373,7 +373,7 @@ MainWindow::MainWindow(QWidget *parent)
         {"primaryAttr", 6760}, {"crit", 18.00}, {"quickness", 40.88}, {"lucky", 48.00}, 
         {"proficient", 48.09}, {"almighty", 21.00}, {"atk", 4533}, {"refineAtk", 1000}, 
         {"elementAtk", 230}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, 
-        {"incSet", 0}, {"eleIncSet", 0}, {"times", 1}, {"maxTime", 18000}, {"deltaTime", 1}, {"seed", 42}};
+        {"incSet", 0}, {"eleIncSet", 0}, {"times", 1}, {"maxTime", 180000}, {"deltaTime", 10}, {"seed", 42}};
     onProfessionChanged(0); // 初始化 Beam
 }
 
@@ -482,8 +482,8 @@ QWidget *MainWindow::createInputPanel()
     // ---- 模拟参数 ----
     auto [simBox, simLayout] = makeGroup("模拟参数");
     addField(simLayout, 0, "模拟循环次数", m_timesEdit = new QLineEdit("1"));
-    addField(simLayout, 1, "最大运行时间 (0.01s)", m_maxTimeEdit = new QLineEdit("18000"));
-    addField(simLayout, 2, "deltaTime (0.01s)", m_deltaTimeEdit = new QLineEdit("1"));
+    addField(simLayout, 1, "最大运行时间 (ms)", m_maxTimeEdit = new QLineEdit("180000"));
+    addField(simLayout, 2, "deltaTime (ms)", m_deltaTimeEdit = new QLineEdit("10"));
     m_randomSeedCheck = new QCheckBox("使用随机种子");
     m_randomSeedCheck->setObjectName("accentCheck");
     simLayout->addWidget(m_randomSeedCheck, 3, 0, 1, 2);
@@ -854,7 +854,7 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
         totalCount += stats[i][2].toInt();
         totalLuckyCount += stats[i][4].toInt();
     }
-    double totalDps = (totalTime > 0) ? (totalDamage + totalLucky) / (totalTime / 100.0) : 0.0;  // 防御除零
+    double totalDps = (totalTime > 0) ? (totalDamage + totalLucky) / (totalTime / 1000.0) : 0.0;  // 防御除零
     int row = m_resultTable->rowCount();
     m_resultTable->insertRow(row);
     m_resultTable->setItem(row, 0, new QTableWidgetItem("🔥 总计"));

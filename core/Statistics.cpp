@@ -51,7 +51,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
                   << ", Released Times: " << info.second.releasedTimes
                   << ", Lucky Damage: " << info.second.luckyDamage
                   << ", Lucky Attack count: " << info.second.luckyDamageCount
-                  << ", DPS: " << info.second.damage / (static_cast<double>(totalTime) / 100.0)
+                  << ", DPS: " << info.second.damage / (static_cast<double>(totalTime) / 1000.0)
                   << ", Propotion:" << (info.second.damage / totalAllDamage) * 100 << "%"
                   << std::endl;
     }
@@ -59,7 +59,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
     std::cout << "Lucky: " 
                   << " Damage: " << totalLuckyDamage
                   << ", Damage attack count: " << totalLuckyDamageCount
-                  << ", DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 100.0)
+                  << ", DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 1000.0)
                   << ", Propotion:" << (totalLuckyDamage / totalAllDamage) * 100 << "%"
                   << std::endl;
     
@@ -68,7 +68,7 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
               << "total Damage Statistics:" << std::endl;
     
     std::cout << "Total Damage: " << totalDamage
-              << ", Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 100.0)
+              << ", Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 1000.0)
               << std::endl;
     
     std::cout << "Total Damage Count: " << totalDamageCount

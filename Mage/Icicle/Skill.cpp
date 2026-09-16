@@ -13,11 +13,11 @@ Flood_Icicle::Flood_Icicle(Person *)  : InstantSkill()
 
 {
     this->energyAdd = 6.0L;
-    this->MaxCD = 4050;
+    this->MaxCD = 40500;
     this->CD = 0;
     this->chargeCD = 0;
     this->MaxchargeCD = 0;
-    this->releasingTime = 100;
+    this->releasingTime = 1000;
 
     this->setSkillType();
 }
@@ -50,11 +50,11 @@ Ultimate_Icicle::Ultimate_Icicle(Person *) : InstantSkill()
 
     this->multiplying = 12.60;
     this->fixedValue = 5400;
-    this->MaxCD = 5400;
+    this->MaxCD = 54000;
     this->CD = 0;
     this->chargeCD = 0;
     this->MaxchargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
 
     this->setSkillType();
 }
@@ -84,8 +84,8 @@ IceArrow_Icicle::IceArrow_Icicle(Person *p) : InstantSkill()
 {
     this->multiplying = 0.28;
     this->fixedValue = 0;
-    this->duration = 53;
-    this->damageTriggerInterval = 53;
+    this->duration = 530;
+    this->damageTriggerInterval = 530;
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -138,7 +138,7 @@ Spear::Spear(Person *p) : InstantSkill()
     this->CD = 0;
     this->chargeCD = 0;
     this->MaxchargeCD = 0;
-    this->releasingTime = 40;
+    this->releasingTime = 400;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->setSkillType();
@@ -175,7 +175,7 @@ std::string PierceSpear::name = "PierceSpear";
 
 PierceSpear::PierceSpear(Person *) : InstantSkill()
 {
-    this->damageTriggerInterval = 30;
+    this->damageTriggerInterval = 300;
     this->damageTriggerTimer = 0;
     this->duration = this->damageTriggerInterval;
 
@@ -233,13 +233,13 @@ Meteorite::Meteorite(Person *p) : InstantSkill()
     this->elementIncreaseAdd = 0.1;
     this->criticalIncreaseAdd = 0.13;
 
-    this->MaxCD = 1350;
-    this->MaxchargeCD = 50;
+    this->MaxCD = 13500;
+    this->MaxchargeCD = 500;
     this->CD = 0;
     this->chargeCD = 0;
     this->maxStack = 2;
     this->stack = this->maxStack;
-    this->releasingTime = 100;
+    this->releasingTime = 1000;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->setSkillType();
@@ -283,7 +283,7 @@ std::string SynergyMeteorite::name = "SynergyMeteorite";
 
 SynergyMeteorite::SynergyMeteorite(Person *p) : InstantSkill()
 {
-    this->damageTriggerInterval = 30;
+    this->damageTriggerInterval = 300;
     this->damageTriggerTimer = 0;
 
     this->canTriggerLucky = true;
@@ -334,13 +334,13 @@ WaterDrop::WaterDrop(Person *p) : InstantSkill()
 
     this->canCharge = true;
 
-    this->MaxCD = 2250;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 22500;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
     this->maxStack = 2;
     this->stack = this->maxStack;
-    this->releasingTime = 80;
+    this->releasingTime = 800;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->setSkillType();
@@ -368,8 +368,8 @@ std::string FrostComet::name = "FrostComet";
 
 FrostComet::FrostComet(Person *p) : InstantSkill()
 {
-    this->duration = 10;
-    this->damageTriggerInterval = 10;
+    this->duration = 100;
+    this->damageTriggerInterval = 100;
     this->damageTriggerTimer = 0;
 
     this->multiplying = 2.5L;
@@ -404,8 +404,8 @@ std::string FantasyImpact::name = "FantasyImpact";
 
 FantasyImpact::FantasyImpact(Person *p) : InstantSkill()
 {
-    this->duration = 20;
-    this->damageTriggerInterval = 20;
+    this->duration = 200;
+    this->damageTriggerInterval = 200;
     this->damageTriggerTimer = 0;
 
     this->multiplying = 12.5L;

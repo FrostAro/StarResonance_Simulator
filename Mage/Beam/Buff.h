@@ -441,7 +441,7 @@ public:
     double triggerNum = 10;
     double count = 0;
     double timer = 0;
-    double triggerInterval = 0.5; // 触发间隔，防止一次伤害触发多次
+    double triggerInterval = 5; // 触发间隔，防止一次伤害触发多次
 
 public:
     void listenerCallback(DamageInfo& info);
@@ -644,7 +644,7 @@ public:
     int count = 0;              // 计数器
     int arrowTriggerNum = 5;    // 冰箭触发所需层数
     double timer = 0;           // 计时器
-    double beamTriggerInterval = 100; // 射线触发间隔
+    double beamTriggerInterval = 1000; // 射线触发间隔
 
 
 public:
@@ -663,7 +663,7 @@ public:
     // 幻想冲击 
     static std::string name;
     double triggerTimer = 0;                //计时器
-    int triggerInterval = 1000;             //触发间隔
+    int triggerInterval = 10000;             //触发间隔
     int triggerStack = 20;                  //触发所需层数
     int extremeLuckTriggerStack = 10;       //极运触发所需层数
     int extraTriggerStack = 10;             // 额外层数（如极运提供的层数）

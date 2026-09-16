@@ -19,16 +19,16 @@ Beam::Beam(Person* p)
     this->fixedValue = 150;
     this->baseMultiplying = this->multiplying;
     this->baseFixedValue = this->fixedValue;
-    this->damageTriggerInterval = 30;
+    this->damageTriggerInterval = 300;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
     this->MaxCD = 0;
     this->CD = 0;
-    this->releasingTime = 85;
+    this->releasingTime = 850;
     this->releasingTime = this->releasingTime / (1 + p->castingSpeed);
 
     this->damageIncreaseAdd = 0.16; 
 
-    this->energyReduce = 12 * (this->damageTriggerInterval / 30);
+    this->energyReduce = 12 * (this->damageTriggerInterval / 300);
     this->duration = kPermanentBuffDuration;
     this->noEnergyConsumeTime = 5;
 
@@ -76,10 +76,10 @@ Vortex::Vortex(Person* p) : ContinuousSkill()
 {
     this->multiplying = 0.2L;
     this->fixedValue = 120;
-    this->damageTriggerInterval = 50;
-    this->duration = 1000;
-    this->MaxCD = 10;
-    this->releasingTime = 5;
+    this->damageTriggerInterval = 500;
+    this->duration = 10000;
+    this->MaxCD = 100;
+    this->releasingTime = 50;
 
     this->energyAdd = 2;
 
@@ -111,10 +111,10 @@ WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
 
     this->multiplying = 1.4448L;
     this->fixedValue = 514;
-    this->damageTriggerInterval = 50;
+    this->damageTriggerInterval = 500;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
-    this->MaxCD = 10;
-    this->duration = 2000;
+    this->MaxCD = 100;
+    this->duration = 20000;
 
     this->setSkillType();
 }
@@ -149,10 +149,10 @@ FrostWind::FrostWind(Person* p) : InstantSkill()
     this->canTriggerLucky = true;
     this->multiplying = 1.75L;
     this->fixedValue = 1050;
-    this->MaxCD = 100;
+    this->MaxCD = 1000;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 16;
+    this->releasingTime = 160;
 
     this->setSkillType();
 }
@@ -185,10 +185,10 @@ std::string Flood_Beam::name = "Flood_Beam";
 
 Flood_Beam::Flood_Beam(Person* p) : InstantSkill()
 {
-    this->MaxCD = 4229;
+    this->MaxCD = 42290;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 75;
+    this->releasingTime = 750;
 
     this->setSkillType();
 }
@@ -216,8 +216,8 @@ CrystalsHail::CrystalsHail(Person* p) : InstantSkill()
     this->multiplying = 6;
     this->energyAdd = 30;
     this->isNoReleasing = true;
-    this->duration = 10;
-    this->damageTriggerInterval = 10;
+    this->duration = 100;
+    this->damageTriggerInterval = 100;
 
     this->setSkillType();
 }
@@ -242,8 +242,8 @@ std::string FrostDecreePulse::name = "FrostDecreePulse";
 
 FrostDecreePulse::FrostDecreePulse(Person* p) : InstantSkill()
 {
-    this->duration = 1;
-    this->damageTriggerInterval = 1;
+    this->duration = 10;
+    this->damageTriggerInterval = 10;
     this->multiplying = 5;
     this->isNoReleasing = true;
 
@@ -271,8 +271,8 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
     this->energyAdd = 2;
     this->multiplying = 0.28;
     this->fixedValue = 0;
-    this->duration = 53;
-    this->damageTriggerInterval = 53;
+    this->duration = 530;
+    this->damageTriggerInterval = 530;
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -315,8 +315,8 @@ FrostBurst::FrostBurst(Person *p) : InstantSkill()
 {
     this->multiplying = 0.28;
     this->fixedValue = 0;
-    this->duration = 1;
-    this->damageTriggerInterval = 1;
+    this->duration = 10;
+    this->damageTriggerInterval = 10;
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -358,11 +358,11 @@ Ultimate_Beam::Ultimate_Beam(Person *) : InstantSkill()
 
     this->multiplying = 12.60;
     this->fixedValue = 5400;
-    this->MaxCD = 5400;
+    this->MaxCD = 54000;
     this->CD = 0;
     this->chargeCD = 0;
     this->MaxchargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
 
     this->setSkillType();
 }
@@ -390,8 +390,8 @@ std::string FantasyImpact_Beam::name = "FantasyImpact_Beam";
 
 FantasyImpact_Beam::FantasyImpact_Beam(Person *p) : InstantSkill()
 {
-    this->duration = 20;
-    this->damageTriggerInterval = 20;
+    this->duration = 200;
+    this->damageTriggerInterval = 200;
     this->damageTriggerTimer = 0;
 
     this->multiplying = 13.75L;

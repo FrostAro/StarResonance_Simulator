@@ -91,8 +91,8 @@ int main(int argc, char** argv)
     Logger::initialize(Logger::Level::WARNING);
 
     // 模拟参数
-    const int maxTime = 18000;   // 180 秒（毫秒）
-    const int deltaTime = 1;     // 步长（毫秒，建议 1-3）
+    const int maxTime = 180000;  // 180 秒（1 tick = 1ms）
+    const int deltaTime = 10;    // 步长（毫秒，建议 10-30）
     int pairs = 20;              // 配对数（建议 20+，越多配对σ越稳）
     std::uint32_t firstSeed = 42;
 

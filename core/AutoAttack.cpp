@@ -6,7 +6,7 @@
 
 // 静态成员初始化
 double AutoAttack::timer = 0;
-double AutoAttack::deltaTime = 1;
+double AutoAttack::deltaTime = 10;  // 1 tick = 1ms
 
 // 构造函数
 AutoAttack::AutoAttack(Person *p)

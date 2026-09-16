@@ -7,8 +7,8 @@
 #pragma once
 
 // 永久Buff/技能的时长占位值（配合 isInherent=true 使用，表示"不随时间衰减"）
-inline constexpr double kPermanentBuffDuration = 999999;        // 常规永久时长
-inline constexpr double kPermanentBuffDurationLarge = 9999999;  // 较大的永久时长（个别buff使用）
+inline constexpr double kPermanentBuffDuration = 9999990;        // 常规永久时长（1 tick = 1ms）
+inline constexpr double kPermanentBuffDurationLarge = 99999990;  // 较大的永久时长（个别buff使用）
 
 // 面板基础百分比（从站街面板换算属性点数时扣除的部分）
 inline constexpr double kBaseCriticalPercent = 0.05;   // 基础暴击

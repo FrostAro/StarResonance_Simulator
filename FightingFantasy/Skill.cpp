@@ -15,13 +15,13 @@ MukuChief::MukuChief(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 6000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 60000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
     this->maxStack = 2;
     this->stack = this->maxStack;
-    this->releasingTime = 10;;
+    this->releasingTime = 100;;
 
     this->MukuChief::setSkillType();
 }
@@ -62,11 +62,11 @@ MukuScout::MukuScout(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->MukuScout::setSkillType();
@@ -111,11 +111,11 @@ BYS::BYS(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->BYS::setSkillType();
@@ -160,11 +160,11 @@ YGLWS::YGLWS(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 6000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 60000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->YGLWS::setSkillType();
@@ -207,11 +207,11 @@ SXMQ::SXMQ(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->SXMQ::setSkillType();
@@ -250,11 +250,11 @@ HYXZ::HYXZ(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->HYXZ::setSkillType();
@@ -298,11 +298,11 @@ LSZZ::LSZZ(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->LSZZ::setSkillType();
@@ -346,11 +346,11 @@ YZ::YZ(Person *p) : FightingFantasy(), InstantSkill()
     this->multiplying = 0;
     this->fixedValue = 0;
 
-    this->MaxCD = 8000;
-    this->MaxchargeCD = 100;
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
     this->CD = 0;
     this->chargeCD = 0;
-    this->releasingTime = 10;
+    this->releasingTime = 100;
     this->releasingTime /= (1 + p->attackSpeed);
 
     this->YZ::setSkillType();

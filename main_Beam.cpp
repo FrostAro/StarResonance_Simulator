@@ -141,15 +141,15 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
  */
 int main()
 {
-    // 1. 初始化日志系统，设置日志级别为DEBUG
+    // 1. 初始化日志系统，设置日志级别为INFO
     Logger::initialize(Logger::Level::INFO);
     
     // 2. 伤害统计结果列表（用于存储多次模拟的结果）
     std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
     
     // 3. 模拟参数配置
-    const int maxTime = 18000;       // 最大运行时间：180秒
-    const int deltaTime = 1;         // 时间增量：0.01s  (建议值：1-3)
+    const int maxTime = 180000;      // 最大运行时间：180秒（1 tick = 1ms）
+    const int deltaTime = 10;        // 时间增量：10ms  (建议值：10-30)
     
     // 4. 执行模拟
     // 参数说明：

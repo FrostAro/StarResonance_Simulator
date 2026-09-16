@@ -64,7 +64,7 @@ public:
             atk, refineATK, elementATK,
             attackSpeed, castingSpeed,
             criticaldamage_set, increasedamage_set, elementdamage_set,
-            /*totalTime*/ 20000,
+            /*totalTime*/ 200000,
             fantasyConfig);
     }
 };
@@ -144,7 +144,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
                                   int durationTicks,
                                   const std::string& singleFantasySkill = "")
 {
-    const int deltaTime = 1;
+    const int deltaTime = 10;  // 1 tick = 1ms
 
     ScenarioResult result;
     result.title = title;
@@ -165,7 +165,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
 
     int currentTime = 0;
     int startedTime = -1;
-    const int maxGuard = 30000;  // 安全上限，防止异常情况下死循环
+    const int maxGuard = 300000;  // 安全上限，防止异常情况下死循环
 
     while (currentTime < maxGuard)
     {
@@ -197,7 +197,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
         return result;
     }
 
-    const int seconds = durationTicks / 100;
+    const int seconds = durationTicks / 1000;
     std::unordered_map<std::string, std::vector<double>> perSecond;
 
     for (const auto& info : person->getDamageListInfoRef())
@@ -205,7 +205,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
         if (info.time < startedTime || info.time >= startedTime + durationTicks)
             continue;
 
-        const int sec = static_cast<int>((info.time - startedTime) / 100);
+        const int sec = static_cast<int>((info.time - startedTime) / 1000);
         if (sec < 0 || sec >= seconds)
             continue;
 
@@ -238,6 +238,100 @@ static ScenarioResult runScenario(const beam_person& cfg,
         stat.dps = (seconds > 0) ? stat.totalDamage / static_cast<double>(seconds) : 0.0;
         result.totalAllDamage += stat.totalDamage;
         result.stats[entry.first] = stat;
+    }
+
+    return result;
+}
+
+// ============================================================================
+// 只注册技能、不装备任何 Buff/被动的初始化器（用于裸技能首次伤害）
+// ============================================================================
+class SkillOnlyInitializer_Mage_Beam : public Initializer
+{
+public:
+    SkillOnlyInitializer_Mage_Beam(Person* p, double deltaTime)
+        : Initializer(p, deltaTime, 0) {}
+
+    // 只把技能注册到 SkillCreator，不装备技能、不创建任何 Buff
+    void SetupSkillsOnly()
+    {
+        registerSkills();
+    }
+
+protected:
+    void equipSkills() override {}
+
+    void registerSkills() override
+    {
+        registerCertainSkill<IceArrow_Beam>();
+        registerCertainSkill<Flood_Beam>();
+        registerCertainSkill<Ultimate_Beam>();
+        registerCertainSkill<Beam>();
+        registerCertainSkill<Vortex>();
+        registerCertainSkill<FrostWind>();
+        registerCertainSkill<WaterSpout>();
+        registerCertainSkill<CrystalsHail>();
+        registerCertainSkill<FrostDecreePulse>();
+        registerCertainSkill<FrostBurst>();
+        registerCertainSkill<MukuChief>();
+        registerCertainSkill<MukuScout>();
+        registerCertainSkill<YGLWS>();
+        registerCertainSkill<SXMQ>();
+        registerCertainSkill<HYXZ>();
+        registerCertainSkill<LSZZ>();
+        registerCertainSkill<YZ>();
+    }
+
+    void registerBuffs() override {}
+};
+
+// ============================================================================
+// 单独技能首次伤害（用于与游戏内数据对齐）
+// ============================================================================
+struct FirstHitResult
+{
+    std::string skillName;
+    bool found = false;
+    DamageInfo info;
+};
+
+static FirstHitResult runFirstHit(const beam_person& cfg, const std::string& skillName)
+{
+    const int deltaTime = 10;  // 1 tick = 1ms
+
+    FirstHitResult result;
+    result.skillName = skillName;
+
+    auto person = cfg.build();
+    person->setRandomSeed(cfg.seed);
+
+    std::vector<std::string> wave = { skillName };
+    person->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_Scripted>(person.get(), wave);
+
+    // 裸技能测试：只注册技能，不装备任何 Buff/被动
+    auto initializer = std::make_unique<SkillOnlyInitializer_Mage_Beam>(person.get(), deltaTime);
+    initializer->SetupSkillsOnly();
+
+    AutoAttack::setTimer() = 0;
+
+    int currentTime = 0;
+    const int maxGuard = 30000;  // 单个技能首次出伤的安全上限
+
+    while (currentTime < maxGuard)
+    {
+        person->autoAttackPtr->update(deltaTime);
+        currentTime += deltaTime;
+        AutoAttack::setTimer() += deltaTime;
+
+        for (const auto& info : person->getDamageListInfoRef())
+        {
+            if (info.skillName == skillName)
+            {
+                result.found = true;
+                result.info = info;
+                return result;
+            }
+        }
     }
 
     return result;
@@ -334,7 +428,7 @@ static void printResult(const ScenarioResult& result)
 {
     std::cout << "\n============================================================\n";
     std::cout << "场景: " << result.title << "\n";
-    std::cout << "统计窗口: " << (result.durationTicks / 100) << "s（从 Beam 首次出伤开始）\n";
+    std::cout << "统计窗口: " << (result.durationTicks / 1000) << "s（从 Beam 首次出伤开始）\n";
     std::cout << "============================================================\n";
 
     if (result.stats.empty())
@@ -377,6 +471,37 @@ static void printResult(const ScenarioResult& result)
 }
 
 // ============================================================================
+// 打印单独技能首次伤害
+// ============================================================================
+static void printFirstHits(const std::vector<FirstHitResult>& results)
+{
+    std::cout << "\n============================================================\n";
+    std::cout << "单独技能首次伤害（用于与游戏内数据对齐）\n";
+    std::cout << "裸技能：不装备任何 Buff/被动，仅保留角色基础属性与技能自身系数\n";
+    std::cout << "============================================================\n";
+    std::cout << padRight("技能", 18)
+              << padLeft("首次伤害", 14)
+              << padLeft("首次幸运期望", 16)
+              << padLeft("首次合计", 14)
+              << "\n";
+    std::cout << std::string(64, '-') << "\n";
+
+    for (const auto& result : results)
+    {
+        if (!result.found)
+            continue;
+
+        const double damage = result.info.damageNum;
+        const double lucky = result.info.luckyNum;
+        std::cout << padRight(result.skillName, 18)
+                  << padLeft(formatFixed(damage, 2), 14)
+                  << padLeft(formatFixed(lucky, 2), 16)
+                  << padLeft(formatFixed(damage + lucky, 2), 14)
+                  << "\n";
+    }
+}
+
+// ============================================================================
 // main
 // ============================================================================
 int main()
@@ -393,8 +518,8 @@ int main()
         return 1;
     }
 
-    const int DUR_15S = 1500;   // 15s
-    const int DUR_10S = 1000;   // 10s
+    const int DUR_15S = 15000;  // 15s（1 tick = 1ms）
+    const int DUR_10S = 10000;  // 10s（1 tick = 1ms）
 
     // ---- 公共技能 ----
     const std::string VORTEX = Vortex::name;
@@ -443,6 +568,36 @@ int main()
     {
         std::vector<std::string> wave = { FROSTWIND, VORTEX, BEAM };
         printResult(runScenario(cfg, "空窗期10s", wave, DUR_10S));
+    }
+
+    // ---- 单独技能首次伤害（用于与游戏内数据对齐） ----
+    {
+        const std::vector<std::string> firstHitSkills = {
+            Beam::name,
+            IceArrow_Beam::name,
+            FrostBurst::name,
+            CrystalsHail::name,
+            FrostDecreePulse::name,
+            Ultimate_Beam::name,
+            Vortex::name,
+            FrostWind::name,
+            WaterSpout::name,
+            MukuChief::name,
+            MukuScout::name,
+            YGLWS::name,
+            SXMQ::name,
+            HYXZ::name,
+            LSZZ::name,
+            YZ::name
+        };
+
+        std::vector<FirstHitResult> firstHits;
+        firstHits.reserve(firstHitSkills.size());
+        for (const auto& skillName : firstHitSkills)
+        {
+            firstHits.push_back(runFirstHit(cfg, skillName));
+        }
+        printFirstHits(firstHits);
     }
 
     return 0;

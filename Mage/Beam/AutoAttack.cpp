@@ -26,24 +26,24 @@ AutoAttack_Mage_Beam_Base::AutoAttack_Mage_Beam_Base(Person* p, const std::vecto
 
 void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
     if (m_stages.size() == 6) {
-        // LSZZ 六阶段轴：按实测 CD 就绪时点设置。
-        // Flood_Beam 基础 CD 为 4230ms（冷却缩减后约 3807ms），
-        // 第 6 个 Flood 约 16387 启动，接近 16400 上限。
-        if (timer > 0 && timer < 1000)          tryTriggerStage(1);
-        if (timer > 3000 && timer < 4000)       tryTriggerStage(2);
-        if (timer > 6000 && timer < 6800)       tryTriggerStage(3);
-        if (timer > 8900 && timer < 9600)       tryTriggerStage(4);
-        if (timer > 11600 && timer < 12400)     tryTriggerStage(5);
-        if (timer > 16000 && timer < 18000)     tryTriggerStage(6);
+        // LSZZ 六阶段轴：按实测 CD 就绪时点设置（1 tick = 1ms）。
+        // Flood_Beam 基础 CD 为 42290ms（冷却缩减后约 38061ms），
+        // 第 6 个 Flood 约 163870 启动，接近 164000 上限。
+        if (timer > 0 && timer < 10000)             tryTriggerStage(1);
+        if (timer > 30000 && timer < 40000)         tryTriggerStage(2);
+        if (timer > 60000 && timer < 68000)         tryTriggerStage(3);
+        if (timer > 89000 && timer < 96000)         tryTriggerStage(4);
+        if (timer > 116000 && timer < 124000)       tryTriggerStage(5);
+        if (timer > 160000 && timer < 180000)       tryTriggerStage(6);
     } else {
         // 七阶段轴保留原时间窗口
-        if (timer > 0 && timer < 500)           tryTriggerStage(1);
-        if (timer > 2700 && timer < 4000)       tryTriggerStage(2);
-        if (timer > 5400 && timer < 6500)       tryTriggerStage(3);
-        if (timer > 8100 && timer < 9500)       tryTriggerStage(4);
-        if (timer > 10800 && timer < 12800)     tryTriggerStage(5);
-        if (timer > 13500 && timer < 18000)     tryTriggerStage(6);
-        if (timer > 16300 && timer < 17500)     tryTriggerStage(7);
+        if (timer > 0 && timer < 5000)              tryTriggerStage(1);
+        if (timer > 27000 && timer < 40000)         tryTriggerStage(2);
+        if (timer > 54000 && timer < 65000)         tryTriggerStage(3);
+        if (timer > 81000 && timer < 95000)         tryTriggerStage(4);
+        if (timer > 108000 && timer < 128000)       tryTriggerStage(5);
+        if (timer > 135000 && timer < 180000)       tryTriggerStage(6);
+        if (timer > 163000 && timer < 175000)       tryTriggerStage(7);
     }
 
     windowPeriodLogic();

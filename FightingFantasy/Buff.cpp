@@ -13,7 +13,7 @@ std::string MukuChiefBuff::name = "MukuChiefBuff";
 MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
 {
 
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     Logger::debugBuff(AutoAttack::getTimer(),
@@ -50,7 +50,7 @@ std::string MukuScoutBuff::name = "MukuScoutBuff";
 MukuScoutBuff::MukuScoutBuff(Person *p, double) : Buff(p)
 {
     this->number = 0.15; // 用作增攻数值
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     //p->changeAattackIncrease(this->number);
@@ -77,7 +77,7 @@ std::string BYSBuff::name = "BYSBuff";
 BYSBuff::BYSBuff(Person *p, double) : Buff(p)
 {
     this->number = 0; // 用作增攻数值
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
     this->p->triggerAction<AttackIncreaseModifyAction>(0.26);
     Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease applied");
@@ -105,7 +105,7 @@ std::string YGLWSBuff::name = "YGLWSBuff";
 YGLWSBuff::YGLWSBuff(Person *p, double) : Buff(p)
 {
     this->number = 0; // 用作增攻数值
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
     this->p->triggerAction<CriticalCountModifyAction>(56000);
     this->p->triggerAction<CriticalPercentModifyAction>(0.14);
@@ -150,7 +150,7 @@ std::string SXMQBuff::name = "SXMQBuff";
 SXMQBuff::SXMQBuff(Person *p, double) : Buff(p)
 {
     this->number = 0.78; // 用作主动倍率
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     auto info = std::make_unique<CreateSkillListener>(
@@ -252,7 +252,7 @@ std::string HYXZBuff::name = "HYXZBuff";
 HYXZBuff::HYXZBuff(Person *p, double) : Buff(p)
 {
     this->number = 0.6; // 用作主动倍率
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     p->triggerAction<ProficientPercentModifyAction>(0.2);
@@ -276,7 +276,7 @@ std::string LSZZBuff::name = "LSZZBuff";
 LSZZBuff::LSZZBuff(Person *p, double) : Buff(p)
 {
     this->number = 0.35; // 用作主动倍率
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     p->triggerAction<AttackIncreaseModifyAction>(this->number);
@@ -298,7 +298,7 @@ std::string YZBuff::name = "YZBuff";
 
 YZBuff::YZBuff(Person *p, double) : Buff(p)
 {
-    this->duration = 2000;
+    this->duration = 20000;
     this->maxDuration = this->duration;
 
     p->triggerAction<LuckyPercentModifyAction>(0.2);

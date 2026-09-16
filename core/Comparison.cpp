@@ -17,7 +17,7 @@ double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& stat
     {
         total += stat.damage + stat.luckyDamage;
     }
-    return total / (static_cast<double>(maxTime) / 100.0);
+    return total / (static_cast<double>(maxTime) / 1000.0);
 }
 
 // 平均值（空容器返回 0）

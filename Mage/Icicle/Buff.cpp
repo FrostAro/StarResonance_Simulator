@@ -17,7 +17,7 @@ SpearCritialBuff::SpearCritialBuff(Person *p, const double n) : Buff(p)
     this->stack = n;
     this->maxStack = 10;
     this->number = 0.015;
-    this->duration = 1000;
+    this->duration = 10000;
     this->maxDuration = this->duration;
     this->isStackable = true;
 
@@ -158,7 +158,7 @@ FloodBuff_Icicle::FloodBuff_Icicle(Person *p, double)
       iceNumber(p->getResourceNum())
 {
     this->number = 6; // 用作回能量
-    this->duration = 1500;
+    this->duration = 15000;
     this->maxDuration = this->duration;
 
     // p->changeCriticalDamage(0.15);
@@ -172,7 +172,7 @@ void FloodBuff_Icicle::listenerCallback(double) {}
 
 void FloodBuff_Icicle::update(double)
 {
-    if (static_cast<int>(duration) % 100 == 0)
+    if (static_cast<int>(duration) % 1000 == 0)
     {
         this->p->triggerAction<EnergyRevertAction>(this->number);
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "energy reverted");
@@ -214,7 +214,7 @@ std::string IceRevertBuff::name = "IceRevertBuff";
 IceRevertBuff::IceRevertBuff(Person *p, double) : Buff(p)
 {
     this->number = 1; // 用作每次回复数
-    this->duration = 1200;
+    this->duration = 12000;
     this->maxDuration = this->duration;
     this->allowDuplicates = true;
 }
@@ -229,7 +229,7 @@ void IceRevertBuff::update(const double)
         int a = this->p->findBuffInBuffList(UltiIncreaseBuff_Icicle::name);
         if (a == -1)
         {
-            this->duration = 900;
+            this->duration = 9000;
             this->maxDuration = this->duration;
         }
         this->checked = true;
@@ -237,7 +237,7 @@ void IceRevertBuff::update(const double)
 
     if (this->duration > 0)
     {
-        if (static_cast<int>(duration) % 300 == 0)
+        if (static_cast<int>(duration) % 3000 == 0)
         {
             this->p->triggerAction<ResourceRevertAction>(this->number);
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "resource reverted");
@@ -275,7 +275,7 @@ ConsumedEnergyCountBuff::ConsumedEnergyCountBuff(Person *p, const double n)
     : Buff(p)
 {
     this->stack = n;
-    this->number = 100;  // 每攒满25能量，减少水球CD的毫秒数（恢复被注释掉的旧构造函数的数值）
+    this->number = 1000;  // 每攒满25能量，减少水球CD的毫秒数（1 tick = 1ms）
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isStackable = true;
@@ -319,7 +319,7 @@ EndlessColdBuff::EndlessColdBuff(Person *p, double n) : Buff(p)
     this->stack = n;
     this->number = 1.5; // 用作根据玄冰计数层数来对陨星附加的额外增伤
     this->maxStack = 40;
-    this->duration = 1000;
+    this->duration = 10000;
     this->maxDuration = this->duration;
     this->isStackable = true;
 }
@@ -343,7 +343,7 @@ std::string UltiIncreaseBuff_Icicle::name = "UltiIncreaseBuff_Icicle";
 UltiIncreaseBuff_Icicle::UltiIncreaseBuff_Icicle(Person *p, double) : Buff(p)
 {
     this->number = 0.45; // 用于冰伤增加值
-    this->duration = 1000;
+    this->duration = 10000;
     this->maxDuration = this->duration;
 
     this->p->triggerAction<ElementIncreaseModifyAction>(this->number);
@@ -517,7 +517,7 @@ SimulateNormalAttackToRevertIceBuff::SimulateNormalAttackToRevertIceBuff(
     : Buff(p),
       revertTimer(0)
 {
-    this->number = 400; // 用作触发间隔
+    this->number = 4000; // 用作触发间隔（1 tick = 1ms）
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
@@ -650,7 +650,7 @@ std::string FantasyImpactBuff::name = "FantasyImpactBuff";
 FantasyImpactBuff::FantasyImpactBuff(Person *p, double)
     : Buff(p),
       triggerTimer(0),
-      triggerInterval(1000),
+      triggerInterval(10000),
       triggerStack(20),
       extremeLuckTriggerStack(10)
 {
@@ -658,7 +658,7 @@ FantasyImpactBuff::FantasyImpactBuff(Person *p, double)
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     // 时阶 +5s 内置cd
-    this->triggerInterval += 500;
+    this->triggerInterval += 5000;
     this->isInherent = true;
 
     auto info = std::make_unique<DamageListener>(
@@ -714,7 +714,7 @@ ExtremeLuckFactor::ExtremeLuckFactor(Person *p, double) : Factor(p)
 {
     this->number = 0.1; // 用作增加属性值
     this->stack = 0;
-    this->duration = 500;
+    this->duration = 5000;
     this->maxDuration = this->duration;
 
     this->p->triggerAction<PrimaryAttributesPercentModifyAction>(this->number);
@@ -807,7 +807,7 @@ void InstantCooldownBuff_Icicle::listenerCallback(double n)
     this->count += n;
     if(this->count >= this->triggerNum)
     {
-        this->p->triggerAction<CDReduceAction>(1.3,Meteorite::name);
+        this->p->triggerAction<CDReduceAction>(13,Meteorite::name);
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Meteorite CD reduced");
         this->count -= triggerNum;
     }
