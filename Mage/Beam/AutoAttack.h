@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../../core/AutoAttack.h"
 #include <vector>
 #include <string>
@@ -72,10 +72,4 @@ public:
 class AutoAttack_Mage_Beam_YZ : public AutoAttack_Mage_Beam_Base {
 public:
     explicit AutoAttack_Mage_Beam_YZ(Person* p);
-};
-
-// 无幻想版本 - 仅使用基础技能，不依赖任何幻想技能
-class AutoAttack_Mage_Beam_NoFantasy : public AutoAttack_Mage_Beam_Base {
-public:
-    explicit AutoAttack_Mage_Beam_NoFantasy(Person* p);
 };

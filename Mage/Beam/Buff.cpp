@@ -58,6 +58,7 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
         }
     }
 
+    // 如果冰箭暴击，则触发霜爆
     if(info.skillName == IceArrow_Beam::name && info.isCritical)
     {
         this->p->triggerAction<CreateSkillAction>(0,FrostBurst::name);
@@ -67,6 +68,7 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
 
 void BeamBuildBuff::listenerCallback2(double)
 {
+    // 监听射线的能量消耗/回复事件，调整射线的增伤和能量增耗
     Skill *const skill = this->p->getNowReleasingSkill();
     if (!skill)
         return;
@@ -121,6 +123,7 @@ NaturalEnergyRegenBuff::NaturalEnergyRegenBuff(Person *p, double) : Buff(p)
 
 void NaturalEnergyRegenBuff::update(double deltaTime)
 {
+    // 计算自然回能的触发间隔，考虑急速属性的影响
     this->timer += deltaTime;
     if (this->timer >= this->triggerInterval) 
     {
@@ -152,6 +155,7 @@ IcePromiseBuff::IcePromiseBuff(Person *p, double) : Buff(p)
 
 void IcePromiseBuff::listenerCallback(Skill *const skill)
 {
+    // 水圈回能*3
     if (!skill)
         return;
     if (skill->getSkillName() == Vortex::name)
@@ -202,6 +206,7 @@ void FrostCrystalResonanceBuff::listenerCallback(DamageInfo &info)
 
 void FrostCrystalResonanceBuff::listenerCallback2(Skill *const skill)
 {
+    // 灌注期间，冰箭回能*2
     if(skill->getSkillName() == IceArrow_Beam::name)
     {
         // 冰光共鸣部分
@@ -215,6 +220,7 @@ void FrostCrystalResonanceBuff::listenerCallback2(Skill *const skill)
 
 void FrostCrystalResonanceBuff::update(const double deltaTime)
 {
+    // 如果灌注期间且释放技能为射线，则每0.5s触发一次冰箭
     if (this->p->getNowReleasingSkill() != nullptr && this->p->getNowReleasingSkill()->getSkillName() == Beam::name)
     {
         this->triggerTimer += deltaTime;
@@ -316,6 +322,7 @@ void FloodBuff_Beam::update(const double deltaTime)
     this->timer += deltaTime;
     if(this->timer >= this->energyRevertInterval)
     {
+        // 灌注期间每秒回6能量
         this->p->triggerAction<EnergyRevertAction_Beam>(this->number);
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "energy reverted");
         this->timer -= this->energyRevertInterval;
@@ -569,7 +576,6 @@ void BeamMagnumOpusBuff::listenerCallback(DamageInfo &info)
     // 射线出伤使精通翻倍
     if (info.skillName == Beam::name)
     {
-        
         this->p->triggerAction<CreateBuffAction>(0, DoubleProficientBuff::name);
         Logger::debugBuff(AutoAttack::getTimer(),
                 this->getBuffName(),
@@ -637,7 +643,7 @@ std::string FrostwindFocusBuff::name = "FrostwindFocusBuff";
 FrostwindFocusBuff::FrostwindFocusBuff(Person *p, double)
     : Buff(p)
 {
-    this->number = 0.03 * 6;
+    this->number = 0.03 * 9;
     this->duration = 1500;
     this->maxDuration = this->duration;
 
@@ -649,7 +655,7 @@ FrostwindFocusBuff::FrostwindFocusBuff(Person *p, double)
 
 void FrostwindFocusBuff::listenerCallback(Skill *const skill)
 {
-    // 技能耗能减少
+    // 技能耗能减少27%
     if(skill->getSkillName() != Beam::name)
         return;
     skill->changeEnergyReduceDOWN(this->number);
@@ -763,7 +769,6 @@ std::string EnergySurgeLawBuff::name = "EnergySurgeLawBuff";
 EnergySurgeLawBuff::EnergySurgeLawBuff(Person *p, double)
     : Buff(p)
 {
-    this->number = 0.08; // 增加的元素增伤
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
@@ -778,6 +783,7 @@ void EnergySurgeLawBuff::listenerCallback(DamageInfo &info)
 {
     if (info.skillName == IceArrow_Beam::name)
     {
+        // 每个冰箭+2层
         this->count += 2;
     }
 
@@ -819,6 +825,7 @@ EnergyRevertBuff_EnergySurgeLaw::EnergyRevertBuff_EnergySurgeLaw(Person *p, doub
 
 void EnergyRevertBuff_EnergySurgeLaw::update(const double deltaTime)
 {
+    // 每秒回复最大能量3%的能量
     this->timer += deltaTime;
     if (this->timer >= this->triggerInterval)
     {
@@ -852,6 +859,7 @@ void UltiIncreaseBuff_Beam::update(const double deltaTime)
     this->timer += deltaTime;
     if (this->timer >= this->triggerInterval)
     {
+        // 每秒回复22点能量
         this->p->triggerAction<EnergyRevertAction_Beam>(2.2);
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "ulti energy reverted");
         this->timer -= this->triggerInterval;
@@ -876,7 +884,8 @@ EquipmentSetEffectBuff_Beam::EquipmentSetEffectBuff_Beam(Person *p, double) : Bu
     this->isInherent = true;
     this->triggerInterval = 100;
     this->number = 0.02;
-    this->triggerNum = 3;
+    this->triggerNum = 2;
+    this->count = 1;
 
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
@@ -886,13 +895,13 @@ EquipmentSetEffectBuff_Beam::EquipmentSetEffectBuff_Beam(Person *p, double) : Bu
 
 void EquipmentSetEffectBuff_Beam::listenerCallback(Skill *const skill)
 {
-    // 每三次灌注一次必爆龙卷并且龙卷可触发幸运一击
+    // 每二次灌注一次必爆龙卷并且龙卷可触发幸运一击
     if(skill->getSkillName() == Flood_Beam::name)
     {
         this->count ++;
     }
 
-    if(canForWSpt && skill->getSkillName() == Flood_Beam::name)
+    if(!canForWSpt && skill->getSkillName() == Flood_Beam::name)
     {
         if(this->count >= this->triggerNum)
         {
@@ -982,11 +991,9 @@ IllusoryDreamBuff::IllusoryDreamBuff(Person *p, double) : Buff(p)
     this->triggerCount = 12;
     this->simulateAttackTriggerInterval = 50;
 
-    // 无视防御效果，粗记为2%
-    this->p->changeDamageReduce(-0.02);
-    // 精炼攻击增加10%
+    // 精炼攻击增加15%
     this->number = this->p->getRefineATK();
-    this->p->triggerAction<RefineATKCountModifyAction>(this->number * 0.1);
+    this->p->triggerAction<RefineATKCountModifyAction>(this->number * 0.15);
 
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &info)
@@ -1115,7 +1122,7 @@ FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_
     this->maxDuration = this->duration;
     this->isInherent = true;
 
-    // 寻找属性最大值
+    // 寻找属性最大值,给最大固定值的属性+3.5%百分比
     this->findMaxAttribute();
     switch (lastAttribute)
     {
@@ -1301,6 +1308,7 @@ InstantCooldownBuff_Beam::InstantCooldownBuff_Beam(Person *p, double n) : Buff(p
 
 void InstantCooldownBuff_Beam::listenerCallback(double n)
 {
+    // 能量消耗35后减少冻结寒风1.3scd
     this->count += n;
     if(this->count >= this->triggerNum)
     {
@@ -1391,7 +1399,6 @@ void WaterSpoutRealBuff::listenerCallback2(Skill* const skill)
         // 3风
         skill->damageTriggerInterval /= 3;
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout interval /3");
-        skill->dreamIncreaseAdd += this->number / 3;
     }
 }
 
@@ -1423,6 +1430,7 @@ IceRealBuff::IceRealBuff(Person *p, double n) : Factor(p)
 
 void IceRealBuff::listenerCallback(DamageInfo& info)
 {
+    // 15次出伤后触发9冰buff
     if(info.skillName != Beam::name) return;
     this->count += 1;
     if(this->count >= this->triggerNum)
@@ -1491,7 +1499,7 @@ IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Factor(p)
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
     this->isInherent = true;
-    this->p->luckyFinalIncrease += 0.4;
+    this->p->luckyFinalIncrease += 0.3;
 
     auto info1 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
@@ -1571,6 +1579,7 @@ VortexLuckyDoubledBuff::VortexLuckyDoubledBuff(Person *p, double n) : Buff(p)
     LuckyCountModifyAction::addListener(std::move(info));
 
     p->triggerAction<LuckyCountModifyAction>(this->number);
+    this->p->luckyMultiplyingExtra += 0.2;
     Logger::debugBuff(AutoAttack::getTimer(),this->getBuffName(),"triggered, current lucky: " + std::to_string(this->p->getLuckyCount()));
 }
 
@@ -1592,6 +1601,7 @@ VortexLuckyDoubledBuff::~VortexLuckyDoubledBuff()
 {
     LuckyCountModifyAction::deleteListener(this->getBuffID());
     this->p->triggerAction<LuckyCountModifyAction>(-this->number);
+    this->p->luckyMultiplyingExtra -= 0.2;
 }
 
 // 叠势迸破
@@ -1617,6 +1627,7 @@ ConquerorBuff::ConquerorBuff(Person *p, double)
 
 void ConquerorBuff::listenerCallback(DamageInfo &info)
 {
+    // 射线出伤8次后给予叠势buff
     if(info.skillName == Beam::name)
     {
         this->count += 1;
@@ -1649,8 +1660,8 @@ StackMomentumBuff::StackMomentumBuff(Person *p, double n) : Buff(p)
     this->isStackable = true;
     this->maxStack = 5;
 
-    this->number = 96.8;
-    this->stack = n;  // 使用传入的叠层数（CreateBuffAction 的 n）
+    this->number = 74;
+    // this->stack = n;  // 使用传入的叠层数（CreateBuffAction 的 n）
     if (this->stack > this->maxStack) this->stack = this->maxStack;
     if (this->stack < 0) this->stack = 0;
     this->triggerNum = 5;
@@ -1696,7 +1707,8 @@ BreakThroughBuff::BreakThroughBuff(Person *p, double n) : Buff(p)
     this->isInherent = true;
 
     this->enhance = 1.5;
-    this->number = 580;
+    this->number = 400;
+    // 攻击力提升
     this->p->triggerAction<AttackCountModifyAction>(this->number * this->enhance);
     this->p->triggerAction<AttackIncreaseModifyAction>(0.08 * this->enhance);
     this->p->triggerAction<DreamIncreaseModifyAction>(0.1 * this->enhance);

@@ -103,6 +103,13 @@ set_target_properties(dps_simulator_beam PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
+# ===== 3.1 射线各场景技能伤害峰值统计 =====
+add_executable(dps_simulator_beam_max ${BEAM_SOURCES} ./main_beam_max.cpp)
+target_link_libraries(dps_simulator_beam_max PRIVATE core_lib)
+set_target_properties(dps_simulator_beam_max PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
 # ===== 4. 创建 GUI 程序（需要 Qt6）=====
 # GUI 需要包含所有职业的实现源文件
 if(BUILD_GUI)

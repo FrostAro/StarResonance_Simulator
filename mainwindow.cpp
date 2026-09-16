@@ -444,7 +444,6 @@ QWidget *MainWindow::createInputPanel()
     m_professionCombo->addItem("急速精通流");
     m_professionCombo->addItem("幸运流");
     addField(classLayout, 1, "幻想配置", m_fantasyCombo = new QComboBox);
-    m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
     m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
     m_fantasyCombo->addItem("姆头 + 嗜血毛球");
@@ -513,7 +512,7 @@ QWidget *MainWindow::createInputPanel()
         "暴击 +5\n"
         "攻击 +100\n"
         "精通 +10\n"
-        "# 幻想用绝对值：-1=无幻想，0-5=具体幻想(见上面板)，如：幻想 -1");
+        "# 幻想用绝对值：0-6=具体幻想(见上面板)，如：幻想 5");
     m_candidatesEdit->setFixedHeight(80);
     compareLayout->addWidget(m_candidatesEdit, 2, 1);
     mainLayout->addWidget(compareBox);
@@ -576,7 +575,6 @@ QWidget *MainWindow::createResultPanel()
 void MainWindow::onProfessionChanged(int index)
 {
     m_fantasyCombo->clear(); // 清空原有选项
-    m_fantasyCombo->addItem("无幻想");
     m_fantasyCombo->addItem("姆头 + 尖兵");
     m_fantasyCombo->addItem("姆头 + 伊戈雷乌斯");
     m_fantasyCombo->addItem("姆头 + 嗜血毛球");
@@ -631,8 +629,8 @@ SimConfig MainWindow::buildBaseConfig()
     cfg.criticaldamage_set = m_critDmgSetEdit->text().toDouble();
     cfg.increasedamage_set = m_incSetEdit->text().toDouble();
     cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
-    int fantasyConfig = m_fantasyCombo->currentIndex() - 1;  // 面板index：0=无幻想 → -1，1..6 → 0..5
-    cfg.fantasyConfig = fantasyConfig;  // -1 = 无幻想，直接命中 Person.cpp 的 default 分支
+    int fantasyConfig = m_fantasyCombo->currentIndex();  // 面板index直接对应幻想配置0..6
+    cfg.fantasyConfig = fantasyConfig;
     cfg.flowConfig = m_professionCombo->currentIndex();  // 0=急速精通流，1=幸运流
     return cfg;
 }
@@ -769,9 +767,8 @@ void MainWindow::onRunClicked()
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
-    int fantasyConfig = m_fantasyCombo->currentIndex() - 1; // 面板index：0=无幻想 → -1，1..6 → 0..5
+    int fantasyConfig = m_fantasyCombo->currentIndex();     // 面板index直接对应幻想配置0..6
     int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
-    // -1 = 无幻想，直接传给 Person.cpp 的 default 分支（无需再转 999）
 
     // 清空之前的日志和表格
     m_logText->clear();

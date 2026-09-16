@@ -36,3 +36,4 @@ compile_commands.json
 log/
 .cache/
 .dsh-downloads/
+build-msvc-review/

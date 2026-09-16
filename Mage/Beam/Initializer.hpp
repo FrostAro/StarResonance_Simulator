@@ -4,6 +4,7 @@
 #include "../../FightingFantasy/Skill.h"
 #include "Buff.h"
 #include "Skill.h"
+#include <string>
 
 // 射线流派：仅影响 Buff 选择，不影响职业/幻想配置
 enum class BeamFlow
@@ -15,6 +16,8 @@ enum class BeamFlow
 class Initializer_Mage_Beam : public Initializer
 {
     int m_flowConfig = 0;  // 0=急速精通流，1=幸运流
+    std::string m_singleFantasySkill;  // 非空时只装备该幻想技能（用于单幻想测试）
+
     void equipSkills() override
     {   
         //配置技能:射线
@@ -24,6 +27,14 @@ class Initializer_Mage_Beam : public Initializer
         equipCertainSkill(FrostWind::name);
         equipCertainSkill(Flood_Beam::name);
         equipCertainSkill(Ultimate_Beam::name);
+
+        // 单幻想测试：只装备指定的一个幻想技能
+        if (!m_singleFantasySkill.empty())
+        {
+            equipCertainSkill(m_singleFantasySkill);
+            return;
+        }
+
         // 根据幻想配置装备第二个幻想技能
         if (m_fantasyConfig == 0) {
             equipCertainSkill(MukuChief::name);
@@ -52,7 +63,9 @@ class Initializer_Mage_Beam : public Initializer
             equipCertainSkill(SXMQ::name);
         }
         else {
-            // 默认配置(无幻想)
+            // 无幻想已移除，默认按 0 号幻想配置处理
+            equipCertainSkill(MukuChief::name);
+            equipCertainSkill(MukuScout::name);
         }
     }
 
@@ -109,7 +122,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();
-        //registerCertainBuff<OtherExtraEnhanceBuff>();
+        registerCertainBuff<OtherExtraEnhanceBuff>();
 
         //心相仪与装备套装效果
         registerCertainBuff<FloatingExtraSecondaryAttributesBuff_Beam>();
@@ -125,6 +138,7 @@ class Initializer_Mage_Beam : public Initializer
             registerCertainBuff<WaterSpoutRealBuff>();
             registerCertainBuff<NineIceBuff>();
             registerCertainBuff<IceRealBuff>();
+            registerCertainBuff<VortexLuckyDoubledBuff>();
         }
         else if (m_flowConfig == static_cast<int>(BeamFlow::Lucky))
         {
@@ -135,6 +149,9 @@ class Initializer_Mage_Beam : public Initializer
     }
 
 public:
-    Initializer_Mage_Beam(Person* p, double deltaTime, int fantasyConfig, int flowConfig = 0)
-        : Initializer(p, deltaTime, fantasyConfig), m_flowConfig(flowConfig) {}
+    Initializer_Mage_Beam(Person* p, double deltaTime, int fantasyConfig, int flowConfig = 0,
+                          const std::string& singleFantasySkill = "")
+        : Initializer(p, deltaTime, fantasyConfig),
+          m_flowConfig(flowConfig),
+          m_singleFantasySkill(singleFantasySkill) {}
 };

@@ -48,7 +48,8 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_LSZZ>(this);
             break;
         default:
-            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_NoFantasy>(this);
+            // 无幻想自动战斗已移除，默认按 0 号幻想配置处理
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
             break;
     }
 

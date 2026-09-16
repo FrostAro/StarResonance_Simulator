@@ -86,14 +86,12 @@ void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
     if (!nextIsWindow) return;
 
     if (!windowSkillTriggered) {
-        // LSZZ 六阶段轴：窗口期只打射线刷 Flood_Beam CD，
+        // 六阶段轴：窗口期只打射线刷 Flood_Beam CD，
         // 保留 Vortex/FrostWind CD 供下一阶段爆发使用。
-        //if (m_stages.size() != 6) 
-        {
-            maniAddPriorSkillList(Vortex::name);
-            maniAddPriorSkillList(FrostWind::name);
-        }
+        maniAddPriorSkillList(FrostWind::name);
+        maniAddPriorSkillList(Vortex::name);
         maniAddPriorSkillList(Beam::name);
+        maniAddPriorSkillList(WaterSpout::name);
         //maniAddPriorSkillList(WaterSpout::name);
         windowSkillTriggered = true;
     }
@@ -155,10 +153,10 @@ AutoAttack_Mage_Beam_MukuScout::AutoAttack_Mage_Beam_MukuScout(Person* p)
         { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {MukuChief::name, true}, {MukuScout::name, false}, {Vortex::name, false},
-            {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {MukuChief::name, MukuScout::name, Vortex::name, FrostWind::name,
-           Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {MukuChief::name, true}, {MukuScout::name, false}, {Vortex::name, false},
+        //     {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {MukuChief::name, MukuScout::name, Vortex::name, FrostWind::name,
+        //    Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
 // YGLWS
@@ -189,9 +187,9 @@ AutoAttack_Mage_Beam_YGLWS::AutoAttack_Mage_Beam_YGLWS(Person* p)
         { { {Ultimate_Beam::name, false}, {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {MukuChief::name, true}, {YGLWS::name, true}, {Vortex::name, false},
-            {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {MukuChief::name, YGLWS::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {MukuChief::name, true}, {YGLWS::name, true}, {Vortex::name, false},
+        //     {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {MukuChief::name, YGLWS::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
 // SXMQ
@@ -220,9 +218,9 @@ AutoAttack_Mage_Beam_SXMQ::AutoAttack_Mage_Beam_SXMQ(Person* p)
         { { {Ultimate_Beam::name, false}, {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {MukuChief::name, true}, {SXMQ::name, false}, {Vortex::name, false},
-            {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {MukuChief::name, SXMQ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {MukuChief::name, true}, {SXMQ::name, false}, {Vortex::name, false},
+        //     {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {MukuChief::name, SXMQ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
 // HYXZ
@@ -251,9 +249,9 @@ AutoAttack_Mage_Beam_HYXZ::AutoAttack_Mage_Beam_HYXZ(Person* p)
         { { {Ultimate_Beam::name, false}, {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {SXMQ::name, false}, {HYXZ::name, false}, {Vortex::name, false},
-            {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {SXMQ::name, HYXZ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {SXMQ::name, false}, {HYXZ::name, false}, {Vortex::name, false},
+        //     {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {SXMQ::name, HYXZ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
 // JBMQ
@@ -282,9 +280,9 @@ AutoAttack_Mage_Beam_JBMQ::AutoAttack_Mage_Beam_JBMQ(Person* p)
         { { {Ultimate_Beam::name, false}, {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
           {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {SXMQ::name, false}, {MukuScout::name, false}, {Vortex::name, false},
-            {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {SXMQ::name, MukuScout::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {SXMQ::name, false}, {MukuScout::name, false}, {Vortex::name, false},
+        //     {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {SXMQ::name, MukuScout::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
     // LSZZ
@@ -347,33 +345,7 @@ AutoAttack_Mage_Beam_YZ::AutoAttack_Mage_Beam_YZ(Person* p)
           {SXMQ::name, YZ::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
            Flood_Beam::name, Beam::name, WaterSpout::name} },
         // 阶段7
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
      }) {}
 
-// -------------------- 无幻想版本 --------------------
-// 无幻想 AutoAttack - 仅使用基础技能，不依赖任何 FightingFantasy 技能
-AutoAttack_Mage_Beam_NoFantasy::AutoAttack_Mage_Beam_NoFantasy(Person* p)
-    : AutoAttack_Mage_Beam_Base(p, {
-        // 阶段1 - 起手爆发：释放所有核心技能
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段2
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段3
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段4
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段5
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段6
-        { { {Ultimate_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-        // 阶段7
-        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
-          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}

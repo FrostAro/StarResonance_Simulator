@@ -49,6 +49,7 @@ void Beam::trigger(Person* p)
     if(this->count > this->noEnergyConsumeTime)
     {
         p->triggerAction<EnergyConsumeAction>(this->energyReduce,this);
+        p->triggerAction<EnergyRevertAction>(this->energyReduce,this);
     }
     if(addMultiplyingTimes < 10)
     {
@@ -110,10 +111,10 @@ WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
 
     this->multiplying = 1.4448L;
     this->fixedValue = 514;
-    this->damageTriggerInterval = 45;
+    this->damageTriggerInterval = 50;
     this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
     this->MaxCD = 10;
-    this->duration = 1500;
+    this->duration = 2000;
 
     this->setSkillType();
 }

@@ -270,8 +270,10 @@ void CreateBuffAction::execute(double n, Person *p)
     {
         auto &existingBuff = p->getBuffListRef().at(existingIndex);
 
+        // 如果Buff是可叠加的，增加层数
         if (existingBuff->getIsStackable())
         {
+            // 如果当前层数小于最大层数，则增加层数
             if (existingBuff->getStack() < existingBuff->getMaxStack())
             {
                 existingBuff->addStack(n);
@@ -281,6 +283,7 @@ void CreateBuffAction::execute(double n, Person *p)
                     ", Stack: " + std::to_string(existingBuff->getStack()));
             }
 
+            // 如果当前层数已经达到最大层数，则重置持续时间
             existingBuff->resetDuration();
             Logger::debugAction(AutoAttack::getTimer(), this->getActionName(),
                 "Buff Refreshed: " + this->buffName +
@@ -288,7 +291,8 @@ void CreateBuffAction::execute(double n, Person *p)
 
             return;
         }
-
+        
+        // 如果Buff不允许重复，则重置持续时间
         if (!existingBuff->getAllowDuplicates())
         {
             existingBuff->resetDuration();
