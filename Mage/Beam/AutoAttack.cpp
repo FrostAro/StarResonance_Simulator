@@ -214,6 +214,32 @@ void AutoAttack_Mage_Beam_Base::addOutBurstLogicToQueue(OutBurstTypeEnum type)
   this->m_outBurstQueue.push(type);
 }
 
+// 硬编码爆发轴：映射 [6]~[10] 阶段并按固定顺序入队（仿照 LSZZ 轴）
+void AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst)
+{
+  this->m_logicToStageIndex[OutBurstTypeEnum::twoFantasyAndUlti] = 6;
+  this->m_logicToStageIndex[OutBurstTypeEnum::simpleFantasyOnly] = 7;
+  this->m_logicToStageIndex[OutBurstTypeEnum::ultiOnly] = 8;
+  this->m_logicToStageIndex[OutBurstTypeEnum::pureBurst] = 9;
+  this->m_logicToStageIndex[OutBurstTypeEnum::window] = 10;
+
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  // 第二波爆发：2层充能幻想用 simpleFantasyOnly，其余用 pureBurst
+  this->addOutBurstLogicToQueue(simpleBurstInSecondBurst ? OutBurstTypeEnum::simpleFantasyOnly
+                                                         : OutBurstTypeEnum::pureBurst);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+}
+
 void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
     if (!nextIsWindow) return;
 
@@ -289,7 +315,32 @@ AutoAttack_Mage_Beam_MukuScout::AutoAttack_Mage_Beam_MukuScout(Person* p)
         //     {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {MukuChief::name, MukuScout::name, Vortex::name, FrostWind::name,
         //    Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {MukuChief::name, MukuScout::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（只放2层充能的姆克头目）
+        { {},
+          {MukuChief::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+    })
+    {
+        // 幻想：姆克头目(2层充能) + 姆克尖兵；第二波只放2层充能的姆克头目
+        this->setupHardcodedOutBurstAxis(true);
+    }
 
 // YGLWS
 AutoAttack_Mage_Beam_YGLWS::AutoAttack_Mage_Beam_YGLWS(Person* p)
@@ -322,7 +373,33 @@ AutoAttack_Mage_Beam_YGLWS::AutoAttack_Mage_Beam_YGLWS(Person* p)
         // { { {MukuChief::name, true}, {YGLWS::name, true}, {Vortex::name, false},
         //     {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {MukuChief::name, YGLWS::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {MukuChief::name, YGLWS::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（2层充能幻想；本搭配中姆克头目与伊戈雷乌斯都是2层，
+        //     此处取姆克头目，如需换成就放伊戈雷乌斯把名字替换即可）
+        { {},
+          {MukuChief::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+    })
+    {
+        // 幻想：姆克头目(2层充能) + 伊戈雷乌斯(2层充能)；第二波只放2层充能的幻想
+        this->setupHardcodedOutBurstAxis(true);
+    }
 
 // SXMQ
 AutoAttack_Mage_Beam_SXMQ::AutoAttack_Mage_Beam_SXMQ(Person* p)
@@ -353,7 +430,32 @@ AutoAttack_Mage_Beam_SXMQ::AutoAttack_Mage_Beam_SXMQ(Person* p)
         // { { {MukuChief::name, true}, {SXMQ::name, false}, {Vortex::name, false},
         //     {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {MukuChief::name, SXMQ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {MukuChief::name, SXMQ::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（只放2层充能的姆克头目）
+        { {},
+          {MukuChief::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+    })
+    {
+        // 幻想：姆克头目(2层充能) + 嗜血毛球；第二波只放2层充能的姆克头目
+        this->setupHardcodedOutBurstAxis(true);
+    }
 
 // HYXZ
 AutoAttack_Mage_Beam_HYXZ::AutoAttack_Mage_Beam_HYXZ(Person* p)
@@ -384,7 +486,32 @@ AutoAttack_Mage_Beam_HYXZ::AutoAttack_Mage_Beam_HYXZ(Person* p)
         // { { {SXMQ::name, false}, {HYXZ::name, false}, {Vortex::name, false},
         //     {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {SXMQ::name, HYXZ::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {SXMQ::name, HYXZ::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（无2层充能幻想，仅作备用配置）
+        { {},
+          {HYXZ::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+    })
+    {
+        // 幻想：幻妖蟹蛛 + 嗜血毛球（均无充能层数），第二波爆发仍走 pureBurst
+        this->setupHardcodedOutBurstAxis(false);
+    }
 
 // JBMQ
 AutoAttack_Mage_Beam_JBMQ::AutoAttack_Mage_Beam_JBMQ(Person* p)
@@ -415,7 +542,32 @@ AutoAttack_Mage_Beam_JBMQ::AutoAttack_Mage_Beam_JBMQ(Person* p)
         // { { {SXMQ::name, false}, {MukuScout::name, false}, {Vortex::name, false},
         //     {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {SXMQ::name, MukuScout::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-    }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {SXMQ::name, MukuScout::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（无2层充能幻想，仅作备用配置）
+        { {},
+          {MukuScout::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+    })
+    {
+        // 幻想：姆克尖兵 + 嗜血毛球（均无充能层数），第二波爆发仍走 pureBurst
+        this->setupHardcodedOutBurstAxis(false);
+    }
 
 // LSZZ
 AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
@@ -470,25 +622,8 @@ AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
            Beam::name,Vortex::name, WaterSpout::name} },
      }) 
      {
-      this->m_logicToStageIndex[OutBurstTypeEnum::twoFantasyAndUlti] = 6;
-      this->m_logicToStageIndex[OutBurstTypeEnum::simpleFantasyOnly] = 7;
-      this->m_logicToStageIndex[OutBurstTypeEnum::ultiOnly] = 8;
-      this->m_logicToStageIndex[OutBurstTypeEnum::pureBurst] = 9;
-      this->m_logicToStageIndex[OutBurstTypeEnum::window] = 10;
-
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+      // LSZZ 与 SXMQ 均无充能层数，第二波爆发仍走 pureBurst
+      this->setupHardcodedOutBurstAxis(false);
      }
 
      // 游子
@@ -521,5 +656,30 @@ AutoAttack_Mage_Beam_YZ::AutoAttack_Mage_Beam_YZ(Person* p)
         // 阶段7
         // { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-     }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {SXMQ::name, YZ::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（无2层充能幻想，仅作备用配置）
+        { {},
+          {YZ::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+     })
+     {
+        // 幻想：游子 + 嗜血毛球（均无充能层数），第二波爆发仍走 pureBurst
+        this->setupHardcodedOutBurstAxis(false);
+     }
 

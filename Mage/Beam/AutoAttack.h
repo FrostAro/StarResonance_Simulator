@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../../core/AutoAttack.h"
 #include <vector>
 #include <string>
@@ -30,6 +30,19 @@ protected:
     void windowPeriodLogic() override;
     void checkAndFinishOutBurst() override;
     void addOutBurstLogicToQueue(OutBurstTypeEnum type);
+
+    /**
+     * @brief 配置硬编码爆发轴（仿照 LSZZ 轴）
+     *
+     * 设置爆发逻辑 -> 阶段下标的映射（[6]~[10]），并把固定的爆发顺序压入队列：
+     * 双幻想+大招 -> 窗口 -> 爆发 -> 窗口 -> 爆发 -> 窗口 -> 双幻想+大招
+     * -> 窗口 -> 爆发 -> 窗口 -> 爆发 -> 窗口 -> 双幻想+大招
+     * （共13段：双幻想+大招 x3、爆发 x4、窗口 x6，合计176s，可跑满180s上限）
+     *
+     * @param simpleBurstInSecondBurst 第二次爆发是否改用 simpleFantasyOnly。
+     *        幻想带2层充能时用 true：第二波另一个幻想还在CD，只再放那个2层充能的幻想。
+     */
+    void setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst = false);
 
 private:
     void tryTriggerStage(int stageIdx);
