@@ -536,7 +536,8 @@ public:
     ~VortexLuckyDoubledBuff() override;
 };
 
-class CoefficientAdjustmentBuff_Beam : public Buff  //系数调整
+//系数调整
+class CoefficientAdjustmentBuff_Beam : public Buff  
 {
 public:
     static std::string name;
@@ -556,9 +557,11 @@ class WaterSpoutRealBuff : public RealFactor
 {
 public:   
     static std::string name;
+    Skill* waterSpoutSkill = nullptr; // 技能指针
 
 public:
-    void listenerCallback2(Skill* const skill);
+    void listenerCallback1(Skill* const skill);
+    void listenerCallback2(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -657,6 +660,7 @@ public:
     ~OccupationalFactorBuff_Beam() override;
 };
 
+// 幻想冲击
 class FantasyImpactBuff_Beam : public Buff
 {
 public:
@@ -693,7 +697,8 @@ public:
     ~ExtremeLuckBuff_Beam();
 };
 
-class OtherExtraEnhanceBuff : public Buff  //极运
+//其他额外增伤(刻痕)
+class OtherExtraEnhanceBuff : public Buff  
 {
 public:
     static std::string name;

@@ -1385,21 +1385,40 @@ WaterSpoutRealBuff::WaterSpoutRealBuff(Person *p, double n) : RealFactor(p)
     this->isInherent = true;
     this->number = 0.0; // 龙卷伤害增加
 
-    auto info2 = std::make_unique<CreateSkillListener>(
+    auto info1 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
-        { this->listenerCallback2(skill); });
-    CreateSkillAction::addListener(std::move(info2));
+        { this->listenerCallback1(skill); });
+    CreateSkillAction::addListener(std::move(info1));
+
+    auto info2 = std::make_unique<DamageListener>(
+        this->getBuffID(), [this](DamageInfo& info)
+        { this->listenerCallback2(info); });
+    AttackAction::addListener(std::move(info2));
 }
 
-void WaterSpoutRealBuff::listenerCallback2(Skill* const skill)
+void WaterSpoutRealBuff::listenerCallback1(Skill* const skill)
 {
     if(skill->getSkillName() == WaterSpout::name)
     {
         //this->p->triggerAction<CDRefreshAction>(0,WaterSpout::name);
         // 3风
         skill->damageTriggerInterval /= 3;
+        
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout interval /3");
+
+        this->waterSpoutSkill = skill;
     }
+}
+
+void WaterSpoutRealBuff::listenerCallback2(DamageInfo& info)
+{
+    // if(info.skillName == WaterSpout::name && this->waterSpoutSkill)
+    // {
+    //     // 3风
+    //     this->p->triggerAction<AttackAction>(0,this->waterSpoutSkill);
+    //     this->p->triggerAction<AttackAction>(0,this->waterSpoutSkill);
+    //     Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout extra attack triggered");
+    // }
 }
 
 void WaterSpoutRealBuff::update(const double) {}
@@ -1409,6 +1428,7 @@ std::string WaterSpoutRealBuff::getBuffName() const { return WaterSpoutRealBuff:
 WaterSpoutRealBuff::~WaterSpoutRealBuff()
 {
     CreateSkillAction::deleteListener(this->getBuffID());
+    AttackAction::deleteListener(this->getBuffID());
 }
 
 // 9冰真实因子
