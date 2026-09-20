@@ -1,14 +1,10 @@
 #include "AutoAttack.h"
 #include "Skill.h"
 #include "../../core/Person.h"
+#include "../../core/Action.h"
 #include "../../FightingFantasy/Skill.h"
 #include "../../core/Logger.h"
 #include <cassert>
-
-// 假设这些技能名称常量已在对应头文件中定义
-// 实际项目中请包含相应的技能头文件
-class MukuChief; class MukuScout; class YGLWS; class SXMQ; class HYXZ;
-class Vortex; class FrostWind; class Ultimate_Beam; class Flood_Beam; class Beam; class WaterSpout;
 
 // 辅助函数：检查单个技能是否就绪
 static bool isSkillReady(Person* p, const std::string& skillName, bool allowStack) {
@@ -22,34 +18,54 @@ static bool isSkillReady(Person* p, const std::string& skillName, bool allowStac
 
 // 基类实现
 AutoAttack_Mage_Beam_Base::AutoAttack_Mage_Beam_Base(Person* p, const std::vector<BurstStage>& stages)
-    : AutoAttack(p), m_stages(stages) {}
-
-void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
-    if (m_stages.size() == 6) {
-        // LSZZ 六阶段轴：按实测 CD 就绪时点设置（1 tick = 1ms）。
-        // Flood_Beam 基础 CD 为 42290ms（冷却缩减后约 38061ms），
-        // 第 6 个 Flood 约 163870 启动，接近 164000 上限。
-        if (timer > 0 && timer < 10000)             tryTriggerStage(1);
-        if (timer > 30000 && timer < 40000)         tryTriggerStage(2);
-        if (timer > 60000 && timer < 68000)         tryTriggerStage(3);
-        if (timer > 89000 && timer < 96000)         tryTriggerStage(4);
-        if (timer > 116000 && timer < 124000)       tryTriggerStage(5);
-        if (timer > 160000 && timer < 180000)       tryTriggerStage(6);
-    } else {
-        // 七阶段轴保留原时间窗口
-        if (timer > 0 && timer < 5000)              tryTriggerStage(1);
-        if (timer > 27000 && timer < 40000)         tryTriggerStage(2);
-        if (timer > 54000 && timer < 65000)         tryTriggerStage(3);
-        if (timer > 81000 && timer < 95000)         tryTriggerStage(4);
-        if (timer > 108000 && timer < 128000)       tryTriggerStage(5);
-        if (timer > 135000 && timer < 180000)       tryTriggerStage(6);
-        if (timer > 163000 && timer < 175000)       tryTriggerStage(7);
+    : AutoAttack(p), m_stages(stages)
+    {
+      this->registerOutBurstLogic();
     }
 
-    windowPeriodLogic();
-    checkAndFinishOutBurst();
-    createSkillByAuto();
-    updatePerson(deltaTime);
+void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
+    // if (m_stages.size() == 6) {
+    //     // LSZZ 六阶段轴：按实测 CD 就绪时点设置（1 tick = 1ms）。
+    //     // Flood_Beam 基础 CD 为 42290ms（冷却缩减后约 38061ms），
+    //     // 第 6 个 Flood 约 163870 启动，接近 164000 上限。
+    //     if (timer > 0 && timer < 10000)             tryTriggerStage(1);
+    //     if (timer > 30000 && timer < 40000)         tryTriggerStage(2);
+    //     if (timer > 60000 && timer < 68000)         tryTriggerStage(3);
+    //     if (timer > 89000 && timer < 96000)         tryTriggerStage(4);
+    //     if (timer > 116000 && timer < 124000)       tryTriggerStage(5);
+    //     if (timer > 160000 && timer < 180000)       tryTriggerStage(6);
+    // } else {
+    //     // 七阶段轴保留原时间窗口
+    //     if (timer > 0 && timer < 5000)              tryTriggerStage(1);
+    //     if (timer > 27000 && timer < 40000)         tryTriggerStage(2);
+    //     if (timer > 54000 && timer < 65000)         tryTriggerStage(3);
+    //     if (timer > 81000 && timer < 95000)         tryTriggerStage(4);
+    //     if (timer > 108000 && timer < 128000)       tryTriggerStage(5);
+    //     if (timer > 135000 && timer < 180000)       tryTriggerStage(6);
+    //     if (timer > 163000 && timer < 175000)       tryTriggerStage(7);
+    // }
+  
+
+    // windowPeriodLogic();
+    this->checkSpecificLogicForOutBurst();
+
+    // checkAndFinishOutBurst();
+    this->createSkillByAuto();
+    this->updatePerson(deltaTime);
+    std::string currentSkillName = this->p->getNowReleasingSkill() ? this->p->getNowReleasingSkill()->getSkillName() : "None";
+    if(currentSkillName != "None")
+    {
+      int index = this->p->findSkillInSkillCDList(currentSkillName);
+      if(index != -1)
+      {
+        Skill* skill = this->p->getSkillCDListRef().at(index).get();
+        if(skill->getStackRef() < skill->getMaxStack())
+        {
+          // 如果当前技能的堆叠数小于最大堆叠数，则触发CD刷新动作
+          this->p->triggerAction<CDRefreshAction>(0, currentSkillName);
+        }
+      }
+    }
 }
 
 void AutoAttack_Mage_Beam_Base::tryTriggerStage(int stageIdx) {
@@ -82,6 +98,122 @@ void AutoAttack_Mage_Beam_Base::addSkillsToList(const std::vector<std::string>& 
     }
 }
 
+void AutoAttack_Mage_Beam_Base::checkSpecificLogicForOutBurst()
+{
+  // if(this->currentOutBurstType == OutBurstTypeEnum::None) return;
+  // 如果已经在爆发期间
+  if(isOutBurst)
+  {
+    this->timerForVariousStages -= deltaTime;
+    // 如果上一次爆发时间截止
+    if(this->timerForVariousStages <= 0)
+    {
+      this->isOutBurst = false;
+      this->currentOutBurstType = OutBurstTypeEnum::None;
+      Logger::debugAutoAttack(timer, "outBurst finished");
+      // 如果当前正在释放的技能是 Beam，则停止它
+      if (this->p->getNowReleasingSkill() && this->p->getNowReleasingSkill()->getSkillName() == Beam::name) 
+      {
+        (dynamic_cast<Beam*>(this->p->getNowReleasingSkill()))->stop();
+      }
+      // 如果当前正在释放的技能不是 Beam，则将其置为 nullptr
+      else if(this->p->getNowReleasingSkill()) 
+      {
+        Logger::debugAutoAttack(timer, "outBurst twoFantasyAndUlti finished but nowReleasingSkill is not Beam");
+        this->p->clearNowReleasingSkill();
+      }
+    }
+  }
+  else
+  {
+    // 如果不在爆发期间，则检查是否有新的爆发逻辑需要触发
+    if(!m_outBurstQueue.empty())
+    {
+      auto nextOutBurstType = m_outBurstQueue.front();
+      m_outBurstQueue.pop();
+      if(m_outBurstLogicMap.find(nextOutBurstType) != m_outBurstLogicMap.end())
+      {
+        // 执行爆发逻辑
+        m_outBurstLogicMap[nextOutBurstType].logic();
+        this->timerForVariousStages = m_outBurstLogicMap[nextOutBurstType].lastingTime;
+        this->isOutBurst = true;
+        this->currentOutBurstType = nextOutBurstType;
+      }
+    }
+  }
+}
+
+void AutoAttack_Mage_Beam_Base::registerOutBurstLogic()
+{
+  this->m_outBurstLogicMap[OutBurstTypeEnum::twoFantasyAndUlti] = {
+    20000, 
+    [this]() 
+    { 
+      const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::twoFantasyAndUlti)]; // 阶段1
+      Logger::debugAutoAttack(timer, "outBurst twoFantasyAndUlti started");
+      addSkillsToList(stage.addSkills);
+      this->isOutBurst = true;
+      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->currentOutBurstType = OutBurstTypeEnum::twoFantasyAndUlti;
+    }
+  };
+  this->m_outBurstLogicMap[OutBurstTypeEnum::simpleFantasyOnly] = {
+    20000, 
+    [this]() 
+    { 
+      const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::simpleFantasyOnly)]; // 阶段2
+      Logger::debugAutoAttack(timer, "outBurst simpleFantasyOnly started");
+      addSkillsToList(stage.addSkills);
+      this->isOutBurst = true;
+      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->currentOutBurstType = OutBurstTypeEnum::simpleFantasyOnly;
+    }
+  };
+  this->m_outBurstLogicMap[OutBurstTypeEnum::ultiOnly] = {
+    20000, 
+    [this]() 
+    { 
+      const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::ultiOnly)]; // 阶段2
+      Logger::debugAutoAttack(timer, "outBurst ultiOnly started");
+      addSkillsToList(stage.addSkills);
+      this->isOutBurst = true;
+      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->currentOutBurstType = OutBurstTypeEnum::ultiOnly;
+    }
+  };
+  this->m_outBurstLogicMap[OutBurstTypeEnum::pureBurst] = 
+  {
+    20000, 
+    [this]() 
+    { 
+      const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::pureBurst)]; // 阶段2
+      Logger::debugAutoAttack(timer, "outBurst pureBurst started");
+      addSkillsToList(stage.addSkills);
+      this->isOutBurst = true;
+      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->currentOutBurstType = OutBurstTypeEnum::pureBurst;
+    }
+  };
+  this->m_outBurstLogicMap[OutBurstTypeEnum::window] = 
+  {
+    6000, 
+    [this]() 
+    { 
+      const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::window)]; // 阶段2
+      Logger::debugAutoAttack(timer, "outBurst window started");
+      addSkillsToList(stage.addSkills);
+      this->isOutBurst = true;
+      this->timerForVariousStages = 6000; // 设置计时器为 6 秒
+      this->currentOutBurstType = OutBurstTypeEnum::window;
+    }
+  };
+}
+
+void AutoAttack_Mage_Beam_Base::addOutBurstLogicToQueue(OutBurstTypeEnum type)
+{
+  this->m_outBurstQueue.push(type);
+}
+
 void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
     if (!nextIsWindow) return;
 
@@ -91,7 +223,7 @@ void AutoAttack_Mage_Beam_Base::windowPeriodLogic() {
         maniAddPriorSkillList(FrostWind::name);
         maniAddPriorSkillList(Vortex::name);
         maniAddPriorSkillList(Beam::name);
-        maniAddPriorSkillList(WaterSpout::name);
+        //maniAddPriorSkillList(WaterSpout::name);
         //maniAddPriorSkillList(WaterSpout::name);
         windowSkillTriggered = true;
     }
@@ -285,7 +417,7 @@ AutoAttack_Mage_Beam_JBMQ::AutoAttack_Mage_Beam_JBMQ(Person* p)
         //   {SXMQ::name, MukuScout::name, Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
     }) {}
 
-    // LSZZ
+// LSZZ
 AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
     : AutoAttack_Mage_Beam_Base(p, {
         // 阶段1
@@ -315,7 +447,49 @@ AutoAttack_Mage_Beam_LSZZ::AutoAttack_Mage_Beam_LSZZ(Person* p)
         // 阶段7
         // { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
         //   {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
-     }) {}
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {SXMQ::name, LSZZ::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name,Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly
+        { {},
+          {LSZZ::name, FrostWind::name,
+           Flood_Beam::name, Beam::name,Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name,Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name,Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name,Vortex::name, WaterSpout::name} },
+     }) 
+     {
+      this->m_logicToStageIndex[OutBurstTypeEnum::twoFantasyAndUlti] = 6;
+      this->m_logicToStageIndex[OutBurstTypeEnum::simpleFantasyOnly] = 7;
+      this->m_logicToStageIndex[OutBurstTypeEnum::ultiOnly] = 8;
+      this->m_logicToStageIndex[OutBurstTypeEnum::pureBurst] = 9;
+      this->m_logicToStageIndex[OutBurstTypeEnum::window] = 10;
+
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+      this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
+     }
 
      // 游子
 AutoAttack_Mage_Beam_YZ::AutoAttack_Mage_Beam_YZ(Person* p)
