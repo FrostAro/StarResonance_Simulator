@@ -46,36 +46,36 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
         if(info.second.skillName == "NONE")
             continue; // 跳过无效技能统计
         std::cout << "Skill: " << info.second.skillName
-                  << ", Damage: " << info.second.damage
-                  << ", Damage attack count: " << info.second.damageCount
-                  << ", Released Times: " << info.second.releasedTimes
-                  << ", Lucky Damage: " << info.second.luckyDamage
-                  << ", Lucky Attack count: " << info.second.luckyDamageCount
-                  << ", DPS: " << info.second.damage / (static_cast<double>(totalTime) / 1000.0)
-                  << ", Propotion:" << (info.second.damage / totalAllDamage) * 100 << "%"
+                  << " | Damage: " << info.second.damage
+                  << " | Damage attack count: " << info.second.damageCount
+                  << " | Released Times: " << info.second.releasedTimes
+                  << " | Lucky Damage: " << info.second.luckyDamage
+                  << " | Lucky Attack count: " << info.second.luckyDamageCount
+                  << " | DPS: " << info.second.damage / (static_cast<double>(totalTime) / 1000.0)
+                  << " | Propotion:" << (info.second.damage / totalAllDamage) * 100 << "%"
                   << std::endl;
     }
 
-    std::cout << "Lucky: " 
-                  << " Damage: " << totalLuckyDamage
-                  << ", Damage attack count: " << totalLuckyDamageCount
-                  << ", DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 1000.0)
-                  << ", Propotion:" << (totalLuckyDamage / totalAllDamage) * 100 << "%"
+    std::cout << "Lucky:" 
+                  << " | Damage: " << totalLuckyDamage
+                  << " | Damage attack count: " << totalLuckyDamageCount
+                  << " | DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 1000.0)
+                  << " | Propotion:" << (totalLuckyDamage / totalAllDamage) * 100 << "%"
                   << std::endl;
     
     // 打印总体统计
     std::cout << std::endl
               << "total Damage Statistics:" << std::endl;
     
-    std::cout << "Total Damage: " << totalDamage
-              << ", Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 1000.0)
+    std::cout << " | Total Damage: " << totalDamage
+              << " | Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 1000.0)
               << std::endl;
     
     std::cout << "Total Damage Count: " << totalDamageCount
-              << ", Total Lucky Damage Count: " << totalLuckyDamageCount
-              << ", Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
-              << ", Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
-              << ", Total Released Times: " << totalReleasedTimes
+              << " | Total Lucky Damage Count: " << totalLuckyDamageCount
+              << " | Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
+              << " | Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
+              << " | Total Released Times: " << totalReleasedTimes
               << std::endl;
 }
 
