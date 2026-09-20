@@ -153,6 +153,9 @@ private:
     QWidget* createResultPanel();
     void applyTheme(bool dark);  // 切换明/暗主题
 
+    // 中断并回收仍在运行的模拟/对比线程（析构与重跑前调用）
+    void stopWorkerThreads();
+
     // 对比模式：从界面输入构建基准配置 / 解析候选配置
     SimConfig buildBaseConfig();
     std::vector<SimConfig> parseCandidates(const SimConfig& base, const QString& text);
@@ -192,6 +195,7 @@ private:
     QAction* m_darkModeAction;  // 暗色主题切换
 
     QThread* m_workerThread;
+    QThread* m_compareThread;    // 对比模式线程（与 m_workerThread 互斥使用，析构时两者都要回收）
     SimulationWorker* m_worker;
     ComparisonWorker* m_compareWorker;
 

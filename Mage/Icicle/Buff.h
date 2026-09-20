@@ -21,6 +21,7 @@ public:
 class SpearCritialToRevertIceBuff : public Buff
 {
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     // 冰矛暴击回复玄冰
     static std::string name;
 
@@ -40,6 +41,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -106,6 +108,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -154,6 +157,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info) const;
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -170,6 +174,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info) const;
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -186,6 +191,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info) const;
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -203,6 +209,7 @@ public:
     double revertTimer = 0;         //计时器
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -218,6 +225,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -234,6 +242,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -254,6 +263,7 @@ public:
     int extremeLuckTriggerStack = 0;   //极运触发所需层数
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -284,6 +294,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void listenerCallback2(Skill* const skill);
     void update(double deltaTime) override;
@@ -303,6 +314,7 @@ public:
     double count = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -330,6 +342,7 @@ public:
     secondaryAttributesEnum lastAttribute = secondaryAttributesEnum::CRITICAL;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;

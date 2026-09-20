@@ -59,6 +59,13 @@ class NewBuff : public Buff {
 public:
     // Buff名称（静态，必须定义）
     static std::string name;
+
+    // 是否为"固有Buff"（常驻，如因子/职业被动），必须与构造函数里的 isInherent 一致：
+    //   - 固有Buff：写 static constexpr bool kInherent = true;  构造函数里同时 this->isInherent = true;
+    //   - 普通Buff：不写这一行即可（编译期探测会回退为 false）
+    // Initializer 靠这个编译期标记决定要不要在初始化时自动装上该Buff，不再构造临时实例去问。
+    // 忘记写标记而构造函数里设了 isInherent=true 时，Debug 构建会在 Initialize() 末尾断言报错。
+    static constexpr bool kInherent = true;
     
     // 监听器回调函数（可选，根据实际需要三选一）
     void listenerCallback(const DamageInfo &info);        // 伤害监听

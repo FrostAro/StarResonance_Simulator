@@ -19,6 +19,13 @@ if(Qt6_FOUND)
     if(NOT MSVC AND Qt6_DIR MATCHES "msvc")
         message(WARNING "Qt6 found at ${Qt6_DIR} is an MSVC build, incompatible with the current compiler. "
                         "GUI target will be skipped; set CMAKE_PREFIX_PATH to a MinGW/GCC Qt to build the GUI.")
+    elseif(NOT MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
+        # Qt 6.10 起大量头文件使用 Q_DECLARE_*_NON_NOEXCEPT 宏，内部 static_assert 要求编译器
+        # 支持相应 __cpp_lib_* 特性宏，GCC 11 以下会直接编译失败（报 "Use *_NON_NOEXCEPT version of the macro"）。
+        # 控制台程序不依赖 Qt，因此这里只跳过 GUI，而不是让整个构建失败。
+        message(WARNING "GCC ${CMAKE_CXX_COMPILER_VERSION} is too old for Qt ${Qt6_VERSION} GUI headers "
+                        "(needs GCC 11+). GUI target will be skipped; console targets build normally. "
+                        "Use MSVC or a GCC 11+ toolchain to build the GUI.")
     else()
         set(BUILD_GUI TRUE)
         message(STATUS "Found Qt6: ${Qt6_DIR}")

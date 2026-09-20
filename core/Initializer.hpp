@@ -5,8 +5,35 @@
 #include "Buff.h"
 #include "AutoAttack.h"
 #include "Creators.hpp"
+#include <algorithm>
+#include <cassert>
+#include <iostream>
 #include <memory>
+#include <string>
+#include <type_traits>
 #include <vector>
+
+/* ============================================================================
+ * 固有Buff标记的编译期探测
+ *
+ * 约定：固有Buff（常驻，如因子/职业被动）在类内声明
+ *           static constexpr bool kInherent = true;
+ * 本工具在编译期探测该成员：
+ *     - 声明了 kInherent = true 的类 -> true
+ *     - 未声明（含旧代码/外部扩展的Buff）-> false（SFINAE 回退，不会编译失败）
+ * 因此新增固有Buff时只需在类内加一行标记，无需构造实例去问 isInherent，
+ * 也不会再污染全局 Buff::ID / 静态监听器表。
+ * ============================================================================
+ */
+template <typename T, typename = void>
+struct is_inherent_buff : std::false_type {};
+
+template <typename T>
+struct is_inherent_buff<T, std::void_t<decltype(T::kInherent)>>
+    : std::bool_constant<static_cast<bool>(T::kInherent)> {};
+
+template <typename T>
+inline constexpr bool is_inherent_buff_v = is_inherent_buff<T>::value;
 
 /* ============================================================================
  * @class Initializer
@@ -94,9 +121,18 @@ protected:
 
     /**
      * @brief 注册特定Buff类型
-     * @tparam Buff_ Buff类类型
+     * @tparam Buff_ 要注册的Buff类类型
      * 
-     * 将Buff类型注册到BuffCreator，同时检查是否为固有Buff。
+     * 将Buff类型登记到BuffCreator；若为固有Buff（常驻，如因子/职业被动），
+     * 则把名字加入 inherentBuffs，稍后由 initializePerson() 统一创建。
+     * 
+     * @note 是否固有由类内 `static constexpr bool kInherent` 在编译期探测（见文件顶部
+     *       is_inherent_buff_v），不再构造临时 Buff/Person 实例去读 isInherent。
+     *       原因：Buff 构造函数普遍带副作用（注册监听器、修改 p 的属性、递增全局 Buff::ID），
+     *       为探测一个 bool 而构造临时对象会污染全局状态、在静态监听器表里留下悬挂回调，
+     *       并让 Buff ID 分配变得顺序敏感。
+     *       Debug 构建下 Initialize() 末尾会断言"构造函数设了 isInherent 的Buff必须声明
+     *       kInherent = true"，忘记标记会在开发期直接暴露。
      */
     template<typename Buff_>
     void registerCertainBuff()
@@ -105,23 +141,12 @@ protected:
         BuffCreator::creatorMap.insert({Buff_::name,
                         [](Person* p,double n = 0) { return std::make_unique<Buff_>(p,n); }});
         
-        // 检查是否为固有Buff
-        // 创建一个临时的person
-        std::unique_ptr<temp_Person> temp_p = std::make_unique<temp_Person>();
-        bool isInherent = false;
-        auto temp = std::make_unique<Buff_>(temp_p.get(),0);
-        isInherent = temp->getIsInherent();
-        
-        if(isInherent)
+        if constexpr (is_inherent_buff_v<Buff_>)
         {
             Logger::debug("Initializer",
                           "Inherent Buff Registered: " + Buff_::name);
-            this->inherentBuffs.emplace_back(temp->getBuffName());
+            this->inherentBuffs.emplace_back(Buff_::name);
         }
-        
-        // 重置Buff ID计数器，避免测试实例影响正式ID分配
-        Buff::resetID();
-        temp.reset();
     }
 
     /**
@@ -213,7 +238,52 @@ public:
         this->equipSkills();
         this->initializePerson();
         this->initializeAutoAttack();
+
+#ifndef NDEBUG
+        checkInherentFlagConsistency();
+#endif
     }
+
+#ifndef NDEBUG
+    /**
+     * @brief 校验 kInherent 标记与实际 isInherent 一致（仅 Debug）
+     *
+     * 覆盖两个方向的遗漏，避免"新写了固有Buff但忘记加 kInherent = true"这类静默回归：
+     *   1. 注册为固有、但构造函数没有设置 isInherent；
+     *   2. 构造函数设置了 isInherent，但该类没有声明 kInherent（于是没被注册为固有）。
+     */
+    void checkInherentFlagConsistency() const
+    {
+        for (const auto& name : inherentBuffs)
+        {
+            int idx = this->p->findBuffInBuffList(name);
+            if (idx == -1)
+                continue;
+            const Buff* buff = this->p->getBuffListRef().at(idx).get();
+            if (buff && !buff->getIsInherent())
+            {
+                Logger::error("Initializer",
+                              "kInherent/isInherent 不一致（应为非固有，却标记为固有）: " + name);
+            }
+            assert(buff && buff->getIsInherent() &&
+                   "该Buff声明了 kInherent=true，但构造函数没有设置 isInherent=true");
+        }
+
+        for (const auto& buff : this->p->getBuffListRef())
+        {
+            if (!buff || !buff->getIsInherent())
+                continue;
+            const std::string& name = buff->getBuffName();
+            if (std::find(inherentBuffs.begin(), inherentBuffs.end(), name) == inherentBuffs.end())
+            {
+                Logger::error("Initializer",
+                              "kInherent/isInherent 不一致（构造函数设为固有，却缺少 kInherent 标记）: " + name);
+                assert(false &&
+                       "该Buff构造函数设置了 isInherent=true，但类内缺少 static constexpr bool kInherent = true;");
+            }
+        }
+    }
+#endif
 
     /**
      * @brief 构造函数

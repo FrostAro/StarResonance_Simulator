@@ -16,6 +16,7 @@ public:
     int triggerNum = 0;                     // 触发所需次数
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void listenerCallback2(double n);
     void update(double deltaTime) override;
@@ -35,6 +36,7 @@ public:
     double triggerInterval = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -50,6 +52,7 @@ public:
     double timer;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -68,6 +71,7 @@ public:
     double triggerInterval = 0;         //触发间隔
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void listenerCallback2(Skill *const skill);
     void update(double deltaTime) override;
@@ -86,6 +90,7 @@ public:
     bool triggered = false;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -120,6 +125,7 @@ public:
     double maxEnergyAdd = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -136,6 +142,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -169,6 +176,7 @@ public:
     double lastChange = 0;      // 记录上次修改
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void listenerCallback2(double n);
     void update(double deltaTime) override;
@@ -186,6 +194,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -236,6 +245,7 @@ public:
     bool triggered = false;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -252,6 +262,7 @@ public:
     bool triggered = false;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -269,6 +280,7 @@ public:
     int count = 0;          // 计数器
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -326,6 +338,7 @@ public:
     int triggerNum = 0; // 触发所需次数
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -346,6 +359,7 @@ public:
     double timer = 0;                         // 计时器
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -388,6 +402,7 @@ public:
     secondaryAttributesEnum lastAttribute = secondaryAttributesEnum::CRITICAL;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -406,6 +421,7 @@ public:
     int count = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -424,6 +440,7 @@ public:
     double count = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(double n);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -444,6 +461,7 @@ public:
     double triggerInterval = 5; // 触发间隔，防止一次伤害触发多次
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -462,6 +480,7 @@ public:
     int count = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo& info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -494,6 +513,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback1(Skill* const skill);
     void listenerCallback2(Buff* const buff);
     void update(double deltaTime) override;
@@ -527,6 +547,7 @@ public:
     int timer = 0;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     void listenerCallback(double n);
     bool shouldBeRemoved() override;
@@ -543,6 +564,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -560,6 +582,7 @@ public:
     Skill* waterSpoutSkill = nullptr; // 技能指针
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback1(Skill* const skill);
     void listenerCallback2(DamageInfo& info);
     void update(double deltaTime) override;
@@ -579,6 +602,7 @@ public:
     int triggerNum = 8;                     //触发次数
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -597,6 +621,7 @@ public:
     int triggerNum = 5;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -613,6 +638,7 @@ public:
     double enhance = 1.5;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -631,6 +657,7 @@ private:
     bool triggered = false;   // 是否已应用额外精通加成（实例级，防止多实例共享状态）
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -651,6 +678,7 @@ public:
 
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -673,6 +701,7 @@ public:
     int extraTriggerStack = 10;             // 额外层数（如极运提供的层数）
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(DamageInfo &info);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
@@ -704,6 +733,7 @@ public:
     static std::string name;
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill* const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;

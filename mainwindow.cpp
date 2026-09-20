@@ -179,43 +179,44 @@ void SimulationWorker::run()
             tableData.append(row);
         }
     } else {
-        // 多次模拟：累加所有结果
-        std::unordered_map<std::string, DamageStatistics> accumulatedMap;
+        // 多次模拟：先累加所有结果，再求平均。
+        // 注意用 double 累加器：DamageStatistics 里的 count 字段是 int，直接 /= m_times
+        // 会整除截断（387.8 -> 387），截断后再算暴击率/幸运率就是有偏的。
+        struct Acc {
+            double damage = 0, luckyDamage = 0;
+            double damageCount = 0, luckyDamageCount = 0, critCount = 0;
+        };
+        std::unordered_map<std::string, Acc> accumulatedMap;
         for (const auto& statsMap : damageStatisticsList) {
             for (const auto& [skillName, stat] : statsMap) {
                 auto& acc = accumulatedMap[skillName];
-                acc.skillName = skillName;
                 acc.damage += stat.damage;
                 acc.damageCount += stat.damageCount;
                 acc.luckyDamage += stat.luckyDamage;
                 acc.luckyDamageCount += stat.luckyDamageCount;
-                acc.CritDamageCount += stat.CritDamageCount;
+                acc.critCount += stat.CritDamageCount;
             }
         }
-        // 计算平均值
-        for (auto& [skillName, acc] : accumulatedMap) {
-            acc.damage /= m_times;
-            acc.damageCount /= m_times;
-            acc.luckyDamage /= m_times;
-            acc.luckyDamageCount /= m_times;
-            acc.CritDamageCount /= m_times;
-        }
-        // 转换为表格数据
-        for (const auto& [skillName, acc] : accumulatedMap) {
-            double totalDmg = acc.damage + acc.luckyDamage;
-            double dps = totalDmg / (m_maxTime / 1000.0);
-            double critRate = acc.damageCount > 0 ? (acc.CritDamageCount / acc.damageCount) * 100.0 : 0.0;
+        // 转换为表格数据（每项为该次数的均值）
+        for (const auto& [skillName, raw] : accumulatedMap) {
+            const double damage = raw.damage / m_times;
+            const double luckyDamage = raw.luckyDamage / m_times;
+            const double damageCount = raw.damageCount / m_times;
+            const double luckyCount = raw.luckyDamageCount / m_times;
+            const double critCount = raw.critCount / m_times;
+            double dps = (damage + luckyDamage) / (m_maxTime / 1000.0);
+            double critRate = damageCount > 0 ? (critCount / damageCount) * 100.0 : 0.0;
             QVector<QVariant> row;
             row << QString::fromStdString(skillName)
-                << acc.damage
-                << acc.damageCount
-                << acc.luckyDamage
-                << acc.luckyDamageCount
+                << damage
+                << damageCount
+                << luckyDamage
+                << luckyCount
                 << dps
                 << critRate;
             tableData.append(row);
         }
-        emit logMessage(QString("已完成 %1 次模拟，输出平均值。").arg(m_times));
+        emit logMessage(QString("已完成 %1 次模拟，输出 %1 次平均值。").arg(m_times));
     }
 
     emit simulationFinished(tableData, m_maxTime);
@@ -345,7 +346,7 @@ static const char* kDarkStyle = R"(
 // MainWindow 实现
 //==============================================================================
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_workerThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
+    : QMainWindow(parent), m_workerThread(nullptr), m_compareThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
 {
     // 默认浅色主题 + 更大默认窗口
     setStyleSheet(kLightStyle);
@@ -377,14 +378,30 @@ MainWindow::MainWindow(QWidget *parent)
     onProfessionChanged(0); // 初始化 Beam
 }
 
+void MainWindow::stopWorkerThreads()
+{
+    // 析构与重跑前统一回收：不留下仍在跑模拟的线程。
+    // 注意不能只处理 m_workerThread —— 对比模式用的是 m_compareThread，
+    // 旧实现漏了它，关窗时对比线程仍在跑，程序会卡住不退出。
+    for (QThread **slot : {&m_workerThread, &m_compareThread})
+    {
+        QThread *thread = *slot;
+        if (thread)
+        {
+            thread->requestInterruption();  // 让 run() 的循环与 shouldStop 回调尽早跳出
+            thread->quit();
+            thread->wait();
+        }
+        // 对象本身由 finished -> deleteLater 回收，这里只清空指针
+        *slot = nullptr;
+    }
+    m_worker = nullptr;
+    m_compareWorker = nullptr;
+}
+
 MainWindow::~MainWindow()
 {
-    if (m_workerThread)
-    {
-        m_workerThread->requestInterruption();
-        m_workerThread->quit();
-        m_workerThread->wait();
-    }
+    stopWorkerThreads();
 }
 
 void MainWindow::setupUI()
@@ -581,6 +598,7 @@ void MainWindow::onProfessionChanged(int index)
     m_fantasyCombo->addItem("嗜血毛球 + 幻妖蟹蛛");
     m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
+    m_fantasyCombo->addItem("游子 + 嗜血毛球");
     m_fantasyCombo->setCurrentIndex(0);
     updateDefaultsForProfession("beam");
 }
@@ -683,7 +701,9 @@ std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const 
 
 void MainWindow::onRunClicked()
 {
-    if (m_workerThread && m_workerThread->isRunning())
+    // 两类线程都要检查：监听器/计时器都是进程级静态状态，两个模拟并发会互相污染
+    if ((m_workerThread && m_workerThread->isRunning()) ||
+        (m_compareThread && m_compareThread->isRunning()))
     {
         QMessageBox::warning(this, "模拟中", "已有模拟正在运行，请等待完成。");
         return;
@@ -723,19 +743,19 @@ void MainWindow::onRunClicked()
         m_logText->clear();
         m_resultTable->setRowCount(0);
 
-        m_workerThread = new QThread(this);
+        m_compareThread = new QThread(this);
         m_compareWorker = new ComparisonWorker(base, std::move(candidates), pairs, seed,
                                                maxTime, deltaTime, runBeamSimulationOnce);
-        m_compareWorker->moveToThread(m_workerThread);
+        m_compareWorker->moveToThread(m_compareThread);
 
-        connect(m_workerThread, &QThread::started, m_compareWorker, &ComparisonWorker::run);
+        connect(m_compareThread, &QThread::started, m_compareWorker, &ComparisonWorker::run);
         connect(m_compareWorker, &ComparisonWorker::logMessage, this, &MainWindow::appendLog);
         connect(m_compareWorker, &ComparisonWorker::comparisonFinished, this, &MainWindow::onComparisonFinished);
-        connect(m_compareWorker, &ComparisonWorker::comparisonFinished, m_workerThread, &QThread::quit);
-        connect(m_workerThread, &QThread::finished, m_compareWorker, &QObject::deleteLater);
-        connect(m_workerThread, &QThread::finished, m_workerThread, &QObject::deleteLater);
+        connect(m_compareWorker, &ComparisonWorker::comparisonFinished, m_compareThread, &QThread::quit);
+        connect(m_compareThread, &QThread::finished, m_compareWorker, &QObject::deleteLater);
+        connect(m_compareThread, &QThread::finished, m_compareThread, &QObject::deleteLater);
 
-        m_workerThread->start();
+        m_compareThread->start();
         m_runButton->setEnabled(false);
         m_statusLabel->setText("对比模拟中...");
         return;
@@ -844,24 +864,26 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
         }
     }
 
-    // 添加总计行（简化示例，实际应计算总和）
+    // 总计行：表格每一行都是"单次模拟"或"多次模拟的均值"，这里按同样的口径
+    // 把各技能的单位伤害/次数相加，得到整场（或均值场）的总量与总 DPS。
+    // 注意分母是 totalTime 而不是 m_times：各行已经是均值，直接相加即为均值总量。
     double totalDamage = 0, totalLucky = 0;
-    int totalCount = 0, totalLuckyCount = 0;
+    double totalCount = 0, totalLuckyCount = 0;
     for (int i = 0; i < stats.size(); ++i)
     {
         totalDamage += stats[i][1].toDouble();
         totalLucky += stats[i][3].toDouble();
-        totalCount += stats[i][2].toInt();
-        totalLuckyCount += stats[i][4].toInt();
+        totalCount += stats[i][2].toDouble();
+        totalLuckyCount += stats[i][4].toDouble();
     }
     double totalDps = (totalTime > 0) ? (totalDamage + totalLucky) / (totalTime / 1000.0) : 0.0;  // 防御除零
     int row = m_resultTable->rowCount();
     m_resultTable->insertRow(row);
     m_resultTable->setItem(row, 0, new QTableWidgetItem("🔥 总计"));
     m_resultTable->setItem(row, 1, new QTableWidgetItem(QString::number(totalDamage, 'f', 0)));
-    m_resultTable->setItem(row, 2, new QTableWidgetItem(QString::number(totalCount)));
+    m_resultTable->setItem(row, 2, new QTableWidgetItem(QString::number(totalCount, 'f', 1)));
     m_resultTable->setItem(row, 3, new QTableWidgetItem(QString::number(totalLucky, 'f', 0)));
-    m_resultTable->setItem(row, 4, new QTableWidgetItem(QString::number(totalLuckyCount)));
+    m_resultTable->setItem(row, 4, new QTableWidgetItem(QString::number(totalLuckyCount, 'f', 1)));
     m_resultTable->setItem(row, 5, new QTableWidgetItem(QString::number(totalDps, 'f', 2)));
     m_resultTable->setItem(row, 6, new QTableWidgetItem(""));
 
@@ -903,7 +925,7 @@ void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, in
     appendLog(QString("对比完成：%1 对。配对σ远小于基准DPS表示CRN生效；|t值|≥2视为差异显著。").arg(pairs));
 
     // 清空指针，防止下次点击时访问已销毁对象
-    m_workerThread = nullptr;
+    m_compareThread = nullptr;
     m_compareWorker = nullptr;
 }
 

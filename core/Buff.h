@@ -232,6 +232,7 @@ public:
     std::unordered_map<std::string, double> skillReleasedTimesMap{}; // 技能释放时间记录表，键为技能名称，值为次数（毫秒）
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void listenerCallback(Skill *const skill);
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;

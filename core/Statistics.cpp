@@ -19,6 +19,10 @@
 void printDamageStatistics(const std::unordered_map<std::string, DamageStatistics>& damageStatsMap, 
                            int totalTime)
 {
+    // 注意：本函数同时被"单次模拟"和"多次模拟的均值表"（summaryCirculationPrint 已除过 simCount）
+    // 调用，因此各字段按"本次展示口径"理解：单次模拟=总量，多次模拟汇总=均值。
+    // 表中可能没有任何有效出伤（totalDamageCount=0），所有比率都要防除零。
+
     // 计算总体统计
     double totalDamage = 0;
     double totalLuckyDamage = 0;
@@ -39,6 +43,15 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
         totalReleasedTimes += info.second.releasedTimes;
     }
 
+    // 比率/DPS 辅助：统一防除零，避免 0 命中的技能表把输出打成 nan
+    const double seconds = static_cast<double>(totalTime) / 1000.0;
+    const auto percentOf = [](double part, double whole) {
+        return whole > 0 ? (part / whole) * 100 : 0.0;
+    };
+    const auto dpsOf = [seconds](double damage) {
+        return seconds > 0 ? damage / seconds : 0.0;
+    };
+
     // 打印每个技能的统计数据
     std::cout << "skill Damage Statistics:" << std::endl;
     for (const auto &info : damageStatsMap)
@@ -51,30 +64,31 @@ void printDamageStatistics(const std::unordered_map<std::string, DamageStatistic
                   << " | Released Times: " << info.second.releasedTimes
                   << " | Lucky Damage: " << info.second.luckyDamage
                   << " | Lucky Attack count: " << info.second.luckyDamageCount
-                  << " | DPS: " << info.second.damage / (static_cast<double>(totalTime) / 1000.0)
-                  << " | Propotion:" << (info.second.damage / totalAllDamage) * 100 << "%"
+                  << " | DPS: " << dpsOf(info.second.damage)
+                  << " | Propotion:" << percentOf(info.second.damage, totalAllDamage) << "%"
                   << std::endl;
     }
 
     std::cout << "Lucky:" 
                   << " | Damage: " << totalLuckyDamage
                   << " | Damage attack count: " << totalLuckyDamageCount
-                  << " | DPS: " << totalLuckyDamage / (static_cast<double>(totalTime) / 1000.0)
-                  << " | Propotion:" << (totalLuckyDamage / totalAllDamage) * 100 << "%"
+                  << " | DPS: " << dpsOf(totalLuckyDamage)
+                  << " | Propotion:" << percentOf(totalLuckyDamage, totalAllDamage) << "%"
                   << std::endl;
     
     // 打印总体统计
     std::cout << std::endl
               << "total Damage Statistics:" << std::endl;
     
+    // Total：单次模拟时为该次的总量；多次模拟汇总表里为每次的均值（见 summaryCirculationPrint）
     std::cout << " | Total Damage: " << totalDamage
-              << " | Total DPS: " << (totalDamage + totalLuckyDamage) / (static_cast<double>(totalTime) / 1000.0)
+              << " | Total DPS: " << dpsOf(totalDamage + totalLuckyDamage)
               << std::endl;
     
     std::cout << "Total Damage Count: " << totalDamageCount
               << " | Total Lucky Damage Count: " << totalLuckyDamageCount
-              << " | Lucky rate:" << (totalLuckyDamageCount / totalDamageCount) * 100 << "%"
-              << " | Crit rate:" << (totalCritCount / totalDamageCount) * 100 << "%"
+              << " | Lucky rate:" << percentOf(totalLuckyDamageCount, totalDamageCount) << "%"
+              << " | Crit rate:" << percentOf(totalCritCount, totalDamageCount) << "%"
               << " | Total Released Times: " << totalReleasedTimes
               << std::endl;
 }

@@ -2,7 +2,18 @@
 
 这是一个基于`C++17`、`cmake`、`Qt6`构建的可扩展DPS模拟器，主要用于模拟《星痕共鸣》中的3分钟输出循环。  
 
-程序模拟数据与游戏内实际数据会有所出入。伤害计算中暴击/幸运采用**期望值模型**（不逐次掷骰），数据波动主要来自技能触发、Buff生效时机等程序随机；为提高精度，建议调高循环次数，目前20次循环可将波动控制在2%左右，如需更精确数据可继续提高模拟次数
+程序模拟数据与游戏内实际数据会有所出入。伤害计算中暴击/幸运采用**期望值模型**（不逐次掷骰），数据波动主要来自技能触发、Buff生效时机等程序随机；为提高精度，建议调高循环次数。
+
+**当前版本的实测波动（20 次循环，1 tick = 1ms，180s）：**
+
+| 配置 | 平均 DPS | 标准差 σ | 变异系数（σ/均值） |
+| --- | --- | --- | --- |
+| 射线（硬编码爆发轴） | 1,628,366 | 142 | **约 0.01%** |
+| 冰矛（三段时间轴） | 458,263 | 12,263 | **约 2.7%** |
+
+射线因为爆发轴已经硬编码成固定顺序（见 `AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis`），程序随机几乎被压没，单次就很稳；冰矛的随机触发更多，20 次循环的波动约 2.7%，要提高精度请继续加大循环次数。
+
+如果你要比较**两个配置的提升**，不要靠"多跑几次比均值"——用下文的**对比模式**，同种子配对能把噪声抵消掉几个数量级。
 
 本程序不能用于对自身配置的预测，而应用于对于后续未知配置的提升推测，并根据游戏变动适当拓展。  
 
@@ -41,6 +52,14 @@ CMake 3.16+
 GCC/Clang/MSVC 支持C++17  
 Qt 6.10.2及以上（**必须与编译器匹配**：MSVC 编译器配 MSVC 版 Qt，MinGW 编译器配 MinGW 版 Qt）  
 （控制台程序已在 MinGW-w64 GCC 8.1.0 下验证通过；GUI 需配套的 MinGW 版 Qt）
+
+> **MinGW 现状（实测）**
+> - 控制台目标（`beam` / `beam_max` / `icicle` / `compare`）用 MinGW-w64 GCC 8.1.0 + Qt 6.10.2 mingw_64 **已可正常编译运行**（配置方式见下文 MinGW 段）。
+> - **GUI 目标在 GCC 8.1.0 下编不过**，会停在 Qt 头文件里的
+>   `static assertion failed: Use *_NON_NOEXCEPT version of the macro`（`qmetatype.h` / `qvariant.h` / `qurl.h` / `qpen.h` / `qlocale.h`）。
+>   原因是 Qt 6.10 要求编译器支持相应的 `__cpp_lib_*` 特性宏，而 GCC 8.1 太旧——**这是工具链版本问题，不是程序代码问题**。
+> - 想用 MinGW 编 GUI，需要 **GCC 11 及以上**的 MinGW，并且 Qt 也要用同一个编译器重新构建（混用不同 GCC 大版本的 Qt 会在链接期报 ABI 不兼容）。
+> - 只想跑控制台（或手头只有 GCC 8.1）时，GUI 编不过不影响使用，也可以直接用 MSVC 编 GUI。
 
 ### 编译运行
 
@@ -182,7 +201,7 @@ make([](SimConfig& c){ c.fantasyConfig = 0; }, "换幻想0");     // 幻想：�
    暴击 +5
    攻击 +100
    精通 +10
-   # 幻想用绝对值：-1=无幻想，0-5=具体幻想，如：幻想 -1
+   # 幻想用绝对值：0-6=具体幻想（对应上方"幻想配置"下拉框的序号），如：幻想 5
    ```
 
 4. 点「运行模拟」，结果表显示每个候选的 基准DPS/候选DPS/ΔDPS/Δ%/配对σ/t值（ΔDPS、Δ% 绿涨红跌）
@@ -205,7 +224,10 @@ make([](SimConfig& c){ c.fantasyConfig = 0; }, "换幻想0");     // 幻想：�
 | 爆伤 / critDmgSet | 爆伤额外值 | 增量 |
 | 增伤 / incSet | 增伤额外值 | 增量 |
 | 元素增伤 / eleIncSet | 元素增伤额外值 | 增量 |
-| 幻想 / fantasy | 幻想配置 | **绝对值**（-1=无幻想，0-5=具体幻想） |
+| 幻想 / fantasy | 幻想配置 | **绝对值**（0-6=具体幻想，见上方"幻想配置"下拉框的7个选项；没有"无幻想"档位） |
+
+> 想看每个序号对应哪两个幻想，见 `Mage/Beam/Initializer.hpp` 的 `equipSkills()`：
+> `0`=姆头+尖兵、`1`=姆头+伊戈雷乌斯、`2`=姆头+嗜血毛球、`3`=幻妖蟹蛛+嗜血毛球、`4`=尖兵+嗜血毛球、`5`=掠食蜘蛛+嗜血毛球、`6`=游子+嗜血毛球。
 
 ### 使用建议
 
@@ -241,13 +263,19 @@ make([](SimConfig& c){ c.fantasyConfig = 0; }, "换幻想0");     // 幻想：�
 
 ```text
 skill Damage Statistics:
-Skill: Spear, Damage: XXXXX, Damage attack count: XXX, Lucky Damage: XXXXX, Lucky Attack count: XXX, DPS: XXXX
+Skill: <技能名> | Damage: XXXXX | Damage attack count: XXX | Released Times: XXX | Lucky Damage: XXXXX | Lucky Attack count: XXX | DPS: XXXX | Propotion:X.XX%
 ...
+Lucky: | Damage: XXXXX | Damage attack count: XXX | DPS: XXXX | Propotion:XX.XX%
 
 total Damage Statistics:
-Total Damage: XXXXXXX, Total Lucky Damage: XXXXXX, Total DPS: XXXXXX
-Total Damage Count: XXXX, Total Lucky Damage Count: XXX, Lucky rate: XX.XX%, Crit rate: XX.XX%
+ | Total Damage: XXXXXXX | Total DPS: XXXXXX
+Total Damage Count: XXXX | Total Lucky Damage Count: XXX | Lucky rate:XX.XX% | Crit rate:XX.XX% | Total Released Times: XXXX
 ```
+
+> 字段口径说明：
+> - `Damage` / `Lucky Damage` 是**期望值**累计（暴击与幸运都按概率折算，不逐次掷骰），`Attack count` / `Lucky Attack count` 是实际触发次数。
+> - 循环次数 > 1 时，程序先累加再除以次数，所以汇总表里的每个数字都是**每次的均值**（`Total Damage`/`Total DPS` 同样是均值，不是多次总和）——次数类字段可能出现小数（如 `376.9`）属正常。
+> - `Lucky rate` / `Crit rate` 用"幸运/暴击触发次数 ÷ 总命中次数"计算，分母为 0 时按 0 输出（不会出现 `nan`）。
 
 ### 性能优化建议
 

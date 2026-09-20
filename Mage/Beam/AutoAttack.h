@@ -11,10 +11,33 @@ class Beam;
 // 所有 Beam 法系自动爆发的基类
 class AutoAttack_Mage_Beam_Base : public AutoAttack
 {
-    enum class OutBurstTypeEnum;
-    struct BurstStage;
-    struct OutBurstLogic;
-    
+    // 嵌套类型必须先于任何访问说明符统一定义（类内默认 private）。
+    // 原写法是"先 private 里前置声明、再 protected 里定义"，属于同一实体以不同访问权限
+    // 重复声明，GCC/Clang 直接报 redeclared with different access（MSVC 容忍但不标准）。
+    enum class OutBurstTypeEnum
+    {
+        twoFantasyAndUlti = 0,
+        simpleFantasyOnly = 1,
+        ultiOnly = 2,
+        pureBurst = 3,
+        window = 4,
+        None = 5
+    };
+
+    // 阶段配置：检查的技能列表 + 要添加的技能列表
+    struct BurstStage
+    {
+        // 每个技能：名称，是否允许用堆叠替代CD（true表示允许stack>0也算就绪）
+        std::vector<std::pair<std::string, bool>> checkSkills;
+        std::vector<std::string> addSkills;
+    };
+
+    struct OutBurstLogic
+    {
+        int lastingTime; // 持续时间（毫秒）
+        std::function<void()> logic; // 逻辑函数
+    };
+
 public:
     AutoAttack_Mage_Beam_Base(Person *p, const std::vector<BurstStage> &stages);
     ~AutoAttack_Mage_Beam_Base() override = default;
@@ -56,31 +79,6 @@ private:
     bool windowSecondBeamTriggered = false;
     int timerForVariousStages = 0; // 用于不同阶段的计时器
     OutBurstTypeEnum currentOutBurstType = OutBurstTypeEnum::None;
-
-protected:
-    enum class OutBurstTypeEnum
-    {
-        twoFantasyAndUlti = 0,
-        simpleFantasyOnly = 1,
-        ultiOnly = 2,
-        pureBurst = 3,
-        window = 4,
-        None = 5
-    };
-
-    // 阶段配置：检查的技能列表 + 要添加的技能列表
-    struct BurstStage
-    {
-        // 每个技能：名称，是否允许用堆叠替代CD（true表示允许stack>0也算就绪）
-        std::vector<std::pair<std::string, bool>> checkSkills;
-        std::vector<std::string> addSkills;
-    };
-
-    struct OutBurstLogic
-    {
-        int lastingTime; // 持续时间（毫秒）
-        std::function<void()> logic; // 逻辑函数
-    };
 };
 
 // -------------------- 具体派生类 --------------------
