@@ -136,8 +136,8 @@ class Initializer_Mage_Beam : public Initializer
         if (m_flowConfig == static_cast<int>(BeamFlow::QuicknessProficient))
         {
             registerCertainBuff<WaterSpoutRealBuff>();
-            registerCertainBuff<NineIceBuff>();
-            registerCertainBuff<IceRealBuff>();
+            registerCertainBuff<FloodLuckyBuff>();
+            // registerCertainBuff<IceRealBuff>();
             registerCertainBuff<VortexLuckyDoubledBuff>();
         }
         else if (m_flowConfig == static_cast<int>(BeamFlow::Lucky))

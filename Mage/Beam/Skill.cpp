@@ -74,12 +74,13 @@ std::string Vortex::name = "Vortex";
 
 Vortex::Vortex(Person* p) : ContinuousSkill()
 {
+    this->isNoReleasing = true;
+    
     this->multiplying = 0.2L;
     this->fixedValue = 120;
     this->damageTriggerInterval = 500;
     this->duration = 10000;
     this->MaxCD = 100;
-    this->releasingTime = 50;
 
     this->energyAdd = 2;
 
@@ -152,7 +153,7 @@ FrostWind::FrostWind(Person* p) : InstantSkill()
     this->MaxCD = 1000;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 160;
+    this->releasingTime = 10;
 
     this->setSkillType();
 }
