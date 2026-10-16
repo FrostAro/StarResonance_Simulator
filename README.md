@@ -4,13 +4,6 @@
 
 程序模拟数据与游戏内实际数据会有所出入。伤害计算中暴击/幸运采用**期望值模型**（不逐次掷骰），数据波动主要来自技能触发、Buff生效时机等程序随机；为提高精度，建议调高循环次数。
 
-**当前版本的实测波动（20 次循环，1 tick = 1ms，180s）：**
-
-| 配置 | 平均 DPS | 标准差 σ | 变异系数（σ/均值） |
-| --- | --- | --- | --- |
-| 射线（硬编码爆发轴） | 1,628,366 | 142 | **约 0.01%** |
-| 冰矛（三段时间轴） | 458,263 | 12,263 | **约 2.7%** |
-
 射线因为爆发轴已经硬编码成固定顺序（见 `AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis`），程序随机几乎被压没，单次就很稳；冰矛的随机触发更多，20 次循环的波动约 2.7%，要提高精度请继续加大循环次数。
 
 如果你要比较**两个配置的提升**，不要靠"多跑几次比均值"——用下文的**对比模式**，同种子配对能把噪声抵消掉几个数量级。
@@ -21,8 +14,6 @@
 
 本程序有一个简单的图形化页面，没有c++基础的可以使用此图形化页面，但是目前为beta版本可能会导致一系列问题(例如现在实时日志框中无法输出debug信息)，有c++基础者仍建议自行编译并运行dps_simulator_icicle.exe  
 
-(孩子第一次写这种东西，代码写的烂，多多见谅谢谢喵)
-
 ## 注意
 
 1.填入属性时，直接按原始站街面板填入即可，关于天赋等各部分带来的面板影响均已考虑进去（除3.5%，3.5%需自行扣除），无需担心
@@ -30,7 +21,12 @@
 
 ## 快速开始(简单版)
 
-1.本文件目录找到StarResonance_Simulator.exe双击运行  
+> **注意**：仓库源码不附带编译好的 exe，clone 下来后需自行编译（见下文「快速开始(复杂版)」）。
+> 若拿到的是已编译版本，GUI 程序位于 `build-msvc-review\bin\Release\dps_simulator_gui.exe`
+> （该目录同时带有运行所需的 `Qt6*.dll`，**请保持 exe 在原目录内运行，不要单独拷走**）。
+> 也可直接用 `build-msvc-review\bin\Release\dps_simulator_icicle.exe` 运行控制台版冰矛。
+
+1.双击 `build-msvc-review\bin\Release\dps_simulator_gui.exe`  
 2.勾选随机种子  
 3.填入对应数据(数据应为站街面板，且应自行扣除3.5%)
 4.点击下方的运行模拟  
@@ -48,12 +44,13 @@ Visual C++ 2015-2022 Redistributable
 
 支持C++17 或更高版本  
 CMake 3.16+  
-(补充：若不使用cmake等构建工具而使用vscode的某些runner插件，例如compile runner，需自行修改程序链接，或者怕麻烦也可以include对应的.cpp文件(bushi))  
+(补充：若不使用cmake等构建工具而使用vscode的某些runner插件，例如compile runner，需自行修改程序链接，或改为直接include对应的.cpp文件)  
 GCC/Clang/MSVC 支持C++17  
 Qt 6.10.2及以上（**必须与编译器匹配**：MSVC 编译器配 MSVC 版 Qt，MinGW 编译器配 MinGW 版 Qt）  
 （控制台程序已在 MinGW-w64 GCC 8.1.0 下验证通过；GUI 需配套的 MinGW 版 Qt）
 
 > **MinGW 现状（实测）**
+>
 > - 控制台目标（`beam` / `beam_max` / `icicle` / `compare`）用 MinGW-w64 GCC 8.1.0 + Qt 6.10.2 mingw_64 **已可正常编译运行**（配置方式见下文 MinGW 段）。
 > - **GUI 目标在 GCC 8.1.0 下编不过**，会停在 Qt 头文件里的
 >   `static assertion failed: Use *_NON_NOEXCEPT version of the macro`（`qmetatype.h` / `qvariant.h` / `qurl.h` / `qpen.h` / `qlocale.h`）。

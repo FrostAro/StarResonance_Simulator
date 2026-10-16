@@ -9,6 +9,7 @@
 
 # 构建目录
 build/
+build-*/
 
 # IDE相关
 .vscode/

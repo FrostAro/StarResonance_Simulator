@@ -52,7 +52,7 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
 
-        int fantasyConfig = 5; // 幻想配置参数（0-5），控制装备的幻想技能组合
+        int fantasyConfig = 6; // 幻想配置参数（0-6），控制装备的幻想技能组合
 
         // Person 构造参数描述（用于日志配置头）
         const std::string personParams =

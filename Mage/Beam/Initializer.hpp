@@ -15,7 +15,7 @@ enum class BeamFlow
 
 class Initializer_Mage_Beam : public Initializer
 {
-    int m_flowConfig = 0;  // 0=急速精通流，1=幸运流
+    int m_flowConfig = 1;  // 0=急速精通流，1=幸运流
     std::string m_singleFantasySkill;  // 非空时只装备该幻想技能（用于单幻想测试）
 
     void equipSkills() override

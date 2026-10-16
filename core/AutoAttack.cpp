@@ -133,7 +133,7 @@ void AutoAttack::createSkillByAuto()
         }
     }
 
-    // 2. 优先处理待释放的优先级技能列表
+    // 2.优先处理待释放的优先级技能列表
     if (!this->priorSkillList.empty())
     {
         auto willSkillName = this->priorSkillList.at(0).skillName;

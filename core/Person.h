@@ -133,7 +133,7 @@ public:
 
 	// ==== 幸运相关 ====
     double luckyDamageIncrease = 0;          // 幸运伤害增加百分比 (1 + 百分比)
-    double luckyMultiplying = 0;             // 幸运伤害倍率（基础41.25%，每1%幸运+0.75%）
+    double luckyMultiplying = 0;             // 幸运伤害倍率（基础41.25%，每1%幸运+0.25%，见 setLuckyMultiplying）
 	double luckyMultiplyingExtra = 0;        // 额外幸运伤害倍率（来自buff等）
 	double luckyFinalIncrease = 0;           // 幸运最终伤害增加百分比 (1 + 百分比)
 	double luckyDreamIncrease = 0;           // 幸运梦境增伤百分比 (1 + 百分比)
