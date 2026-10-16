@@ -52,7 +52,8 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
         //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
 
-        int fantasyConfig = 6; // 幻想配置参数（0-6），控制装备的幻想技能组合
+        int fantasyConfig = 5; // 幻想配置参数（0-6），控制装备的幻想技能组合
+        int flowConfig = 0;   // 流派配置参数（0-1），0=急速精通流，1=幸运流
 
         // Person 构造参数描述（用于日志配置头）
         const std::string personParams =
@@ -61,15 +62,15 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
             "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(fantasyConfig);
 
         std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
-        /*三维属性*/ 6760,
-        /*暴击(%)*/ 5,/*例如51.63*/
-        /*急速(%)*/ 30,
-        /*幸运(%)*/ 5,
-        /*精通(%)*/ 45,
-        /*全能(%)*/ 10,
-        /*攻击(物理攻击/魔法攻击)*/ 5000,
-        /*精炼攻击*/ 1000,
-        /*元素攻击*/ 230,
+        /*三维属性*/ 9272,
+        /*暴击(%)*/ 10.12,/*例如51.63*/
+        /*急速(%)*/ 38.18,
+        /*幸运(%)*/ 23.21,
+        /*精通(%)*/ 74.8,
+        /*全能(%)*/ 20.88,
+        /*攻击(物理攻击/魔法攻击)*/ 8151,
+        /*精炼攻击*/ 1100,
+        /*元素攻击*/ 430,
         /*额外攻击速度(%)*/ 0,
         /*额外施法速度(%)*/ 0,
         /*爆伤额外值*/ 0,/*例如0.2*/

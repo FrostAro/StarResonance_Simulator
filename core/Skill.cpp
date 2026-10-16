@@ -70,7 +70,7 @@ bool Skill::reduceDuration()
  */
 bool Skill::addDamageTriggerTimer()
 {
-    if (this->damageTriggerTimer < damageTriggerInterval)
+    if (this->damageTriggerTimer < this->damageTriggerInterval)
     {
         this->damageTriggerTimer += 1;
         return true;
@@ -408,7 +408,7 @@ void ContinuousSkill::use(Person *p)
     addDamageTriggerTimer(AutoAttack::getDeltaTime());
     if(this->damageTriggerTimer >= this->damageTriggerInterval){
         this->trigger(p);  // 触发具体效果
-        this->damageTriggerTimer -= damageTriggerInterval;
+        this->damageTriggerTimer -= this->damageTriggerInterval;
     }
 }
 
@@ -435,7 +435,7 @@ void FacilitationSkill::use(Person* p)
     addDamageTriggerTimer(AutoAttack::getDeltaTime());
     if(this->damageTriggerTimer >= this->damageTriggerInterval){
         this->trigger(p);  // 触发具体效果
-        this->damageTriggerTimer -= damageTriggerInterval;
+        this->damageTriggerTimer -= this->damageTriggerInterval;
     }
 }
 

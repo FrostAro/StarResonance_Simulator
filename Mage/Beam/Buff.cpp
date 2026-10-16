@@ -1402,7 +1402,8 @@ void WaterSpoutRealBuff::listenerCallback1(Skill* const skill)
     {
         //this->p->triggerAction<CDRefreshAction>(0,WaterSpout::name);
         // 3风
-        skill->damageTriggerInterval /= 3;
+        skill->baseDamageTriggerInterval /= 3;
+        skill->damageTriggerInterval = skill->baseDamageTriggerInterval / (1 + this->p->getCastingSpeed());
         
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout interval /3");
 
@@ -2020,10 +2021,8 @@ OtherExtraEnhanceBuff::OtherExtraEnhanceBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
 
     // 属性部分
-    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.0125);
-    this->p->elementATK += 120;
-    this->p->triggerAction<DreamIncreaseModifyAction>(0.014*2+0.016+0.012);
-    this->p->triggerAction<AttackIncreaseModifyAction>(0.025+0.016*2);
+    this->p->triggerAction<DreamIncreaseModifyAction>(0.025*3);
+    this->p->triggerAction<AttackIncreaseModifyAction>(0.025*7);
 
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill* const skill)
@@ -2035,13 +2034,12 @@ void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill)
 {
     if(skill->getSkillName() == WaterSpout::name)
     {
-        skill->dreamIncreaseAdd += 0.0523*2 + 0.0597*3 + 0.0933;
-        //skill->dreamIncreaseAdd += 0.0933*10;
+        skill->dreamIncreaseAdd += 0.0933*10;
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout dreamIncreaseAdd applied");
     }
     if(skill->getSkillName() == Beam::name)
     {
-        skill->dreamIncreaseAdd += 0.0288*2 + 0.0384*2;
+        skill->dreamIncreaseAdd += 0;
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Beam dreamIncreaseAdd applied");
     }
 }
@@ -2054,8 +2052,6 @@ OtherExtraEnhanceBuff::~OtherExtraEnhanceBuff()
 {
     CreateSkillAction::deleteListener(this->getBuffID());
     // 属性部分
-    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.0125);
-    this->p->elementATK -= 120;
-    this->p->triggerAction<DreamIncreaseModifyAction>(-(0.014*2+0.016+0.012));
-    this->p->triggerAction<AttackIncreaseModifyAction>(-(0.025+0.016*2));
+    this->p->triggerAction<DreamIncreaseModifyAction>(-0.025*3);
+    this->p->triggerAction<AttackIncreaseModifyAction>(-0.025*7);
 }

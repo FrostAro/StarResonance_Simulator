@@ -234,6 +234,7 @@ public:
 	// ==== 速度加成 ====
 	void addCastingSpeed(double percent);  // 增加施法速度百分比
 	void addAttackSpeed(double percent);   // 增加攻击速度百分比
+	void modifySkillInterval();  		   // 修改技能伤害触发间隔
 
 	// ==== 乘区初始化与修改 ====
 	void initializeIncrease();					  	  				// 初始化乘区

@@ -10,17 +10,18 @@
 // 射线
 std::string Beam::name = "Beam";
 
-Beam::Beam(Person* p) 
-        : FacilitationSkill()
+Beam::Beam(Person* p) : FacilitationSkill()
 {
     this->canTriggerLucky = true;
+    this->canAffectedBySpeed = true;
 
     this->multiplying = 0.42L;
     this->fixedValue = 150;
     this->baseMultiplying = this->multiplying;
     this->baseFixedValue = this->fixedValue;
-    this->damageTriggerInterval = 300;
-    this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
+    this->baseDamageTriggerInterval = 300;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
+    // this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
     this->MaxCD = 0;
     this->CD = 0;
     this->releasingTime = 850;
@@ -28,7 +29,7 @@ Beam::Beam(Person* p)
 
     this->damageIncreaseAdd = 0.16; 
 
-    this->energyReduce = 12 * (this->damageTriggerInterval / 300);
+    this->energyReduce = 12 * (this->baseDamageTriggerInterval / 300);
     this->duration = kPermanentBuffDuration;
     this->noEnergyConsumeTime = 5;
 
@@ -78,7 +79,8 @@ Vortex::Vortex(Person* p) : ContinuousSkill()
     
     this->multiplying = 0.2L;
     this->fixedValue = 120;
-    this->damageTriggerInterval = 500;
+    this->baseDamageTriggerInterval = 500;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
     this->duration = 10000;
     this->MaxCD = 100;
 
@@ -109,11 +111,13 @@ std::string WaterSpout::name = "WaterSpout";
 WaterSpout::WaterSpout(Person* p) : ContinuousSkill()
 {
     this->isNoReleasing = true;
+    this->canAffectedBySpeed = true;
 
     this->multiplying = 1.4448L;
     this->fixedValue = 514;
-    this->damageTriggerInterval = 500;
-    this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
+    this->baseDamageTriggerInterval = 500;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
+    // this->damageTriggerInterval = this->damageTriggerInterval / (1 + p->castingSpeed);
     this->MaxCD = 100;
     this->duration = 20000;
 
@@ -218,7 +222,8 @@ CrystalsHail::CrystalsHail(Person* p) : InstantSkill()
     this->energyAdd = 30;
     this->isNoReleasing = true;
     this->duration = 100;
-    this->damageTriggerInterval = 100;
+    this->baseDamageTriggerInterval = 100;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
 
     this->setSkillType();
 }
@@ -244,7 +249,8 @@ std::string FrostDecreePulse::name = "FrostDecreePulse";
 FrostDecreePulse::FrostDecreePulse(Person* p) : InstantSkill()
 {
     this->duration = 10;
-    this->damageTriggerInterval = 10;
+    this->baseDamageTriggerInterval = 10;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
     this->multiplying = 5;
     this->isNoReleasing = true;
 
@@ -272,8 +278,9 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
     this->energyAdd = 2;
     this->multiplying = 0.28;
     this->fixedValue = 0;
-    this->duration = 530;
-    this->damageTriggerInterval = 530;
+    this->duration = 500;
+    this->baseDamageTriggerInterval = 500;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -317,7 +324,8 @@ FrostBurst::FrostBurst(Person *p) : InstantSkill()
     this->multiplying = 0.28;
     this->fixedValue = 0;
     this->duration = 10;
-    this->damageTriggerInterval = 10;
+    this->baseDamageTriggerInterval = 10;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -392,7 +400,8 @@ std::string FantasyImpact_Beam::name = "FantasyImpact_Beam";
 FantasyImpact_Beam::FantasyImpact_Beam(Person *p) : InstantSkill()
 {
     this->duration = 200;
-    this->damageTriggerInterval = 200;
+    this->baseDamageTriggerInterval = 200;
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
     this->damageTriggerTimer = 0;
 
     this->multiplying = 13.75L;

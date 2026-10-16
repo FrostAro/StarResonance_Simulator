@@ -40,13 +40,13 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
       maxResourceNum(0),                                   // 最大玄冰资源数量
       castingSpeedExtra(castingSpeed / 100),               // 施法速度加成
       attackSpeedExtra(attackSpeed / 100),                 // 攻击速度加成
-      criticalDamage(0.5),                               // 基础暴击伤害加成（+50%）
+      criticalDamage(0.5),                                 // 基础暴击伤害加成（+50%）
       damageReduce(0),                                     // 基础减伤率
       criticaldamage_set(criticaldamage_set),              // 额外暴击伤害（调试用）
       increase_set(increase_set),                          // 额外增伤（调试用）
       elementincrease_set(elementincrease_set),            // 额外元素增伤（调试用）
       luckyDamageIncrease(Lucky),                          // 幸运伤害增幅（初始等于幸运值）
-      randomEngine(std::random_device{}())             // 初始化随机数引擎
+      randomEngine(std::random_device{}())                 // 初始化随机数引擎
       //uniformDist(0.1,1.0)
 {
     // 计算属性数值（将百分比转换为属性点数）
@@ -1033,6 +1033,7 @@ void Person::addCastingSpeed(double percent)
     this->castingSpeedExtra += percent;
     // 重新计算最终施法速度（基础部分不变）
     this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
+    this->modifySkillInterval();
 }
 
 void Person::addAttackSpeed(double percent)
@@ -1040,6 +1041,24 @@ void Person::addAttackSpeed(double percent)
     this->attackSpeedExtra += percent;
     // 重新计算最终攻击速度（基础部分不变）
     this->attackSpeed = this->baseAttackSpeed + this->attackSpeedExtra;
+}
+
+void Person::modifySkillInterval()
+{
+    // 先查找当前释放的技能是否存在，并且是否可以被施法速度影响
+    if(this->isReleasingSkill && this->nowReleasingSkill->canAffectedBySpeed)
+    {
+        this->nowReleasingSkill->damageTriggerInterval = this->nowReleasingSkill->baseDamageTriggerInterval / (1 + this->castingSpeed);
+    }
+    // 再查continuousSkillList中是否有可以被施法速度影响的技能
+    for (auto &skill : this->continuousSkillList)
+    {
+        if(skill && skill->canAffectedBySpeed)
+        {
+            skill->damageTriggerInterval = skill->baseDamageTriggerInterval / (1 + this->castingSpeed);
+        }
+    }
+
 }
 
 double Person::changePrimaryAttributesByCount(const double primaryAttributesCount)
@@ -1297,4 +1316,5 @@ void Person::recalcSpeedFromQuickness()
     // 最终施法速度 = 基础 + 固定加成
     this->castingSpeed = this->baseCastingSpeed + this->castingSpeedExtra;
     this->attackSpeed  = this->baseAttackSpeed  + this->attackSpeedExtra;
+    this->modifySkillInterval();
 }

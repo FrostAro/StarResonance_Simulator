@@ -215,7 +215,7 @@ void AutoAttack_Mage_Beam_Base::addOutBurstLogicToQueue(OutBurstTypeEnum type)
 }
 
 // 硬编码爆发轴：映射 [6]~[10] 阶段并按固定顺序入队（仿照 LSZZ 轴）
-void AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst)
+void AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst,bool simpleBurstInFifthBurst)
 {
   this->m_logicToStageIndex[OutBurstTypeEnum::twoFantasyAndUlti] = 6;
   this->m_logicToStageIndex[OutBurstTypeEnum::simpleFantasyOnly] = 7;
@@ -233,7 +233,8 @@ void AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis(bool simpleBurstInSec
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-  this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+  this->addOutBurstLogicToQueue(simpleBurstInSecondBurst ? OutBurstTypeEnum::simpleFantasyOnly
+                                                         : OutBurstTypeEnum::pureBurst);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);

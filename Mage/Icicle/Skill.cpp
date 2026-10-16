@@ -85,7 +85,7 @@ IceArrow_Icicle::IceArrow_Icicle(Person *p) : InstantSkill()
     this->multiplying = 0.28;
     this->fixedValue = 0;
     this->duration = 530;
-    this->damageTriggerInterval = 530;
+    this->baseDamageTriggerInterval = 530;
     this->damageTriggerTimer = 0;
     this->MaxCD = 0;
     this->CD = 0;
@@ -122,7 +122,7 @@ std::string Spear::name = "Spear";
 
 Spear::Spear(Person *p) : InstantSkill()
 {
-    this->damageTriggerInterval = -1;
+    this->baseDamageTriggerInterval = -1;
 
     this->energyReduce = 10;
 
@@ -175,9 +175,9 @@ std::string PierceSpear::name = "PierceSpear";
 
 PierceSpear::PierceSpear(Person *) : InstantSkill()
 {
-    this->damageTriggerInterval = 300;
+    this->baseDamageTriggerInterval = 300;
     this->damageTriggerTimer = 0;
-    this->duration = this->damageTriggerInterval;
+    this->duration = this->baseDamageTriggerInterval;
 
     this->canTriggerLucky = true;
     this->isNoReleasing = true;
@@ -221,7 +221,7 @@ std::string Meteorite::name = "Meteorite";
 
 Meteorite::Meteorite(Person *p) : InstantSkill()
 {
-    this->damageTriggerInterval = -1;
+    this->baseDamageTriggerInterval = -1;
     this->energyReduce = 5;
 
     this->canTriggerLucky = true;
@@ -283,7 +283,7 @@ std::string SynergyMeteorite::name = "SynergyMeteorite";
 
 SynergyMeteorite::SynergyMeteorite(Person *p) : InstantSkill()
 {
-    this->damageTriggerInterval = 300;
+    this->baseDamageTriggerInterval = 300;
     this->damageTriggerTimer = 0;
 
     this->canTriggerLucky = true;
@@ -330,7 +330,7 @@ std::string WaterDrop::name = "WaterDrop";
 
 WaterDrop::WaterDrop(Person *p) : InstantSkill()
 {
-    this->damageTriggerInterval = -1;
+    this->baseDamageTriggerInterval = -1;
 
     this->canCharge = true;
 
@@ -369,7 +369,7 @@ std::string FrostComet::name = "FrostComet";
 FrostComet::FrostComet(Person *p) : InstantSkill()
 {
     this->duration = 100;
-    this->damageTriggerInterval = 100;
+    this->baseDamageTriggerInterval = 100;
     this->damageTriggerTimer = 0;
 
     this->multiplying = 2.5L;
@@ -405,7 +405,7 @@ std::string FantasyImpact::name = "FantasyImpact";
 FantasyImpact::FantasyImpact(Person *p) : InstantSkill()
 {
     this->duration = 200;
-    this->damageTriggerInterval = 200;
+    this->baseDamageTriggerInterval = 200;
     this->damageTriggerTimer = 0;
 
     this->multiplying = 12.5L;

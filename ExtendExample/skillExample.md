@@ -81,8 +81,9 @@ NewSkill::NewSkill(Person *p) : InstantSkill() {
     // 时间相关 
     
     this->duration;                 // 持续时间（持续/引导技能用）
-    this->damageTriggerInterval;    // 伤害触发间隔（持续/引导技能用）
-    //补充：对于无前摇的立即触发型技能技能需要将duration设置为等同于damageTriggerInterval
+    this->baseDamageTriggerInterval;    // 基础伤害触发间隔（持续/引导技能用）
+    this->damageTriggerInterval;    // 伤害触发间隔（持续/引导技能用），根据实际情况变化
+    //补充：对于无前摇的立即触发型技能技能需要将duration设置为等同于baseDamageTriggerInterval
 
     // 吟唱时间
     this->singingTime;              

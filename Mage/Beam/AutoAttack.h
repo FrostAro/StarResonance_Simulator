@@ -65,7 +65,7 @@ protected:
      * @param simpleBurstInSecondBurst 第二次爆发是否改用 simpleFantasyOnly。
      *        幻想带2层充能时用 true：第二波另一个幻想还在CD，只再放那个2层充能的幻想。
      */
-    void setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst = false);
+    void setupHardcodedOutBurstAxis(bool simpleBurstInSecondBurst = false, bool simpleBurstInFifthBurst = false);
 
 private:
     void tryTriggerStage(int stageIdx);

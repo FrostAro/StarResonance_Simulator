@@ -26,6 +26,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     this->present_energy = max_energy;
     this->proficientToEnergyRatio = 1;
     this->proficientAmplification = 0.035;
+    this->enhanceIncrease = 0.06;
 
     // 根据幻想配置选择对应的自动战斗逻辑
     switch (fantasyConfig) {

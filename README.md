@@ -134,6 +134,7 @@ std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
     /*程序运行总tick*/ maxTime,
     /*幻想配置*/ 0
 );
+// 由于冰法的3.5会直接加在站街面板中，在向模拟输入数据时，记得去掉3.5
 ```
 
 ## 对比模式（同种子配对 · CRN）

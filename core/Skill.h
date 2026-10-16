@@ -68,6 +68,7 @@ public:
     
     bool triggered = false;          // 是否已触发技能（是否已造成伤害/产生效果）
     bool isEquipped = false;         // 是否已装备该技能
+    bool canAffectedBySpeed = false;   // 可受施法速度影响（影响前摇和伤害触发间隔）
     double damageTriggerTimer = 0;   // 伤害触发计时器（用于持续性技能）
 
     // 能量系统
@@ -91,7 +92,8 @@ public:
     
     // 时间系统
     double duration = 0;                // 持续时间（毫秒）
-    double damageTriggerInterval = 0;   // 伤害触发间隔（毫秒）
+    double baseDamageTriggerInterval = 0;   // 基础伤害触发间隔（毫秒）
+    double damageTriggerInterval = 0;   // 实际伤害触发间隔（毫秒）
     int singing = 0;                    // 吟唱时间（毫秒）
     double releasingTime = 0;           // 前摇时间（毫秒）
     
