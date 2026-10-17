@@ -193,7 +193,7 @@ Flood_Beam::Flood_Beam(Person* p) : InstantSkill()
     this->MaxCD = 42290;
 
     // 无视吟唱时间，默认满玄冰释放
-    this->releasingTime = 750;
+    this->releasingTime = 75;
 
     this->setSkillType();
 }
@@ -290,7 +290,7 @@ IceArrow_Beam::IceArrow_Beam(Person *p) : InstantSkill()
 
     this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
-    this->finalIncreaseAdd = p->getProficient() * 2;
+    this->finalIncreaseAdd = p->getProficient() * 1.6;
 
     this->IceArrow_Beam::setSkillType();
     p->triggerAction<ResourceRevertAction>(1);
@@ -336,7 +336,7 @@ FrostBurst::FrostBurst(Person *p) : InstantSkill()
 
     this->criticalAdd = 1;
     this->criticalIncreaseAdd = 0.1;
-    this->finalIncreaseAdd = p->getProficient() * 2;
+    this->finalIncreaseAdd = p->getProficient() * 1.6;
 
     this->FrostBurst::setSkillType();
 }
