@@ -17,7 +17,7 @@ Person::Person(){};
 
 Person::Person(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
-               const double criticaldamage_set, const double increase_set, const double elementincrease_set, const int totalTime)
+               const double criticaldamage_set, const double increase_set, const double elementincrease_set, const int totalTime, const WeaponConfig weaponConfig)
     : propertyTransformationCoeffcient_General(kPropertyTransformCoeffGeneral),     // 一般属性转化系数
       propertyTransformationCoeffcient_Almighty(kPropertyTransformCoeffAlmighty),    // 全能属性转化系数
       totalTime(totalTime),                                // 总模拟时间
@@ -49,12 +49,70 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
       randomEngine(std::random_device{}())                 // 初始化随机数引擎
       //uniformDist(0.1,1.0)
 {
+    // 武器属性：面板里属于武器的那 6% 应走「额外百分比通道」——
+    // 即不参与点数换算，也不会被「双倍精通」之类的点数操作放大。
+    // reclassify 只改 extra 并重算 count，**属性总值保持不变**。
+    constexpr double kWeaponPanelPercent = 0.06;
+    if (weaponConfig.first != SecondaryAttributeConfig::None)
+    {
+        switch (weaponConfig.first)
+        {
+            case SecondaryAttributeConfig::Critical:
+                this->reclassifyCriticalPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Quickness:
+                this->reclassifyQuicknessPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Lucky:
+                this->reclassifyLuckyPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Proficient:
+                this->reclassifyProficientPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Almighty:
+                this->reclassifyAlmightyPercentToExtra(kWeaponPanelPercent);
+                break;
+            default:
+                break;
+        }
+    }
+    if (weaponConfig.second != SecondaryAttributeConfig::None)
+    {
+        switch (weaponConfig.second)
+        {
+            case SecondaryAttributeConfig::Critical:
+                this->reclassifyCriticalPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Quickness:
+                this->reclassifyQuicknessPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Lucky:
+                this->reclassifyLuckyPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Proficient:
+                this->reclassifyProficientPercentToExtra(kWeaponPanelPercent);
+                break;
+            case SecondaryAttributeConfig::Almighty:
+                this->reclassifyAlmightyPercentToExtra(kWeaponPanelPercent);
+                break;
+            default:
+                break;
+        }
+    }
+    this->enhanceIncrease += weaponConfig.enhanceIncrease;
+    this->triggerAction<AttackIncreaseModifyAction>(weaponConfig.extraIncrease);
     // 计算属性数值（将百分比转换为属性点数）
-    this->CriticalCount = getCriticalCount(this->Critical - kBaseCriticalPercent);
-    this->QuicknessCount = getQuicknessCount(this->Quickness);
-    this->LuckyCount = getLuckyCount(this->Lucky - kBaseLuckyPercent);
-    this->ProficientCount = getProficientCount(this->Proficient - kBaseProficientPercent);
-    this->AlmightyCount = getAlmightyCount(this->Almighty);
+    // 可点数化部分 = 总值 - 基础 - 额外通道
+    this->CriticalCount = getCriticalCount(
+        this->Critical - kBaseCriticalPercent - this->CriticalExtraPercent);
+    this->QuicknessCount = getQuicknessCount(
+        this->Quickness - this->QuicknessExtraPercent);
+    this->LuckyCount = getLuckyCount(
+        this->Lucky - kBaseLuckyPercent - this->LuckyExtraPercent);
+    this->ProficientCount = getProficientCount(
+        this->Proficient - kBaseProficientPercent - this->ProficientExtraPercent);
+    this->AlmightyCount = getAlmightyCount(
+        this->Almighty - this->AlmightyExtraPercent);
 
     // 设置幸运倍率
     setLuckyMultiplying();
@@ -1028,6 +1086,138 @@ double Person::changeAlmightyPercent(const double percent)
     return this->Almighty;
 }
 
+// ============================================================================
+// 幻想被动「面板已含百分比」的重新归类
+// ============================================================================
+//
+// 思路：把一段百分比从「点数通道」挪到「额外百分比通道」，属性总值保持不变。
+//
+//   属性 = base + conv(count) + extra
+//   可点数化部分 = 属性 - base - extra
+//
+// 重新归类只改两件事：
+//   1. extra += percent      （标记这段走额外通道）
+//   2. count 按新的「可点数化部分」重算
+//
+// 属性**总值不变**，所以所有依赖百分比的派生值都不用重算
+//（元素增伤、施法/攻击速度、幸运倍率、全能增伤等），只有点数 count 会变小。
+//
+// 注意：这里直接改成员变量，**不走 Action 事件**。原因：
+//   - 「总值不变、只是通道切换」不是一次属性变更，不该广播给监听者；
+//   - Action 版会走 changeXxxCount，而它内部又按「总值 - extra - base」重算，
+//     会把已经在 weaponConfig 里挪进 extra 的部分再扣一次（武器 6% 被扣两遍的根源）。
+
+namespace
+{
+/// 把「主值 - 额外通道 - 基础值」夹到可反解区间 [0, kAttributeSaturatePercent)
+double ClampCountablePercent(double value)
+{
+    if (value < 0.0)
+        return 0.0;
+    if (value >= kAttributeSaturatePercent)
+        return kAttributeSaturatePercent;
+    return value;
+}
+} // namespace
+
+void Person::reclassifyCriticalPercentToExtra(const double percent)
+{
+    if (percent == 0.0)
+        return;
+
+    // 直接把一段百分比从「点数通道」挪到「额外百分比通道」：
+    // Critical（总值）保持不变，只是这一段不再参与点数换算。
+    this->CriticalExtraPercent += percent;
+    if (this->CriticalExtraPercent < 0.0)
+        this->CriticalExtraPercent = 0.0;
+
+    // 重算点数：可点数化部分 = 总值 - 基础 - 额外通道
+    const double y = ClampCountablePercent(
+        this->Critical - this->CriticalExtraPercent - kBaseCriticalPercent);
+
+    this->CriticalCount = getCriticalCount(y);
+}
+
+void Person::reclassifyQuicknessPercentToExtra(const double percent)
+{
+    if (percent == 0.0)
+        return;
+
+    this->QuicknessExtraPercent += percent;
+    if (this->QuicknessExtraPercent < 0.0)
+        this->QuicknessExtraPercent = 0.0;
+
+    // Quickness 总值未变 → 施法/攻击速度不受影响，不必 recalcSpeedFromQuickness()
+    const double y = ClampCountablePercent(this->Quickness - this->QuicknessExtraPercent);
+    this->QuicknessCount = getQuicknessCount(y);
+}
+
+void Person::reclassifyLuckyPercentToExtra(const double percent)
+{
+    if (percent == 0.0)
+        return;
+
+    this->LuckyExtraPercent += percent;
+    if (this->LuckyExtraPercent < 0.0)
+        this->LuckyExtraPercent = 0.0;
+
+    // Lucky 总值未变 → 幸运倍率不受影响
+    const double y = ClampCountablePercent(
+        this->Lucky - this->LuckyExtraPercent - kBaseLuckyPercent);
+    this->LuckyCount = getLuckyCount(y);
+}
+
+void Person::reclassifyProficientPercentToExtra(const double percent)
+{
+    if (percent == 0.0)
+        return;
+
+    this->ProficientExtraPercent += percent;
+    if (this->ProficientExtraPercent < 0.0)
+        this->ProficientExtraPercent = 0.0;
+
+    // Proficient 总值未变 → 元素增伤 / 冰箭增伤 / JQR 转化都不受影响
+    const double y = ClampCountablePercent(
+        this->Proficient - this->ProficientExtraPercent - kBaseProficientPercent);
+    this->ProficientCount = getProficientCount(y);
+}
+
+void Person::reclassifyAlmightyPercentToExtra(const double percent)
+{
+    if (percent == 0.0)
+        return;
+
+    this->AlmightyExtraPercent += percent;
+    if (this->AlmightyExtraPercent < 0.0)
+        this->AlmightyExtraPercent = 0.0;
+
+    // Almighty 总值未变 → 全能增伤不受影响
+    const double y = ClampCountablePercent(this->Almighty - this->AlmightyExtraPercent);
+    this->AlmightyCount = getAlmightyCount(y);
+}
+
+void Person::applyFantasyPassiveBonus(const FantasyPassiveBonus& bonus, const bool apply)
+{
+    if (bonus.isZero())
+        return;
+
+    const double sign = apply ? 1.0 : -1.0;
+
+    if (bonus.proficient != 0.0)
+        this->reclassifyProficientPercentToExtra(sign * bonus.proficient);
+    if (bonus.quickness != 0.0)
+        this->reclassifyQuicknessPercentToExtra(sign * bonus.quickness);
+    if (bonus.critical != 0.0)
+        this->reclassifyCriticalPercentToExtra(sign * bonus.critical);
+    if (bonus.lucky != 0.0)
+        this->reclassifyLuckyPercentToExtra(sign * bonus.lucky);
+    if (bonus.almighty != 0.0)
+        this->reclassifyAlmightyPercentToExtra(sign * bonus.almighty);
+
+    Logger::debug("Person", "fantasy passive bonus {0}, proficient now: {1}",
+                  apply ? "applied" : "removed", std::to_string(this->getProficient()));
+}
+
 void Person::addCastingSpeed(double percent)
 {
     this->castingSpeedExtra += percent;
@@ -1253,6 +1443,7 @@ double Person::getProficientCount() const { return ProficientCount; }
 double Person::getQuicknessCount() const { return QuicknessCount; }
 
 double Person::getATK() const { return ATK; }
+double Person::getTotalATK() const { return ATK * (1 + this->attackIncrease); }
 double Person::getRefineATK() const { return refineATK; }
 double Person::getElementATK() const { return elementATK; }
 double Person::getPrimaryAttributes() const { return primaryAttributes * (1 + primaryAttributesIncrease); }

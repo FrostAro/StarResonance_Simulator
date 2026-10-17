@@ -21,6 +21,61 @@ class ErrorInfo;
 class Initializer;
 
 /**
+ * @brief 副属性种类（必须早于 WeaponConfig 定义）
+ */
+enum class SecondaryAttributeConfig
+{
+	Critical = 0,
+	Quickness,
+	Lucky,
+	Proficient,
+	Almighty,
+	None
+};
+
+/**
+ * @brief 武器配置
+ */
+struct WeaponConfig
+{
+	SecondaryAttributeConfig first = SecondaryAttributeConfig::None;
+	SecondaryAttributeConfig second = SecondaryAttributeConfig::None;
+	double enhanceIncrease = 0.0;
+	double extraIncrease = 0.0;
+};
+
+/**
+ * @brief 幻想提供的、**站街面板已经包含**的百分比被动加成。
+ *
+ * 这类加成的特点：游戏中它会直接计入站街面板，所以玩家输入的面板值
+ * 已经把它包含进去了。如果直接拿面板值反解属性点数，这段百分比会被
+ * 当成点数放大，并且会被「双倍精通」这类操作一起翻倍。
+ *
+ * 因此建模时必须把它从「点数通道」重新归类到「额外百分比通道」：
+ *   - 属性总值不变；
+ *   - 该段不再参与 点数 ⇄ 百分比 换算；
+ *   - 不会被点数类操作（翻倍、加点）影响。
+ *
+ * 通过 Person::applyFantasyPassiveBonus() 应用/移除。
+ * 数值为小数（0.15 表示 15%）。
+ */
+struct FantasyPassiveBonus
+{
+	double proficient = 0.0;   // 精通
+	double quickness = 0.0;    // 急速
+	double critical = 0.0;     // 暴击
+	double lucky = 0.0;        // 幸运
+	double almighty = 0.0;     // 全能
+
+	bool isZero() const
+	{
+		return proficient == 0.0 && quickness == 0.0 && critical == 0.0 &&
+			   lucky == 0.0 && almighty == 0.0;
+	}
+};
+
+
+/**
  * @class Person
  * @brief 游戏角色基类，管理角色属性、技能、buff 和战斗逻辑
  * 
@@ -170,7 +225,7 @@ public:
 	 */
 	Person(const double PrimaryPrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
         const int atk, const  int refineatk, const  int elementatk, const double attackSpeed, const double castingSpeed,
-        const double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const  int totalTime);
+        const double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const  int totalTime, const WeaponConfig weaponConfig = {});
 	
 	Person();
 	// ==== 属性操作方法（可被子类重写） ====
@@ -196,6 +251,27 @@ public:
 	virtual double changeLuckyPercent(double percent);
 	virtual double changeProficientPercent(double percent);
 	virtual double changeAlmightyPercent(double percent);
+
+	// ==== 幻想被动「面板已含百分比」的重新归类 ====
+	//
+	// 见 FantasyPassiveBonus 的说明。以下方法把一段百分比从「点数通道」
+	// 挪到「额外百分比通道」（属性总值不变），全程通过 Action 事件完成，
+	// 因此所有监听者（最高副属性 Buff、双倍精通等）都会同步重算。
+	//
+	// 传正值 = 挪到额外通道；传负值 = 挪回点数通道（用于撤销）。
+
+	/**
+	 * @brief 应用/移除一组幻想被动加成（走 Action 事件）
+	 * @param bonus 被动加成（各项为小数，0.15 表示 15%）
+	 * @param apply true=应用，false=移除
+	 */
+	void applyFantasyPassiveBonus(const FantasyPassiveBonus& bonus, bool apply = true);
+
+	void reclassifyCriticalPercentToExtra(double percent);
+	void reclassifyQuicknessPercentToExtra(double percent);
+	void reclassifyLuckyPercentToExtra(double percent);
+	void reclassifyProficientPercentToExtra(double percent);
+	void reclassifyAlmightyPercentToExtra(double percent);
 
 	// ==== 核心战斗接口 ====
 
@@ -358,6 +434,7 @@ public:
     double getQuicknessCount() const;
     
     double getATK() const;
+	double getTotalATK() const;
     double getRefineATK() const;
     double getElementATK() const;
     double getPrimaryAttributes() const;

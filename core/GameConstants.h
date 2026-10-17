@@ -18,3 +18,9 @@ inline constexpr double kBaseProficientPercent = 0.06; // 基础精通
 // 属性转化系数（游戏数值平衡）
 inline constexpr int kPropertyTransformCoeffGeneral = 200000;  // 一般属性转化系数
 inline constexpr int kPropertyTransformCoeffAlmighty = 89600;  // 全能属性转化系数
+
+// 属性百分比反解点数时的安全上限
+// 转化公式为 percent = count / (count + coeff)，count→∞ 时 percent→1；
+// 反解 count = coeff * y / (1 - y) 在 y→1 时发散，因此夹到 0.9999
+// （对应点数约 2e9，仍在 int 范围内）。
+inline constexpr double kAttributeSaturatePercent = 0.9999;
