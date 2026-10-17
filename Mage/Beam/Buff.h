@@ -456,9 +456,10 @@ class ExtensiveArrow : public Buff
 public:   
     static std::string name;
     double triggerNum = 10;
+    double triggerMax = 20;
     double count = 0;
     double timer = 0;
-    double triggerInterval = 5; // 触发间隔，防止一次伤害触发多次
+    double triggerInterval = 500; // 触发间隔，防止一次伤害触发多次
 
 public:
     static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
@@ -529,9 +530,12 @@ class FloodLuckyBuff : public Buff
 {
 public:   
     static std::string name;
+    bool triggered = false;   // 是否已应用幸运增伤
 
 public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
+    void listenerCallback(Buff* const buff);
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 

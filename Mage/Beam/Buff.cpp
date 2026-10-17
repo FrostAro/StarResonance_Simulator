@@ -914,6 +914,7 @@ void EquipmentSetEffectBuff_Beam::listenerCallback(Skill *const skill)
     {
         skill->criticalAdd = 1;
         skill->setCanTriggerLucky(true);
+        this->canForWSpt = false;
         Logger::debugBuff(AutoAttack::getTimer(),
                           this->getBuffName(),
                           "waterspout crit and lucky triggered");
@@ -922,14 +923,6 @@ void EquipmentSetEffectBuff_Beam::listenerCallback(Skill *const skill)
 
 void EquipmentSetEffectBuff_Beam::update(const double deltaTime) 
 {
-    if(canForWSpt && this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
-    {
-        this->canForWSpt = false;
-        Logger::debugBuff(AutoAttack::getTimer(),
-                          this->getBuffName(),
-                          "waterspout crit and lucky ended");
-    }
-
     // 灌注期间，每秒提升2%施法，到达10%后提升5%主属性
     if(this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
     {
@@ -942,7 +935,7 @@ void EquipmentSetEffectBuff_Beam::update(const double deltaTime)
             Logger::debugBuff(AutoAttack::getTimer(),
                               this->getBuffName(),
                               "triggered, castingSpeed increased by " + std::to_string(this->number));
-            if(this->totalChange > 0.1)
+            if(this->totalChange >= 0.1)
             {
                 this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.05);
                 Logger::debugBuff(AutoAttack::getTimer(),
@@ -1350,15 +1343,19 @@ void ExtensiveArrow::listenerCallback(DamageInfo& info)
         || info.skillName == FrostWind::name || info.skillName == Vortex::name)
     {
         this->count += 1;
-    }
-    if(this->count >= this->triggerNum && this->timer >= this->triggerInterval)
-    {
-        this->count -= this->triggerNum;
-        this->timer = 0;
-        this->p->triggerAction<CreateSkillAction>(0,IceArrow_Beam::name);
-        Logger::debugBuff(AutoAttack::getTimer(),
-                          this->getBuffName(),
-                          "ice arrow triggered by ExtensiveArrow");
+        if(this->count > this->triggerMax)
+        {
+            this->count = this->triggerMax;
+        }
+        if(this->count >= this->triggerNum && this->timer >= this->triggerInterval)
+        {
+            this->count -= this->triggerNum;
+            this->timer = 0;
+            this->p->triggerAction<CreateSkillAction>(0,IceArrow_Beam::name);
+            Logger::debugBuff(AutoAttack::getTimer(),
+                            this->getBuffName(),
+                            "ice arrow triggered by ExtensiveArrow");
+        }
     }
 }
 
@@ -1544,11 +1541,11 @@ void IceArrowLuckyRealBuff::listenerCallback1(Skill *const skill)
 
 void IceArrowLuckyRealBuff::listenerCallback2(Buff *const buff)
 {
-    if(buff == nullptr) return;
-    if(buff->getBuffName() == FloodBuff_Beam::name) 
-    { 
-        this->p->triggerAction<CreateBuffAction>(0,FloodLuckyBuff::name);
-    }
+    // if(buff == nullptr) return;
+    // if(buff->getBuffName() == FloodBuff_Beam::name) 
+    // { 
+    //     this->p->triggerAction<CreateBuffAction>(0,FloodLuckyBuff::name);
+    // }
 }
 
 void IceArrowLuckyRealBuff::update(const double) {}
@@ -1567,21 +1564,50 @@ std::string FloodLuckyBuff::name = "FloodLuckyBuff";
 
 FloodLuckyBuff::FloodLuckyBuff(Person *p, double n) : Buff(p)
 {
+    this->isInherent = true;
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
-    this->p->luckyDreamIncrease += 0.35;
-    this->p->triggerAction<CriticalPercentModifyAction>(-0.05);
-    this->p->triggerAction<LuckyPercentModifyAction>(0.08);
+
+    auto info1 = std::make_unique<CreateBuffListener>(
+        this->getBuffID(), [this](Buff *const buff)
+        { this->listenerCallback(buff); });
+    CreateBuffAction::addListener(std::move(info1));
 }
 
-void FloodLuckyBuff::update(const double) {}
+void FloodLuckyBuff::update(const double) 
+{
+    if(this->triggered && this->p->findBuffInBuffList(FloodBuff_Beam::name) == -1)
+    {
+        this->triggered = false;
+        this->p->luckyDreamIncrease -= 0.35;
+        this->p->triggerAction<CriticalPercentModifyAction>(0.05);
+        this->p->triggerAction<LuckyPercentModifyAction>(-0.08);
+    }
+}
+
+void FloodLuckyBuff::listenerCallback(Buff *const buff)
+{
+    if(buff == nullptr) return;
+    if(buff->getBuffName() == FloodBuff_Beam::name) 
+    { 
+        this->triggered = true;
+        this->p->luckyDreamIncrease += 0.35;
+        this->p->triggerAction<CriticalPercentModifyAction>(-0.05);
+        this->p->triggerAction<LuckyPercentModifyAction>(0.08);
+    }
+}
+
 bool FloodLuckyBuff::shouldBeRemoved() { return this->duration < 0; }
 std::string FloodLuckyBuff::getBuffName() const { return FloodLuckyBuff::name; }
 FloodLuckyBuff::~FloodLuckyBuff() 
 {
-    this->p->luckyDreamIncrease -= 0.35;
-    this->p->triggerAction<CriticalPercentModifyAction>(0.05);
-    this->p->triggerAction<LuckyPercentModifyAction>(-0.08);
+    CreateBuffAction::deleteListener(this->getBuffID());
+    if(this->triggered)
+    {
+        this->p->luckyDreamIncrease -= 0.35;
+        this->p->triggerAction<CriticalPercentModifyAction>(0.05);
+        this->p->triggerAction<LuckyPercentModifyAction>(-0.08);
+    }
 }
 
 // 水圈幸运：【冰魔灵感因子X8】∶新增效果——施放水之涡流，15秒内寒冰射线期间幸运属性固定值翻倍且幸运一击倍率+20%。
@@ -1879,8 +1905,6 @@ std::string OccupationalFactorBuff_Beam::getBuffName() const { return Occupation
 OccupationalFactorBuff_Beam::~OccupationalFactorBuff_Beam()
 {
     CreateSkillAction::deleteListener(this->getBuffID());
-    this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.0106);
-    this->p->triggerAction<PrimaryAttributesCountModifyAction>(-63);
 }
 
 // 幻想冲击
@@ -2021,8 +2045,8 @@ OtherExtraEnhanceBuff::OtherExtraEnhanceBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
 
     // 属性部分
-    this->p->triggerAction<DreamIncreaseModifyAction>(0.025*3);
-    this->p->triggerAction<AttackIncreaseModifyAction>(0.025*7);
+    this->p->triggerAction<DreamIncreaseModifyAction>(0.03*3);
+    this->p->triggerAction<AttackIncreaseModifyAction>(0.03*7);
 
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill* const skill)
@@ -2034,7 +2058,7 @@ void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill)
 {
     if(skill->getSkillName() == WaterSpout::name)
     {
-        skill->dreamIncreaseAdd += 0.0933*10;
+        skill->dreamIncreaseAdd += 0.112*10;
         Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout dreamIncreaseAdd applied");
     }
     if(skill->getSkillName() == Beam::name)
@@ -2052,6 +2076,6 @@ OtherExtraEnhanceBuff::~OtherExtraEnhanceBuff()
 {
     CreateSkillAction::deleteListener(this->getBuffID());
     // 属性部分
-    this->p->triggerAction<DreamIncreaseModifyAction>(-0.025*3);
-    this->p->triggerAction<AttackIncreaseModifyAction>(-0.025*7);
+    this->p->triggerAction<DreamIncreaseModifyAction>(-0.03*3);
+    this->p->triggerAction<AttackIncreaseModifyAction>(-0.03*7);
 }
