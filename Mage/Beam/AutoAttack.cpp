@@ -146,57 +146,57 @@ void AutoAttack_Mage_Beam_Base::checkSpecificLogicForOutBurst()
 void AutoAttack_Mage_Beam_Base::registerOutBurstLogic()
 {
   this->m_outBurstLogicMap[OutBurstTypeEnum::twoFantasyAndUlti] = {
-    20000, 
+    18000, 
     [this]() 
     { 
       const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::twoFantasyAndUlti)]; // 阶段1
       Logger::debugAutoAttack(timer, "outBurst twoFantasyAndUlti started");
       addSkillsToList(stage.addSkills);
       this->isOutBurst = true;
-      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->timerForVariousStages = 18000; // 设置计时器为 18 秒
       this->currentOutBurstType = OutBurstTypeEnum::twoFantasyAndUlti;
     }
   };
   this->m_outBurstLogicMap[OutBurstTypeEnum::simpleFantasyOnly] = {
-    20000, 
+    18000, 
     [this]() 
     { 
       const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::simpleFantasyOnly)]; // 阶段2
       Logger::debugAutoAttack(timer, "outBurst simpleFantasyOnly started");
       addSkillsToList(stage.addSkills);
       this->isOutBurst = true;
-      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->timerForVariousStages = 18000; // 设置计时器为 18 秒
       this->currentOutBurstType = OutBurstTypeEnum::simpleFantasyOnly;
     }
   };
   this->m_outBurstLogicMap[OutBurstTypeEnum::ultiOnly] = {
-    20000, 
+    18000, 
     [this]() 
     { 
       const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::ultiOnly)]; // 阶段2
       Logger::debugAutoAttack(timer, "outBurst ultiOnly started");
       addSkillsToList(stage.addSkills);
       this->isOutBurst = true;
-      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->timerForVariousStages = 18000; // 设置计时器为 18 秒
       this->currentOutBurstType = OutBurstTypeEnum::ultiOnly;
     }
   };
   this->m_outBurstLogicMap[OutBurstTypeEnum::pureBurst] = 
   {
-    20000, 
+    18000, 
     [this]() 
     { 
       const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::pureBurst)]; // 阶段2
       Logger::debugAutoAttack(timer, "outBurst pureBurst started");
       addSkillsToList(stage.addSkills);
       this->isOutBurst = true;
-      this->timerForVariousStages = 20000; // 设置计时器为 20 秒
+      this->timerForVariousStages = 18000; // 设置计时器为 18 秒
       this->currentOutBurstType = OutBurstTypeEnum::pureBurst;
     }
   };
   this->m_outBurstLogicMap[OutBurstTypeEnum::window] = 
   {
-    6000, 
+    5000, 
     [this]() 
     { 
       const auto& stage = m_stages[m_logicToStageIndex.at(OutBurstTypeEnum::window)]; // 阶段2
@@ -229,11 +229,11 @@ void AutoAttack_Mage_Beam_Base::setupHardcodedOutBurstAxis(bool simpleBurstInSec
   this->addOutBurstLogicToQueue(simpleBurstInSecondBurst ? OutBurstTypeEnum::simpleFantasyOnly
                                                          : OutBurstTypeEnum::pureBurst);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-  this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
-  this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
+  //this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
+  //this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::twoFantasyAndUlti);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
-  this->addOutBurstLogicToQueue(simpleBurstInSecondBurst ? OutBurstTypeEnum::simpleFantasyOnly
+  this->addOutBurstLogicToQueue(simpleBurstInFifthBurst ? OutBurstTypeEnum::simpleFantasyOnly
                                                          : OutBurstTypeEnum::pureBurst);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::window);
   this->addOutBurstLogicToQueue(OutBurstTypeEnum::pureBurst);
