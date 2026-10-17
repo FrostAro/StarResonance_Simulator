@@ -13,7 +13,7 @@ public:
 	Mage_Beam(const double primaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
         const int atk, const int refindatk, const int elementatk, const  double attackSpeed, const double castingSpeed,
         const  double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
-        const int fantasyConfig = 0);
+        const int fantasyConfig = 0, const WeaponConfig weaponConfig = {});
 
     double changeElementIncreaseByProficient(double proficient) override;			// 通过精通修改元素增伤
     double setElementIncrease() override;											// 初始化元素增伤乘区

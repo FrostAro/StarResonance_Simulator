@@ -123,3 +123,9 @@ class AutoAttack_Mage_Beam_YZ : public AutoAttack_Mage_Beam_Base
 public:
     explicit AutoAttack_Mage_Beam_YZ(Person *p);
 };
+
+class AutoAttack_Mage_Beam_JQR : public AutoAttack_Mage_Beam_Base
+{
+public:
+    explicit AutoAttack_Mage_Beam_JQR(Person *p);
+};

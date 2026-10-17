@@ -7,10 +7,10 @@
 Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
                          const int atk, const int refindatk, const int elementatk, const double attackSpeed, const double castingSpeed,
                          const double criticaldamage_set, const double increasedamage_set, const double elementdamage_set, const int totalTime,
-                         const int fantasyConfig)
+                         const int fantasyConfig, const WeaponConfig weaponConfig)
     : Person(PrimaryAttributes, critical, quickness, lucky, Proficient, almighty,
              atk, refindatk, elementatk, attackSpeed, castingSpeed,
-             criticaldamage_set, increasedamage_set, elementdamage_set, totalTime)
+             criticaldamage_set, increasedamage_set, elementdamage_set, totalTime, weaponConfig)
 {
     // 覆盖基类中的默认值
     this->primaryAttributeRatio = 0.6;
@@ -51,6 +51,9 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
         case 6:
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_YZ>(this);
             break;
+        case 7:
+            this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_JQR>(this);
+            break;
         default:
             // 无幻想自动战斗已移除，默认按 0 号幻想配置处理
             this->autoAttackPtr = std::make_unique<AutoAttack_Mage_Beam_MukuScout>(this);
@@ -68,6 +71,8 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     // triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.0000001));
     // triggerAction<AlmightyCountModifyAction>(static_cast<int>(this->AlmightyCount * 0.0000001));
     this->triggerAction<AttackIncreaseModifyAction>(0.0000001);
+    this->triggerAction<ProficientPercentModifyAction>(0.1);
+    // this->triggerAction<QuicknessPercentModifyAction>(0.06);
     initializeIncrease();
     changeDamageIncrease(0.08);
     changeElementIncreaseByElementIncrease(0.15);

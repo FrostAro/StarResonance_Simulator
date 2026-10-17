@@ -62,6 +62,10 @@ class Initializer_Mage_Beam : public Initializer
             equipCertainSkill(YZ::name);        // 游子+嗜血毛球
             equipCertainSkill(SXMQ::name);
         }
+        else if (m_fantasyConfig == 7) {
+            equipCertainSkill(JQR::name);        // 机器人+嗜血毛球
+            equipCertainSkill(SXMQ::name);
+        }
         else {
             // 无幻想已移除，默认按 0 号幻想配置处理
             equipCertainSkill(MukuChief::name);
@@ -89,6 +93,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainSkill<HYXZ>();
         registerCertainSkill<LSZZ>();
         registerCertainSkill<YZ>();
+        registerCertainSkill<JQR>();
     }
 
     void registerBuffs() override
@@ -119,6 +124,7 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<SXMQBuff_Passive>();
         registerCertainBuff<LSZZBuff>();
         registerCertainBuff<YZBuff>();
+        registerCertainBuff<JQRBuff>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
         registerCertainBuff<ExtensiveArrow>();

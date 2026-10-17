@@ -684,3 +684,59 @@ AutoAttack_Mage_Beam_YZ::AutoAttack_Mage_Beam_YZ(Person* p)
         this->setupHardcodedOutBurstAxis(false);
      }
 
+     // 机器人
+AutoAttack_Mage_Beam_JQR::AutoAttack_Mage_Beam_JQR(Person* p)
+    : AutoAttack_Mage_Beam_Base(p, {
+        // 阶段1
+        { { {SXMQ::name, false}, {JQR::name, false}, {Vortex::name, false},
+            {FrostWind::name, false}, {Ultimate_Beam::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, JQR::name, Vortex::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段2
+        { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段3
+        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段4
+        { { {SXMQ::name, false}, {JQR::name, false}, {Ultimate_Beam::name, false},
+            {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, JQR::name, Vortex::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段5
+        { { {Flood_Beam::name, false}, {Vortex::name, false}, {FrostWind::name, false} },
+          {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段6
+        { { {Ultimate_Beam::name, false}, {SXMQ::name, false}, {JQR::name, false}, {Vortex::name, false},
+            {FrostWind::name, false}, {Flood_Beam::name, false} },
+          {SXMQ::name, JQR::name, Ultimate_Beam::name, Vortex::name, FrostWind::name, 
+           Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 阶段7
+        // { { {Vortex::name, false}, {FrostWind::name, false}, {Flood_Beam::name, false} },
+        //   {Vortex::name, FrostWind::name, Flood_Beam::name, Beam::name, WaterSpout::name} },
+        // 以下为新逻辑专属
+        // [6] twoFantasyAndUlti
+        { {},
+          {SXMQ::name, JQR::name, FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [7] simpleFantasyOnly（无2层充能幻想，仅作备用配置）
+        { {},
+          {JQR::name, FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [8] ultiOnly
+        { {},
+          {FrostWind::name,
+           Ultimate_Beam::name, Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [9] pureBurst
+        { {},
+          {FrostWind::name,
+           Flood_Beam::name, Beam::name, Vortex::name, WaterSpout::name} },
+        // [10] window
+        { {},
+          {FrostWind::name,
+           Beam::name, Vortex::name, WaterSpout::name} },
+     })
+     {
+        // 幻想：机器人 + 嗜血毛球（机器人有充能层数），第二波爆发走singleBurst
+        this->setupHardcodedOutBurstAxis(true);
+     }
