@@ -24,7 +24,9 @@ class Action {
 ### 2.1.在Action.h中声明
 
 ```cpp
-class NewAction : public TypedAction<ResourceRevertAction, ResourceListener> {
+// 第一个模板参数是**这个 Action 自己**（CRTP，用于让 listeners 成为该子类独有的静态表），
+// 第二个是监听器类型。
+class NewAction : public TypedAction<NewAction, ResourceListener> {
 private:
     // 可选：构造函数参数相关成员，如buffName、skillName
     std::string targetName;
@@ -42,6 +44,9 @@ public:
     void execute(double n, Person *p) override; 
 };
 ```
+
+> 注意 `TypedAction<Derived, ListenerType>` 的第一个参数**必须是派生类自身**。
+> 写成 `TypedAction<ResourceRevertAction, ...>` 会让监听器表与父类共享，派生类失去独立性。
 
 ### 2.2.在Action.cpp中实现
 

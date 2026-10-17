@@ -120,6 +120,10 @@ NewBuff::NewBuff(Person *p) : Buff(p) {
     
     //（可选）初始化角色属性
     this->p->changeDamageIncrease(this->number);
+    // ⚠️ 如果这段增益在游戏里会直接进站街面板（玩家输入已包含），
+    //    不能用 triggerAction 再加一遍，应改用「重新归类」：
+    //    this->p->applyFantasyPassiveBonus(bonus, true);
+    //    详见 personExample.md 第 6 节与 SkillLogic.md 7.4。
 }
 
 // 带参数构造函数

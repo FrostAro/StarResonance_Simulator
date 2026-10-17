@@ -59,11 +59,13 @@ std::string NewSkill::name = "NewSkill";
 NewSkill::NewSkill(Person *p) : InstantSkill() {
     // 你应该重写以下成员变量
     // 基本属性
-    this->add;                      // 回能值
-    this->energyReduce;             // 能量消耗
-    this->canTriggerLucky;          // 是否能触发幸运
+    this->energyAdd;                // 能量回复量
+    this->energyReduce;             // 能量消耗量
+    this->canTriggerLucky;          // 是否能触发幸运伤害
+    this->canTriggerCrit;           // 是否能暴击
     this->canCharge;                // 是否为充能技能（技能是否可以存储多层，例：陨星）
     this->isNoReleasing;            // 是否为无前摇技能（例：冰箭）
+    this->canAffectedBySpeed;       // 出伤间隔是否随施法速度实时变化（例：射线、水龙卷）
     
     // 伤害相关
     this->multiplying;              // 倍率
@@ -80,18 +82,21 @@ NewSkill::NewSkill(Person *p) : InstantSkill() {
     
     // 时间相关 
     
-    this->duration;                 // 持续时间（持续/引导技能用）
-    this->baseDamageTriggerInterval;    // 基础伤害触发间隔（持续/引导技能用）
-    this->damageTriggerInterval;    // 伤害触发间隔（持续/引导技能用），根据实际情况变化
-    //补充：对于无前摇的立即触发型技能技能需要将duration设置为等同于baseDamageTriggerInterval
+    this->duration;                     // 持续时间（持续/引导技能用）
+    this->baseDamageTriggerInterval;    // 基础伤害触发间隔（持续/引导技能用，不含速度）
+    this->damageTriggerInterval = this->baseDamageTriggerInterval / (1 + p->castingSpeed);
+                                        // 实际出伤间隔
+    //补充：对于无前摇的立即触发型技能需要将 duration 设置为等同于 baseDamageTriggerInterval
+    //补充：只有 canAffectedBySpeed = true 的技能，才会被 Person::modifySkillInterval()
+    //      在施法速度变化时持续重算；否则只在构造时除一次速度
 
     // 吟唱时间
-    this->singingTime;              
+    this->singing;              
     // 如果吟唱时间受到施法速度影响
     if(p) this->releasingTime /= (1 + p->castingSpeed);
 
     // 前摇时间（此前摇时间合并了吟唱时间与技能释放时间）
-    this->releasingTime = /*技能释放所需时间*/ + this->singingTime;
+    this->releasingTime = /*技能释放所需时间*/ + this->singing;
     // 如果释放时间受到攻击速度影响
     if(p) this->releasingTime /= (1 + p->attackSpeed);   
     

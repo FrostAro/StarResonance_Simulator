@@ -4,8 +4,10 @@
 > 所有数值以代码为准（1 tick = 1ms，模拟时长默认 180000ms = 180s）。
 > 阅读顺序建议：第一节先看框架套路，后面各节按职业查具体类。
 >
-> **同步状态**：已对齐到 `5125428` 之后的施法速度重做（`baseDamageTriggerInterval` / `canAffectedBySpeed`）、
-> `FloodLuckyBuff` 改为随灌注开关、`EquipmentSetEffectBuff_Beam` 的消费即清除、以及当前 11 段爆发轴。
+> **同步状态**：已对齐到「属性双通道 + 机器人幻想」这一版——
+> `FantasyPassiveBonus` / `reclassifyXxxPercentToExtra`（见 7.4）、`weaponConfig` 重新归类、
+> `JQR` + `JQRBuff`、施法速度重做（`baseDamageTriggerInterval` / `canAffectedBySpeed`）、
+> `FloodLuckyBuff` 随灌注开关、`EquipmentSetEffectBuff_Beam` 的消费即清除、11 段爆发轴。
 > 改动后若数值有变，请顺手更新对应小节。
 
 ---
@@ -476,6 +478,7 @@ class MukuChief : public FightingFantasy, public InstantSkill
 | `HYXZ` 幻妖蟹蛛 | 80000 / 1 层 | `HYXZBuff`：精通 **+20%**，20s | 无（代码被注释） |
 | `LSZZ` 掠食蜘蛛 | 80000 / 1 层 | `LSZZBuff`：攻击增加 **+35%**，20s | 攻击增加 **+21%** |
 | `YZ` 游子 | 80000 / 1 层 | `YZBuff`：幸运 **+20%**，20s | 无（代码被注释） |
+| `JQR` 机器人 | 80000 / 2 层 | `JQRBuff`：精炼攻击 = 总攻击 × (精通/5 × 1.2)，且**专精/特定技能 +30% 增伤**，20s | 精通 **+15%**（走「重新归类」，见 7.4） |
 
 **共性**：主动技能本身倍率为 0（不直接出伤），作用全靠上 Buff；`releasingTime` 都是 100ms 且 `/= (1 + attackSpeed)`。
 
@@ -507,6 +510,63 @@ targetReduction = (暴击 > 0.6) ? (暴击 - 0.6) * 0.3 : 0;
 ```
 
 `update()` 里比较 `lastReduction`，只有变化才加减——**这是项目里少数几处正确做了"变化量重算"的地方**。
+
+### 7.4 `JQR` 机器人：被动为什么要「重新归类」
+
+**问题**：机器人的被动是「精通 +15%」，但游戏里这 15% **会直接加进站街面板**。玩家输入的就是站街面板值，所以输入里**已经包含**了这 15%。
+
+如果就这么拿面板值反解精通点数，会有两个后果：
+
+1. 这 15% 被当成**点数**放大（`count = coeff·y/(1−y)`，高精通区间会被显著放大）；
+2. 它会被 `DoubleProficientBuff`（双倍精通）一起翻倍——但它本质是**独立的额外百分比**，不该被翻倍。
+
+**解法**：把这段百分比从「点数通道」挪到「额外百分比通道」，**属性总值保持不变**。
+
+```
+属性 = base + conv(count) + ExtraPercent
+可点数化部分 = 属性 - base - ExtraPercent
+```
+
+对应的 API 在 `Person`：
+
+| 函数 | 作用 |
+| --- | --- |
+| `FantasyPassiveBonus` | 声明一组「面板已含」的百分比被动（精通/急速/暴击/幸运/全能） |
+| `Person::applyFantasyPassiveBonus(bonus, apply)` | 应用 / 移除（内部按属性分派） |
+| `Person::reclassifyXxxPercentToExtra(percent)` | 单项重新归类；传负值即反向 |
+
+`JQR` 的实现只有三步：
+
+```cpp
+// FightingFantasy/Skill.h
+static constexpr double kPassiveProficient = 0.15;
+
+// FightingFantasy/Skill.cpp
+void JQR::setPassiveEffect(Person *p)
+{
+    FantasyPassiveBonus bonus;
+    bonus.proficient = JQR::kPassiveProficient;
+    p->applyFantasyPassiveBonus(bonus, true);   // 站街面板已含 → 只切通道，不加总值
+}
+```
+
+**`weaponConfig` 用的是同一套机制**：武器的第一/第二属性也在面板里，同样要 `reclassify` 而不是 `-= 0.06`。
+
+> ⚠️ **`reclassifyXxx` 仅限初始化期调用**（`Person` 构造 / `Initializer::equipSkills`）。
+> 它直接改成员变量、**不广播 Action 事件**，因为"总值不变、只是通道切换"不是一次属性变更。
+> 若在战斗中调用，`DoubleProficientBuff` / `FloatingExtraSecondaryAttributesBuff*` / `JQRBuff`
+> 的缓存值会脱钩，而且**不会报错**。
+
+**数值效果示例**（面板精通 74.8%、武器 6%、机器人 15%、代码 +10%）：
+
+| 步骤 | 精通总值 | `ExtraPercent` | `ProficientCount` | 可点数化 |
+| --- | --- | --- | --- | --- |
+| 面板 | 74.8% | 0 | — | — |
+| 武器归类 6% | 74.8% | 6% | 262,963 | 62.8% |
+| 代码 +10% | 84.8% | 16% | 262,963 | 62.8% |
+| 机器人归类 15% | 84.8% | 31% | **183,140** | **47.8%** |
+| 最高副属性 +3.5% | 88.3% | 34.5% | 183,140 | 47.8% |
+| 双倍精通（射线期间） | **105.18%** | 34.5% | 翻倍后 64.68% | — |
 
 ---
 
@@ -577,6 +637,9 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 | 灌注期各种加成 | 搜 `findBuffInBuffList(FloodBuff_Beam::name)` |
 | 三风（龙卷出伤频率） | `WaterSpoutRealBuff::listenerCallback1` 的 `baseDamageTriggerInterval /= 3` |
 | 龙卷必爆 / 可幸运 | `EquipmentSetEffectBuff_Beam::listenerCallback` |
+| **幻想的「面板已含」被动（如机器人 +15% 精通）** | `Person::applyFantasyPassiveBonus` + 各幻想的 `setPassiveEffect`，见 7.4 节 |
+| **武器第一/第二属性（面板已含的部分）** | `core/Person.cpp` 构造函数里的 `weaponConfig` 分支（同样走 `reclassify`） |
+| 属性「点数 ↔ 额外百分比」的通道切换 | `Person::reclassifyXxxPercentToExtra`（**仅限初始化期调用**） |
 | 冰箭本体（倍率 / 必暴 / 精通增伤 / 玄冰回复） | `Mage/Beam/Skill.cpp` → `IceArrow_Beam::IceArrow_Beam` |
 | 冰箭触发源 | 搜 `IceArrow_Beam::name` 的 `CreateSkillAction`；广域冰箭见 `ExtensiveArrow` |
 | **自动战斗轴（阶段顺序 / 时长）** | `Mage/Beam/AutoAttack.cpp` → `setupHardcodedOutBurstAxis()` 与 `registerOutBurstLogic()`，见 3.8 节 |

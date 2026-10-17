@@ -32,18 +32,22 @@ public:
 ### 2.2.模板基类TypedListener
 
 ```cpp
+// T 是事件数据类型（如 DamageInfo / double），回调接收 T&
 template <typename T>
 class TypedListener : public BaseListener {
 public:
-    std::function<void(const T)> callback;  // 回调函数
+    std::function<void(T&)> callback;  // 回调函数（注意是引用，不是 const T）
     
-    TypedListener(int id, std::function<void(const T)> func) 
+    TypedListener(int id, std::function<void(T&)> func) 
                 : callback(std::move(func))
     {
         this->buffID = id;
     }
 };
 ```
+
+> `TypedListener` 本身没有 `trigger()`，各具体监听器（如 `DamageListener`）自行提供。
+> 也没有 `isValid()`——要判断"还能不能用"，只能靠 `callback` 是否为空或 `buffID` 是否有效。
 
 ## 3.拓展新的Listener类型
 
@@ -67,45 +71,28 @@ public:
 ### 3.2.在Action中添加Listener支持
 
 ```cpp
-class NewAction : public Action {
-private:
-    static std::string name;
-    // 监听器容器
-    static std::vector<std::unique_ptr<NewEventListener>> listeners;
-    
+// 推荐直接继承 TypedAction<自身, 监听器类型>，listeners / addListener / deleteListener
+// 都由它提供，不用手写。
+class NewAction : public TypedAction<NewAction, NewEventListener> {
 public:
-    // 触发监听器的方法
-    static void triggerListeners(const xxx& info) {
-        for (const auto& listener : listeners) {
-            if (listener && listener->isValid()) {
+    static std::string name;
+
+    void execute(double n, Person* p) override {
+        // 1. 执行逻辑
+
+        // 2. 触发监听器（遍历 TypedAction 提供的 static listeners）
+        for (const auto &listener : NewAction::listeners) {
+            if (listener && listener->callback) {
                 listener->trigger(info);
             }
         }
     }
-    
-    // 添加监听器
-    static void addListener(std::unique_ptr<NewEventListener> listener) {
-        listeners.push_back(std::move(listener));
-    }
-    
-    // 删除监听器
-    static void deleteListener(int buffID) {
-        auto it = std::remove_if(listeners.begin(), listeners.end(),
-            [buffID](const std::unique_ptr<NewEventListener>& item) {
-                return item->buffID == buffID;
-            });
-        listeners.erase(it, listeners.end());
-    }
-    
-    // 执行Action时触发监听器
-    void execute(double n, Person* p) override {
-        // ... 执行逻辑
-        
-        // 触发监听器
-        triggerListeners(xxx);
-    }
 };
 ```
+
+> 如果确实要手写监听器容器，记得 `addListener` / `deleteListener` 要成对使用：
+> Buff 构造里 `addListener`，析构里必须 `deleteListener(this->getBuffID())`，
+> 否则静态表里会留下指向已析构对象的回调。
 
 ### 3.3.在Buff中创建和使用Listener
 

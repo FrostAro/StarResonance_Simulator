@@ -32,12 +32,26 @@ public:
 
 ## 2.初始化流程概览
 
-Initialize() 入口
-    ├── registerSkills()    注册所有技能到SkillCreator
-    ├── registerBuffs()     注册所有Buff到BuffCreator
-    ├── equipSkills()       装备角色可释放的技能
-    ├── initializePerson()  初始化角色状态和乘区
-    └── initializeAutoAttack() 初始化自动攻击系统
+```cpp
+void Initialize()
+{
+    registerCertainBuff<SkillReleasedTimesStatistics>();  // 统计用，唯一硬编码
+    registerSkills();        // 注册所有技能到 SkillCreator
+    registerBuffs();         // 注册所有 Buff 到 BuffCreator
+    equipSkills();           // 装备角色可释放的技能（会触发幻想的 setPassiveEffect）
+    initializePerson();      // 装载固有 Buff、初始化乘区
+    initializeAutoAttack();  // 初始化自动攻击系统
+}
+```
+
+**顺序很关键**：
+
+- `equipSkills()` 早于 `initializePerson()` —— 幻想的 `setPassiveEffect` 在这里跑，
+  此时改属性还能影响后面 `initializePerson` 里的推导（如最高副属性 Buff 的判定）；
+- `registerCertainBuff<T>()` 会用**编译期** `T::kInherent` 决定要不要把 `T` 加入
+  `inherentBuffs`（随后由 `initializePerson` 统一创建），**不再构造临时实例去问**。
+  所以固有 Buff 必须在类里写 `static constexpr bool kInherent = true;`，
+  同时在构造函数里设 `this->isInherent = true;`（Debug 构建会断言两者一致）。
 
 ## 3.拓展新的Initializer子类
 
