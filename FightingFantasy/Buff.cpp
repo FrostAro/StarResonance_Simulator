@@ -315,3 +315,64 @@ YZBuff::~YZBuff()
     this->p->triggerAction<LuckyPercentModifyAction>(-0.2);
     Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "luckyPercent removed");
 }
+
+// 机器人
+std::string JQRBuff::name = "JQRBuff";
+
+JQRBuff::JQRBuff(Person *p, double) : Buff(p)
+{
+    this->duration = 20000;
+    this->maxDuration = this->duration;
+    this->number = 1.2;
+
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "now proficient is " + std::to_string(this->p->getProficient()));
+    double proficientIncrease = this->p->getProficient() / 5 * this->number;
+    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "proficientIncrease is " + std::to_string(proficientIncrease));
+    double refineATKIncrease = this->p->getTotalATK() * proficientIncrease;
+    this->tempValue = refineATKIncrease;
+    this->p->triggerAction<RefineATKCountModifyAction>(refineATKIncrease);
+
+    auto info = std::make_unique<CreateSkillListener>(
+        this->getBuffID(), [this](Skill *const skill)
+        { this->listenerCallback(skill); });
+    CreateSkillAction::addListener(std::move(info));
+
+    auto info4 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback2(n); });
+    ProficientCountModifyAction::addListener(std::move(info4));
+}
+
+void JQRBuff::listenerCallback(Skill *const skill) 
+{
+    if(skill->hasSkillType(Skill::skillTypeEnum::SPECIALIZED) || skill->hasSkillType(Skill::skillTypeEnum::PARTICULAR))
+    {
+        // 专精技能增伤30%
+        skill->damageIncreaseAdd += 0.3;
+    }
+}
+
+void JQRBuff::listenerCallback2(double n) 
+{
+    // 当精通属性点数变化时，重新计算 refineATKIncrease
+    double proficientIncrease = this->p->getProficient() / 5 * this->number;
+    double refineATKIncrease = this->p->getTotalATK() * proficientIncrease;
+
+    // 先移除之前的增伤，再应用新的增伤
+    this->p->triggerAction<RefineATKCountModifyAction>(-this->tempValue);
+    this->p->triggerAction<RefineATKCountModifyAction>(refineATKIncrease);
+
+    // 更新 tempValue 为新的增伤值
+    this->tempValue = refineATKIncrease;
+}
+
+void JQRBuff::update(const double) {}
+bool JQRBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string JQRBuff::getBuffName() const { return JQRBuff::name; }
+
+JQRBuff::~JQRBuff()
+{
+    CreateSkillAction::deleteListener(this->getBuffID());
+    ProficientCountModifyAction::deleteListener(this->getBuffID());
+    this->p->triggerAction<RefineATKCountModifyAction>(-this->tempValue);
+}

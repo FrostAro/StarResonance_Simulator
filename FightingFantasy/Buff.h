@@ -158,3 +158,21 @@ public:
     YZBuff(Person *p, double n);
     ~YZBuff() override;
 };
+
+class JQRBuff : public Buff
+{
+public:
+    // 机器人
+    static std::string name;
+    double tempValue = 0; // 暂存
+
+public:
+    void listenerCallback(Skill *const skill);
+    void listenerCallback2(double n);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    JQRBuff(Person *p, double n);
+    ~JQRBuff() override;
+};

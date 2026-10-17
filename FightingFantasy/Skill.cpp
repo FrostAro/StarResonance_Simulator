@@ -381,3 +381,66 @@ void YZ::removePassiveEffect(Person *p)
 {
     //p->triggerAction<LuckyCountModifyAction>(-89600);
 }
+
+// 机器人
+std::string JQR::name = "JQR";
+
+JQR::JQR(Person *p) : FightingFantasy(), InstantSkill()
+{
+    this->canCharge = true;
+    this->maxStack = 2;
+    this->stack = this->maxStack;
+
+    this->multiplying = 0;
+    this->fixedValue = 0;
+
+    this->MaxCD = 80000;
+    this->MaxchargeCD = 1000;
+    this->CD = 0;
+    this->chargeCD = 0;
+    this->releasingTime = 100;
+    this->releasingTime /= (1 + p->attackSpeed);
+
+    this->JQR::setSkillType();
+}
+
+void JQR::setSkillType()
+{
+    this->skillTypeList.push_back(skillTypeEnum::NORMAL);
+}
+
+void JQR::trigger(Person *p)
+{
+    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    p->triggerAction<CreateBuffAction>(0, JQRBuff::name);
+}
+
+std::string JQR::getSkillName() const
+{
+    return JQR::name;
+}
+
+void JQR::setPassiveEffect(Person *p)
+{
+    if (this->passiveApplied)
+        return;
+    this->passiveApplied = true;
+
+    // 站街面板已经包含这 15% 精通。这里把它从「点数通道」重新归类到
+    // 「额外百分比通道」——属性总值不变，但不再参与点数换算，
+    // 因此不会被「双倍精通」之类的点数操作放大。
+    FantasyPassiveBonus bonus;
+    bonus.proficient = JQR::kPassiveProficient;
+    p->applyFantasyPassiveBonus(bonus, true);
+}
+
+void JQR::removePassiveEffect(Person *p)
+{
+    if (!this->passiveApplied)
+        return;
+    this->passiveApplied = false;
+
+    FantasyPassiveBonus bonus;
+    bonus.proficient = JQR::kPassiveProficient;
+    p->applyFantasyPassiveBonus(bonus, false);
+}
