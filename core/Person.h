@@ -252,21 +252,39 @@ public:
 	virtual double changeProficientPercent(double percent);
 	virtual double changeAlmightyPercent(double percent);
 
-	// ==== 幻想被动「面板已含百分比」的重新归类 ====
+	// ==== 幻想被动 / 武器属性「面板已含百分比」的重新归类 ====
 	//
-	// 见 FantasyPassiveBonus 的说明。以下方法把一段百分比从「点数通道」
-	// 挪到「额外百分比通道」（属性总值不变），全程通过 Action 事件完成，
-	// 因此所有监听者（最高副属性 Buff、双倍精通等）都会同步重算。
+	// 有些加成在游戏里会直接计入站街面板（机器人的精通 +15%、武器的第一/第二属性 6%），
+	// 所以玩家输入的面板值已经包含了它们。若直接按面板值反解点数：
+	//   - 这段会被当成点数放大（count = coeff·y/(1−y)，高区间放大明显）；
+	//   - 还会被「双倍精通」之类的点数操作一并翻倍。
+	//
+	// 处理方式：把它从「点数通道」挪到「额外百分比通道」——属性总值不变，
+	// 只是不再参与点数换算。即：
+	//     可点数化部分 = 总值 - 基础 - ExtraPercent
+	//
+	// ⚠️ 实现是**直接修改成员变量、不广播 Action 事件**，因为：
+	//    1.「总值不变、只切通道」不是一次属性变更，不该通知监听者；
+	//    2. Action 版会走 changeXxxCount，而它内部又按
+	//       「总值 - ExtraPercent - 基础」重算，会把已经挪进 ExtraPercent 的部分
+	//       再扣一次——这就是武器 6% 曾被扣两遍、精通峰值掉到 99% 的根源。
+	//
+	// ⚠️ 因此**仅限初始化期调用**（Person 构造 / Initializer::equipSkills）。
+	//    战斗中调用会让 DoubleProficientBuff、FloatingExtraSecondaryAttributesBuff*、
+	//    JQRBuff 等的缓存值脱钩，而且不会报错。
 	//
 	// 传正值 = 挪到额外通道；传负值 = 挪回点数通道（用于撤销）。
 
 	/**
-	 * @brief 应用/移除一组幻想被动加成（走 Action 事件）
+	 * @brief 应用 / 移除一组幻想被动加成（按属性分派到对应的 reclassifyXxx）
 	 * @param bonus 被动加成（各项为小数，0.15 表示 15%）
 	 * @param apply true=应用，false=移除
+	 *
+	 * @warning 仅限初始化期调用，见上方说明。
 	 */
 	void applyFantasyPassiveBonus(const FantasyPassiveBonus& bonus, bool apply = true);
 
+	// 单项版：把 percent 从点数通道挪到额外通道（负值反向）
 	void reclassifyCriticalPercentToExtra(double percent);
 	void reclassifyQuicknessPercentToExtra(double percent);
 	void reclassifyLuckyPercentToExtra(double percent);
