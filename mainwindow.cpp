@@ -468,6 +468,7 @@ QWidget *MainWindow::createInputPanel()
     m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
     m_fantasyCombo->addItem("游子 + 嗜血毛球");
+    m_fantasyCombo->addItem("机器人 + 嗜血毛球");
     mainLayout->addWidget(classBox);
 
     // ---- 基础属性 ----
@@ -529,7 +530,7 @@ QWidget *MainWindow::createInputPanel()
         "暴击 +5\n"
         "攻击 +100\n"
         "精通 +10\n"
-        "# 幻想用绝对值：0-6=具体幻想(见上面板)，如：幻想 5");
+        "# 幻想用绝对值：0-7=具体幻想(见上面板)，如：幻想 5");
     m_candidatesEdit->setFixedHeight(80);
     compareLayout->addWidget(m_candidatesEdit, 2, 1);
     mainLayout->addWidget(compareBox);
@@ -599,6 +600,7 @@ void MainWindow::onProfessionChanged(int index)
     m_fantasyCombo->addItem("尖兵 + 嗜血毛球");
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
     m_fantasyCombo->addItem("游子 + 嗜血毛球");
+    m_fantasyCombo->addItem("机器人 + 嗜血毛球");
     m_fantasyCombo->setCurrentIndex(0);
     updateDefaultsForProfession("beam");
 }
@@ -647,7 +649,7 @@ SimConfig MainWindow::buildBaseConfig()
     cfg.criticaldamage_set = m_critDmgSetEdit->text().toDouble();
     cfg.increasedamage_set = m_incSetEdit->text().toDouble();
     cfg.elementdamage_set = m_eleIncSetEdit->text().toDouble();
-    int fantasyConfig = m_fantasyCombo->currentIndex();  // 面板index直接对应幻想配置0..6
+    int fantasyConfig = m_fantasyCombo->currentIndex();  // 面板index直接对应幻想配置0..7
     cfg.fantasyConfig = fantasyConfig;
     cfg.flowConfig = m_professionCombo->currentIndex();  // 0=急速精通流，1=幸运流
     return cfg;
@@ -787,7 +789,7 @@ void MainWindow::onRunClicked()
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
-    int fantasyConfig = m_fantasyCombo->currentIndex();     // 面板index直接对应幻想配置0..6
+    int fantasyConfig = m_fantasyCombo->currentIndex();     // 面板index直接对应幻想配置0..7
     int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
 
     // 清空之前的日志和表格
