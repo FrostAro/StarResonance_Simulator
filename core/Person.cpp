@@ -13,6 +13,40 @@
 #include "Creators.hpp"
 #include "Statistics.h"
 
+namespace
+{
+/**
+ * @brief 把「总值 - 额外通道 - 基础值」夹到可反解区间 [0, kAttributeSaturatePercent)
+ *
+ * 反解公式 count = coeff·y/(1−y) 在 y<0 时返回负点数、在 y≥1 时除零，
+ * 所以凡是拿百分比去反解点数，都必须先过这道夹取。
+ */
+double ClampCountablePercent(double value)
+{
+    if (value < 0.0)
+        return 0.0;
+    if (value >= kAttributeSaturatePercent)
+        return kAttributeSaturatePercent;
+    return value;
+}
+
+/**
+ * @brief 计算「额外通道」允许的上限，保证不变量 base + extra <= total
+ *
+ * 若 extra 超过这个上限，changeXxxCount 的重算式
+ * total = base + convertedPercent + extra 会在 base+extra > total 时
+ * 把属性静默抬高到 base+extra（方向是增益，拉表对数时极难察觉）。
+ *
+ * @param total 属性当前总值（含 base、含 extra）
+ * @param base  该属性的基础百分比（暴击/幸运 0.05、精通 0.06、急速/全能 0）
+ */
+double MaxExtraPercent(double total, double base)
+{
+    const double limit = total - base;
+    return limit > 0.0 ? limit : 0.0;
+}
+} // namespace
+
 Person::Person(){};
 
 Person::Person(const double PrimaryAttributes, const double critical, const double quickness, const double lucky, const double Proficient, const double almighty,
@@ -102,17 +136,19 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
     this->enhanceIncrease += weaponConfig.enhanceIncrease;
     this->triggerAction<AttackIncreaseModifyAction>(weaponConfig.extraIncrease);
     // 计算属性数值（将百分比转换为属性点数）
-    // 可点数化部分 = 总值 - 基础 - 额外通道
-    this->CriticalCount = getCriticalCount(
-        this->Critical - kBaseCriticalPercent - this->CriticalExtraPercent);
-    this->QuicknessCount = getQuicknessCount(
-        this->Quickness - this->QuicknessExtraPercent);
-    this->LuckyCount = getLuckyCount(
-        this->Lucky - kBaseLuckyPercent - this->LuckyExtraPercent);
-    this->ProficientCount = getProficientCount(
-        this->Proficient - kBaseProficientPercent - this->ProficientExtraPercent);
-    this->AlmightyCount = getAlmightyCount(
-        this->Almighty - this->AlmightyExtraPercent);
+    // 可点数化部分 = 总值 - 基础 - 额外通道，必须夹取后再反解：
+    // 面板低于 基础+额外 时（暴击/幸运 < base+6%、精通 < 12%、急速/全能 < 6%）
+    // 括号内为负，而 getXxxCount 会静默返回负点数。
+    this->CriticalCount = getCriticalCount(ClampCountablePercent(
+        this->Critical - kBaseCriticalPercent - this->CriticalExtraPercent));
+    this->QuicknessCount = getQuicknessCount(ClampCountablePercent(
+        this->Quickness - this->QuicknessExtraPercent));
+    this->LuckyCount = getLuckyCount(ClampCountablePercent(
+        this->Lucky - kBaseLuckyPercent - this->LuckyExtraPercent));
+    this->ProficientCount = getProficientCount(ClampCountablePercent(
+        this->Proficient - kBaseProficientPercent - this->ProficientExtraPercent));
+    this->AlmightyCount = getAlmightyCount(ClampCountablePercent(
+        this->Almighty - this->AlmightyExtraPercent));
 
     // 设置幸运倍率
     setLuckyMultiplying();
@@ -1106,19 +1142,9 @@ double Person::changeAlmightyPercent(const double percent)
 //   - 「总值不变、只是通道切换」不是一次属性变更，不该广播给监听者；
 //   - Action 版会走 changeXxxCount，而它内部又按「总值 - extra - base」重算，
 //     会把已经在 weaponConfig 里挪进 extra 的部分再扣一次（武器 6% 被扣两遍的根源）。
-
-namespace
-{
-/// 把「主值 - 额外通道 - 基础值」夹到可反解区间 [0, kAttributeSaturatePercent)
-double ClampCountablePercent(double value)
-{
-    if (value < 0.0)
-        return 0.0;
-    if (value >= kAttributeSaturatePercent)
-        return kAttributeSaturatePercent;
-    return value;
-}
-} // namespace
+//
+// 每个函数都维护不变量 base + ExtraPercent <= 总值（见 MaxExtraPercent），
+// 否则低面板 + 武器额外会让 changeXxxCount 的重算式把属性静默抬高。
 
 void Person::reclassifyCriticalPercentToExtra(const double percent)
 {
@@ -1130,6 +1156,17 @@ void Person::reclassifyCriticalPercentToExtra(const double percent)
     this->CriticalExtraPercent += percent;
     if (this->CriticalExtraPercent < 0.0)
         this->CriticalExtraPercent = 0.0;
+    // 维持不变量 base + extra <= 总值（低面板时武器 6% 可能装不下）
+    {
+        const double maxExtra = MaxExtraPercent(this->Critical, kBaseCriticalPercent);
+        if (this->CriticalExtraPercent > maxExtra)
+        {
+            Logger::warning("Person",
+                            "Critical extraPercent clamped: {0} -> {1}, panel lower than base+weapon",
+                            std::to_string(this->CriticalExtraPercent), std::to_string(maxExtra));
+            this->CriticalExtraPercent = maxExtra;
+        }
+    }
 
     // 重算点数：可点数化部分 = 总值 - 基础 - 额外通道
     const double y = ClampCountablePercent(
@@ -1146,6 +1183,17 @@ void Person::reclassifyQuicknessPercentToExtra(const double percent)
     this->QuicknessExtraPercent += percent;
     if (this->QuicknessExtraPercent < 0.0)
         this->QuicknessExtraPercent = 0.0;
+    // 急速没有基础值，上限就是总值本身
+    {
+        const double maxExtra = MaxExtraPercent(this->Quickness, 0.0);
+        if (this->QuicknessExtraPercent > maxExtra)
+        {
+            Logger::warning("Person",
+                            "Quickness extraPercent clamped: {0} -> {1}, panel lower than weapon",
+                            std::to_string(this->QuicknessExtraPercent), std::to_string(maxExtra));
+            this->QuicknessExtraPercent = maxExtra;
+        }
+    }
 
     // Quickness 总值未变 → 施法/攻击速度不受影响，不必 recalcSpeedFromQuickness()
     const double y = ClampCountablePercent(this->Quickness - this->QuicknessExtraPercent);
@@ -1160,6 +1208,16 @@ void Person::reclassifyLuckyPercentToExtra(const double percent)
     this->LuckyExtraPercent += percent;
     if (this->LuckyExtraPercent < 0.0)
         this->LuckyExtraPercent = 0.0;
+    {
+        const double maxExtra = MaxExtraPercent(this->Lucky, kBaseLuckyPercent);
+        if (this->LuckyExtraPercent > maxExtra)
+        {
+            Logger::warning("Person",
+                            "Lucky extraPercent clamped: {0} -> {1}, panel lower than base+weapon",
+                            std::to_string(this->LuckyExtraPercent), std::to_string(maxExtra));
+            this->LuckyExtraPercent = maxExtra;
+        }
+    }
 
     // Lucky 总值未变 → 幸运倍率不受影响
     const double y = ClampCountablePercent(
@@ -1175,6 +1233,16 @@ void Person::reclassifyProficientPercentToExtra(const double percent)
     this->ProficientExtraPercent += percent;
     if (this->ProficientExtraPercent < 0.0)
         this->ProficientExtraPercent = 0.0;
+    {
+        const double maxExtra = MaxExtraPercent(this->Proficient, kBaseProficientPercent);
+        if (this->ProficientExtraPercent > maxExtra)
+        {
+            Logger::warning("Person",
+                            "Proficient extraPercent clamped: {0} -> {1}, panel lower than base+weapon",
+                            std::to_string(this->ProficientExtraPercent), std::to_string(maxExtra));
+            this->ProficientExtraPercent = maxExtra;
+        }
+    }
 
     // Proficient 总值未变 → 元素增伤 / 冰箭增伤 / JQR 转化都不受影响
     const double y = ClampCountablePercent(
@@ -1190,6 +1258,17 @@ void Person::reclassifyAlmightyPercentToExtra(const double percent)
     this->AlmightyExtraPercent += percent;
     if (this->AlmightyExtraPercent < 0.0)
         this->AlmightyExtraPercent = 0.0;
+    // 全能没有基础值，上限就是总值本身
+    {
+        const double maxExtra = MaxExtraPercent(this->Almighty, 0.0);
+        if (this->AlmightyExtraPercent > maxExtra)
+        {
+            Logger::warning("Person",
+                            "Almighty extraPercent clamped: {0} -> {1}, panel lower than weapon",
+                            std::to_string(this->AlmightyExtraPercent), std::to_string(maxExtra));
+            this->AlmightyExtraPercent = maxExtra;
+        }
+    }
 
     // Almighty 总值未变 → 全能增伤不受影响
     const double y = ClampCountablePercent(this->Almighty - this->AlmightyExtraPercent);
