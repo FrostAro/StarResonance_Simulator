@@ -1244,6 +1244,151 @@ FloatingExtraSecondaryAttributesBuff_Beam::~FloatingExtraSecondaryAttributesBuff
     AlmightyCountModifyAction::deleteListener(this->getBuffID());
 }
 
+// 生命波动
+std::string LifeFluctuationBuff::name = "LifeFluctuation";
+
+void LifeFluctuationBuff::findMaxAttribute()
+{
+    double temp = 0.1;
+    if (this->p->getCritical() > temp)
+    {
+        this->lastAttribute = secondaryAttributesEnum::CRITICAL;
+    }
+    if (this->p->getQuickness() > temp)
+    {
+        this->lastAttribute = secondaryAttributesEnum::QUICKNESS;
+    }
+    if (this->p->getLucky() > temp)
+    {
+        this->lastAttribute = secondaryAttributesEnum::LUCKY;
+    }
+    if (this->p->getProficient() > temp)
+    {
+        this->lastAttribute = secondaryAttributesEnum::PROFICIENT;
+    }
+    if (this->p->getAlmighty() > temp)
+    {
+        this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
+    }
+}
+
+LifeFluctuationBuff::LifeFluctuationBuff(Person *p, double)
+    : Buff(p)
+{
+    this->number = 0.1; // 百分比
+    this->duration = kPermanentBuffDuration;
+    this->maxDuration = this->duration;
+    this->isInherent = true;
+
+    // 寻找属性最大值,给最大固定值的属性+3.5%百分比
+    this->findMaxAttribute();
+    switch (lastAttribute)
+    {
+    case secondaryAttributesEnum::CRITICAL:
+        this->p->triggerAction<CriticalPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::QUICKNESS:
+        this->p->triggerAction<QuicknessPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::LUCKY:
+        this->p->triggerAction<LuckyPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::PROFICIENT:
+        this->p->triggerAction<ProficientPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::ALMIGHTY:
+        this->p->triggerAction<AlmightyPercentModifyAction>(this->number);
+        break;
+    default:
+        break;
+    }
+
+    auto info1 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback(n); });
+    CriticalCountModifyAction::addListener(std::move(info1));
+    auto info2 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback(n); });
+    QuicknessCountModifyAction::addListener(std::move(info2));
+    auto info3 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback(n); });
+    LuckyCountModifyAction::addListener(std::move(info3));
+    auto info4 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback(n); });
+    ProficientCountModifyAction::addListener(std::move(info4));
+    auto info5 = std::make_unique<SecondaryAttributeListener>(
+        this->getBuffID(), [this](double n)
+        { this->listenerCallback(n); });
+    AlmightyCountModifyAction::addListener(std::move(info5));
+}
+
+void LifeFluctuationBuff::listenerCallback(double n)
+{
+    switch (lastAttribute)
+    {
+    case secondaryAttributesEnum::CRITICAL:
+        this->p->triggerAction<CriticalPercentModifyAction>(-this->number);
+        break;
+    case secondaryAttributesEnum::QUICKNESS:
+        this->p->triggerAction<QuicknessPercentModifyAction>(-this->number);
+        break;
+    case secondaryAttributesEnum::LUCKY:
+        this->p->triggerAction<LuckyPercentModifyAction>(-this->number);
+        break;
+    case secondaryAttributesEnum::PROFICIENT:
+        this->p->triggerAction<ProficientPercentModifyAction>(-this->number);
+        break;
+    case secondaryAttributesEnum::ALMIGHTY:
+        this->p->triggerAction<AlmightyPercentModifyAction>(-this->number);
+        break;
+    default:
+        break;
+    }
+
+    // 寻找属性最大值
+    this->findMaxAttribute();
+    switch (lastAttribute)
+    {
+    case secondaryAttributesEnum::CRITICAL:
+        this->p->triggerAction<CriticalPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::QUICKNESS:
+        this->p->triggerAction<QuicknessPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::LUCKY:
+        this->p->triggerAction<LuckyPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::PROFICIENT:
+        this->p->triggerAction<ProficientPercentModifyAction>(this->number);
+        break;
+    case secondaryAttributesEnum::ALMIGHTY:
+        this->p->triggerAction<AlmightyPercentModifyAction>(this->number);
+        break;
+    default:
+        break;
+    }
+
+    Logger::debugBuff(AutoAttack::getTimer(),
+                      this->getBuffName(),
+                      "life fluctuation triggered, secondary attributes floated");
+}
+
+void LifeFluctuationBuff::update(const double deltaTime) {}
+bool LifeFluctuationBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string LifeFluctuationBuff::getBuffName() const { return LifeFluctuationBuff::name; }
+
+LifeFluctuationBuff::~LifeFluctuationBuff()
+{
+    CriticalCountModifyAction::deleteListener(this->getBuffID());
+    QuicknessCountModifyAction::deleteListener(this->getBuffID());
+    LuckyCountModifyAction::deleteListener(this->getBuffID());
+    ProficientCountModifyAction::deleteListener(this->getBuffID());
+    AlmightyCountModifyAction::deleteListener(this->getBuffID());
+}
+
 // 冰令脉冲
 std::string FrostDecreePulseBuff::name = "FrostDecreePulseBuff";
 
@@ -1321,9 +1466,9 @@ InstantCooldownBuff_Beam::~InstantCooldownBuff_Beam()
 }
 
 // 广域冰箭
-std::string ExtensiveArrow::name = "ExtensiveArrow";
+std::string ExtensiveArrowBuff::name = "ExtensiveArrow";
 
-ExtensiveArrow::ExtensiveArrow(Person *p, double n) : Buff(p)
+ExtensiveArrowBuff::ExtensiveArrowBuff(Person *p, double n) : Buff(p)
 {
     this->duration = kPermanentBuffDuration;
     this->maxDuration = this->duration;
@@ -1337,7 +1482,7 @@ ExtensiveArrow::ExtensiveArrow(Person *p, double n) : Buff(p)
     AttackAction::addListener(std::move(info));
 }
 
-void ExtensiveArrow::listenerCallback(DamageInfo& info)
+void ExtensiveArrowBuff::listenerCallback(DamageInfo& info)
 {
     if(info.skillName == WaterSpout::name 
         || info.skillName == FrostWind::name || info.skillName == Vortex::name)
@@ -1359,15 +1504,15 @@ void ExtensiveArrow::listenerCallback(DamageInfo& info)
     }
 }
 
-void ExtensiveArrow::update(const double deltaTime)
+void ExtensiveArrowBuff::update(const double deltaTime)
 {
     this->timer += deltaTime;
 }
 
-bool ExtensiveArrow::shouldBeRemoved() { return this->duration < 0; }
-std::string ExtensiveArrow::getBuffName() const { return ExtensiveArrow::name; }
+bool ExtensiveArrowBuff::shouldBeRemoved() { return this->duration < 0; }
+std::string ExtensiveArrowBuff::getBuffName() const { return ExtensiveArrowBuff::name; }
 
-ExtensiveArrow::~ExtensiveArrow()
+ExtensiveArrowBuff::~ExtensiveArrowBuff()
 {
     AttackAction::deleteListener(this->getBuffID());
 }

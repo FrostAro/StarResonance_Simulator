@@ -412,6 +412,34 @@ public:
     ~FloatingExtraSecondaryAttributesBuff_Beam() override;
 };
 
+// 生命波动
+class LifeFluctuationBuff : public Buff
+{
+private:
+    enum class secondaryAttributesEnum
+    {
+        CRITICAL,
+        QUICKNESS,
+        LUCKY,
+        PROFICIENT,
+        ALMIGHTY
+    };
+    void findMaxAttribute();  // 找出当前点数最高的副属性并记录到 lastAttribute
+public:
+    static std::string name;
+    secondaryAttributesEnum lastAttribute = secondaryAttributesEnum::CRITICAL;
+
+public:
+    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
+    void listenerCallback(double n);
+    void update(double deltaTime) override;
+    bool shouldBeRemoved() override;
+    std::string getBuffName() const override;
+
+    LifeFluctuationBuff(Person *p, double n);
+    ~LifeFluctuationBuff() override;
+};
+
 // 冰令脉冲
 class FrostDecreePulseBuff : public Buff
 {
@@ -451,7 +479,7 @@ public:
 };
 
 // 广域冰箭
-class ExtensiveArrow : public Buff
+class ExtensiveArrowBuff : public Buff
 {
 public:   
     static std::string name;
@@ -468,8 +496,8 @@ public:
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
 
-    ExtensiveArrow(Person *p, double n);
-    ~ExtensiveArrow() override;
+    ExtensiveArrowBuff(Person *p, double n);
+    ~ExtensiveArrowBuff() override;
 };
 
 // 9冰真实因子

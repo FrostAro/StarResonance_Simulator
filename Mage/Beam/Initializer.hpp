@@ -127,7 +127,8 @@ class Initializer_Mage_Beam : public Initializer
         registerCertainBuff<JQRBuff>();
         registerCertainBuff<FrostDecreePulseBuff>();
         registerCertainBuff<InstantCooldownBuff_Beam>();
-        registerCertainBuff<ExtensiveArrow>();
+        registerCertainBuff<LifeFluctuationBuff>();
+        registerCertainBuff<ExtensiveArrowBuff>();
         registerCertainBuff<OtherExtraEnhanceBuff>();
 
         //心相仪与装备套装效果
