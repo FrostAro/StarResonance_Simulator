@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Statistics.h"
+#include "Person.h"          // WeaponConfig / SecondaryAttributeConfig
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -49,6 +50,11 @@ struct SimConfig
     double elementdamage_set = 0;   // 元素增伤额外值
     int fantasyConfig = 0;          // 幻想配置
     int flowConfig = 0;             // 流派配置：0=急速精通流，1=幸运流
+
+    // 武器第一/第二属性。这两项在游戏里会加进站街面板，所以输入的面板值已经
+    // 包含它们；Person 构造函数会用 reclassify 把这段百分比从点数通道切到
+    // 额外通道（总值不变）。GUI 与 CLI 必须用同一套值，否则同一份面板会算出不同 DPS。
+    WeaponConfig weapon;
 };
 
 // ============================================================================

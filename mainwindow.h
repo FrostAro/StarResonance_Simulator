@@ -65,7 +65,8 @@ public:
                               bool randomSeed,
                               uint32_t seed,
                               int fantasyConfig,
-                              int flowConfig);
+                              int flowConfig,
+                              const WeaponConfig& weapon);
     ~SimulationWorker(); 
 public slots:
     void run();  // 在子线程中执行模拟循环
@@ -95,6 +96,7 @@ private:
     uint32_t m_seed;
     int m_fantasyConfig;  // 保存幻想配置索引
     int m_flowConfig;     // 保存流派配置：0=急速精通流，1=幸运流
+    WeaponConfig m_weapon;    // 武器第一/第二属性（与 CLI 同口径）
 };
 
 class ComparisonWorker : public QObject
@@ -160,9 +162,16 @@ private:
     SimConfig buildBaseConfig();
     std::vector<SimConfig> parseCandidates(const SimConfig& base, const QString& text);
 
+    // 从「武器」输入组读取武器第一/第二属性（GUI 与 CLI 共用同一套口径）
+    WeaponConfig buildWeaponConfig() const;
+
     // 输入控件
     QComboBox* m_professionCombo;
     QComboBox* m_fantasyCombo;  // 新增幻想配置下拉框
+    QComboBox* m_weaponFirstCombo;   // 武器第一属性
+    QComboBox* m_weaponSecondCombo;  // 武器第二属性
+    QLineEdit* m_weaponEnhanceEdit;  // 武器增效
+    QLineEdit* m_weaponExtraEdit;    // 武器额外攻击加成
     QLineEdit* m_primaryAttrEdit;
     QLineEdit* m_critEdit;
     QLineEdit* m_quicknessEdit;

@@ -57,7 +57,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
                                    bool randomSeed,
                                    uint32_t seed,
                                    int fantasyConfig,
-                                   int flowConfig)
+                                   int flowConfig,
+                                   const WeaponConfig& weapon)
     : m_profession(profession),
       m_primaryAttr(primaryAttr),
       m_crit(crit),
@@ -79,7 +80,8 @@ SimulationWorker::SimulationWorker(const QString& profession,
       m_randomSeed(randomSeed),
       m_seed(seed),
       m_fantasyConfig(fantasyConfig),
-      m_flowConfig(flowConfig)
+      m_flowConfig(flowConfig),
+      m_weapon(weapon)
 {}
 
 SimulationWorker::~SimulationWorker()
@@ -109,7 +111,7 @@ void SimulationWorker::run()
             m_atk, m_refineAtk, m_elementAtk,
             m_attackSpeed, m_castingSpeed,
             m_critDmgSet, m_incSet, m_eleIncSet,
-            m_maxTime, m_fantasyConfig);
+            m_maxTime, m_fantasyConfig, m_weapon);
 
         // 设置随机种子
         if (m_randomSeed) {
@@ -471,6 +473,30 @@ QWidget *MainWindow::createInputPanel()
     m_fantasyCombo->addItem("机器人 + 嗜血毛球");
     mainLayout->addWidget(classBox);
 
+    // ---- 武器 ----
+    // 武器第一/第二属性在游戏里会加进站街面板，所以「基础属性」里填的面板值
+    // 已经包含它们。这里只是告诉模拟器这两项分别属于谁，让它把对应百分比
+    // 从点数通道切到额外通道（总值不变）。选项顺序必须与
+    // SecondaryAttributeConfig 的枚举顺序一致。
+    auto [weaponBox, weaponLayout] = makeGroup("武器");
+    addField(weaponLayout, 0, "第一属性", m_weaponFirstCombo = new QComboBox);
+    addField(weaponLayout, 1, "第二属性", m_weaponSecondCombo = new QComboBox);
+    const QStringList weaponAttrItems = {"暴击", "急速", "幸运", "精通", "全能", "无"};
+    for (const QString& item : weaponAttrItems)
+    {
+        m_weaponFirstCombo->addItem(item);
+        m_weaponSecondCombo->addItem(item);
+    }
+    // 默认与 main_Beam.cpp 的 CLI 口径一致：精通 + 急速，增效 0.06、额外加成 0.08
+    m_weaponFirstCombo->setCurrentIndex(static_cast<int>(SecondaryAttributeConfig::Proficient));
+    m_weaponSecondCombo->setCurrentIndex(static_cast<int>(SecondaryAttributeConfig::Quickness));
+    addField(weaponLayout, 2, "增效", m_weaponEnhanceEdit = new QLineEdit("0.06"));
+    addField(weaponLayout, 3, "额外攻击加成", m_weaponExtraEdit = new QLineEdit("0.08"));
+    auto* weaponHint = new QLabel("面板值已含这两项，无需再加；红武属性选「无」、增效填 0");
+    weaponHint->setWordWrap(true);
+    weaponLayout->addWidget(weaponHint, 4, 0, 1, 2);
+    mainLayout->addWidget(weaponBox);
+
     // ---- 基础属性 ----
     auto [baseBox, baseLayout] = makeGroup("基础属性");
     addField(baseLayout, 0, "三维属性", m_primaryAttrEdit = new QLineEdit("4593"));
@@ -630,6 +656,18 @@ void MainWindow::updateDefaultsForProfession(const QString &prof)
     appendLog("[CONFIG] 已切换至 射线 默认参数");
 }
 
+// 从「武器」输入组读取武器第一/第二属性
+// 组合框 index 直接对应 SecondaryAttributeConfig 的枚举值，无需映射表
+WeaponConfig MainWindow::buildWeaponConfig() const
+{
+    WeaponConfig w;
+    w.first = static_cast<SecondaryAttributeConfig>(m_weaponFirstCombo->currentIndex());
+    w.second = static_cast<SecondaryAttributeConfig>(m_weaponSecondCombo->currentIndex());
+    w.enhanceIncrease = m_weaponEnhanceEdit->text().toDouble();
+    w.extraIncrease = m_weaponExtraEdit->text().toDouble();
+    return w;
+}
+
 // 从输入面板构建基准配置（SimConfig）
 SimConfig MainWindow::buildBaseConfig()
 {
@@ -652,13 +690,16 @@ SimConfig MainWindow::buildBaseConfig()
     int fantasyConfig = m_fantasyCombo->currentIndex();  // 面板index直接对应幻想配置0..7
     cfg.fantasyConfig = fantasyConfig;
     cfg.flowConfig = m_professionCombo->currentIndex();  // 0=急速精通流，1=幸运流
+    cfg.weapon = buildWeaponConfig();
     return cfg;
 }
 
 // 解析候选配置文本框：每行 "关键词 增量"，# 开头为注释
 // 关键词：三维/primary、暴击/crit、急速/quickness、幸运/lucky、精通/proficient、全能/almighty、
 //        攻击/atk、精炼/refineAtk、元素/elementAtk、攻速/attackSpeed、施速/castingSpeed、
-//        爆伤/critDmgSet、增伤/incSet、元素增伤/eleIncSet、幻想/fantasy(绝对值)
+//        爆伤/critDmgSet、增伤/incSet、元素增伤/eleIncSet、幻想/fantasy(绝对值)、
+//        武器第一/weaponFirst、武器第二/weaponSecond（绝对值为枚举序号 0=暴击..5=无）、
+//        武器增效/weaponEnhance、武器加成/weaponExtra（增量）
 std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const QString& text)
 {
     std::vector<SimConfig> out;
@@ -693,6 +734,15 @@ std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const 
         else if (key == "增伤"    || key == "incSet")      c.increasedamage_set += value;
         else if (key == "元素增伤"|| key == "eleIncSet")   c.elementdamage_set += value;
         else if (key == "幻想"    || key == "fantasy")     c.fantasyConfig = static_cast<int>(value);
+        // 武器相关：属性用枚举序号（0=暴击 1=急速 2=幸运 3=精通 4=全能 5=无）
+        else if (key == "武器第一" || key == "weaponFirst")
+            c.weapon.first = static_cast<SecondaryAttributeConfig>(static_cast<int>(value));
+        else if (key == "武器第二" || key == "weaponSecond")
+            c.weapon.second = static_cast<SecondaryAttributeConfig>(static_cast<int>(value));
+        else if (key == "武器增效" || key == "weaponEnhance")
+            c.weapon.enhanceIncrease += value;
+        else if (key == "武器加成" || key == "weaponExtra")
+            c.weapon.extraIncrease += value;
         else continue;  // 未知关键词，跳过该行
 
         c.label = line.toStdString();
@@ -791,6 +841,7 @@ void MainWindow::onRunClicked()
     uint32_t seed = m_seedEdit->text().toUInt();
     int fantasyConfig = m_fantasyCombo->currentIndex();     // 面板index直接对应幻想配置0..7
     int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
+    const WeaponConfig weapon = buildWeaponConfig();        // 与 CLI 同口径
 
     // 清空之前的日志和表格
     m_logText->clear();
@@ -819,7 +870,8 @@ void MainWindow::onRunClicked()
                                     randomSeed,
                                     seed,
                                     fantasyConfig,
-                                    flowConfig);
+                                    flowConfig,
+                                    weapon);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &SimulationWorker::run);

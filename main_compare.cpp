@@ -128,6 +128,11 @@ int main(int argc, char** argv)
         base.increasedamage_set = 0;
         base.elementdamage_set = 0;
         base.fantasyConfig = 5;
+        // 武器第一/第二属性：与 main_Beam.cpp / GUI 同口径（精通 + 急速，6% 增效、8% 加成）
+        base.weapon.first = SecondaryAttributeConfig::Proficient;
+        base.weapon.second = SecondaryAttributeConfig::Quickness;
+        base.weapon.enhanceIncrease = 0.06;
+        base.weapon.extraIncrease = 0.08;
         simulate = runBeamSimulationOnce;
     }
     else

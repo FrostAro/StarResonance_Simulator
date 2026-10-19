@@ -16,7 +16,7 @@ inline std::unordered_map<std::string, DamageStatistics> runBeamSimulationOnce(
         cfg.atk, cfg.refineATK, cfg.elementATK,
         cfg.attackSpeed, cfg.castingSpeed,
         cfg.criticaldamage_set, cfg.increasedamage_set, cfg.elementdamage_set,
-        maxTime, cfg.fantasyConfig);
+        maxTime, cfg.fantasyConfig, cfg.weapon);
     person->setRandomSeed(seed);
 
     auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig, cfg.flowConfig);
