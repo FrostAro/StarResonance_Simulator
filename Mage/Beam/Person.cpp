@@ -70,7 +70,7 @@ Mage_Beam::Mage_Beam(const double PrimaryAttributes, const double critical, cons
     // 因子效果：暴击，全能
     // triggerAction<CriticalCountModifyAction>(static_cast<int>(this->CriticalCount * 0.0000001));
     // triggerAction<AlmightyCountModifyAction>(static_cast<int>(this->AlmightyCount * 0.0000001));
-    this->triggerAction<AttackIncreaseModifyAction>(0.0000001);;
+    this->triggerAction<AttackIncreaseModifyAction>(0.0000001);
     // this->triggerAction<QuicknessPercentModifyAction>(0.06);
     initializeIncrease();
     changeDamageIncrease(0.08);

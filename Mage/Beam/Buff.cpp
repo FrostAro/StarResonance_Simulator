@@ -1249,26 +1249,31 @@ std::string LifeFluctuationBuff::name = "LifeFluctuation";
 
 void LifeFluctuationBuff::findMaxAttribute()
 {
-    double temp = 0.1;
+    double temp = 0;
     if (this->p->getCritical() > temp)
     {
         this->lastAttribute = secondaryAttributesEnum::CRITICAL;
+        temp = this->p->getCritical();
     }
     if (this->p->getQuickness() > temp)
     {
         this->lastAttribute = secondaryAttributesEnum::QUICKNESS;
+        temp = this->p->getQuickness();
     }
     if (this->p->getLucky() > temp)
     {
         this->lastAttribute = secondaryAttributesEnum::LUCKY;
+        temp = this->p->getLucky();
     }
     if (this->p->getProficient() > temp)
     {
         this->lastAttribute = secondaryAttributesEnum::PROFICIENT;
+        temp = this->p->getProficient();
     }
     if (this->p->getAlmighty() > temp)
     {
         this->lastAttribute = secondaryAttributesEnum::ALMIGHTY;
+        temp = this->p->getAlmighty();
     }
 }
 
