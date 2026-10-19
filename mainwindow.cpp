@@ -371,12 +371,13 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onProfessionChanged);
     connect(m_runButton, &QPushButton::clicked, this, &MainWindow::onRunClicked);
 
-    // 初始化职业默认值
+    // 初始化职业默认值（与 main_Beam.cpp 的站街面板保持一致）
     m_defaults["beam"] = {
-        {"primaryAttr", 6760}, {"crit", 18.00}, {"quickness", 40.88}, {"lucky", 48.00}, 
-        {"proficient", 48.09}, {"almighty", 21.00}, {"atk", 4533}, {"refineAtk", 1000}, 
-        {"elementAtk", 230}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0}, 
-        {"incSet", 0}, {"eleIncSet", 0}, {"times", 1}, {"maxTime", 180000}, {"deltaTime", 10}, {"seed", 42}};
+        {"primaryAttr", 9272}, {"crit", 10.12}, {"quickness", 38.18}, {"lucky", 23.21},
+        {"proficient", 74.80}, {"almighty", 20.88}, {"atk", 8151}, {"refineAtk", 1100},
+        {"elementAtk", 430}, {"attackSpeed", 0.00}, {"castingSpeed", 0.00}, {"critDmgSet", 0},
+        {"incSet", 0}, {"eleIncSet", 0}, {"times", 1}, {"maxTime", 180000}, {"deltaTime", 10},
+        {"seed", 42}, {"fantasy", 7}};
     onProfessionChanged(0); // 初始化 Beam
 }
 
@@ -627,7 +628,13 @@ void MainWindow::onProfessionChanged(int index)
     m_fantasyCombo->addItem("掠食蜘蛛 + 嗜血毛球");
     m_fantasyCombo->addItem("游子 + 嗜血毛球");
     m_fantasyCombo->addItem("机器人 + 嗜血毛球");
-    m_fantasyCombo->setCurrentIndex(0);
+    // 幻想默认值跟随 m_defaults，与 main_Beam.cpp 的 fantasyConfig 保持一致
+    int fantasyDefault = static_cast<int>(m_defaults.value("beam").value("fantasy", 0.0));
+    if (fantasyDefault < 0 || fantasyDefault >= m_fantasyCombo->count())
+    {
+        fantasyDefault = 0;
+    }
+    m_fantasyCombo->setCurrentIndex(fantasyDefault);
     updateDefaultsForProfession("beam");
 }
 
