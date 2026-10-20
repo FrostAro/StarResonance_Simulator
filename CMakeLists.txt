@@ -137,3 +137,39 @@ target_link_libraries(dps_simulator_compare PRIVATE core_lib)
 set_target_properties(dps_simulator_compare PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# ===== 6. 自动化回归测试 =====
+# enable_testing() 打开 CMake 的测试功能；add_test 把可执行文件登记成一个用例，
+# 之后用 ctest -C Release 就能一次跑完并汇总。ctest 只看**进程退出码**：
+# 0=通过，非 0=失败（见 tests/test_main.cpp 的 return）。
+enable_testing()
+
+# 测试拆成两个独立可执行文件，而不是挤进一个：
+#   · 单元测试碰属性构造（快，毫秒级）
+#   · 黄金基线跑完整 180 秒模拟（慢，十几秒）
+# Person/Action 系列里有大量**进程级 static**（TypedAction<...>::listeners、
+# Buff::ID、AutoAttack::timer），拆成两个进程是最彻底的隔离方式，
+# 顺带让 ctest 的报告能直接指认是"数值单元测试"还是"黄金基线"挂了。
+add_executable(dps_unit_tests
+    tests/test_attributes.cpp
+    tests/test_main.cpp
+    ${BEAM_SOURCES}
+)
+target_link_libraries(dps_unit_tests PRIVATE core_lib)
+set_target_properties(dps_unit_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+# 用 $<TARGET_FILE:...> 而不是裸目标名：多配置生成器（Visual Studio）下
+# 这样才能正确定位到 bin/Release/xxx.exe，不会因为找不到文件而报错。
+add_test(NAME unit_tests COMMAND $<TARGET_FILE:dps_unit_tests>)
+
+add_executable(dps_golden_tests
+    tests/test_golden_beam.cpp
+    tests/test_main.cpp
+    ${BEAM_SOURCES}
+)
+target_link_libraries(dps_golden_tests PRIVATE core_lib)
+set_target_properties(dps_golden_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+add_test(NAME golden_beam COMMAND $<TARGET_FILE:dps_golden_tests>)

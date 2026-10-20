@@ -70,7 +70,8 @@ void AutoAttack_Mage_Beam_Base::update(int deltaTime) {
 
 void AutoAttack_Mage_Beam_Base::tryTriggerStage(int stageIdx) {
     if (nextOutBurstSignal != stageIdx || isOutBurst) return;
-    if (stageIdx < 1 || stageIdx > (int)m_stages.size()) return;
+    // size() 返回 size_t，这里显式转成 int 再比较，避免有符号/无符号混比警告
+    if (stageIdx < 1 || stageIdx > static_cast<int>(m_stages.size())) return;
 
     const auto& stage = m_stages[stageIdx - 1];
     if (checkSkills(stage.checkSkills)) {
