@@ -76,9 +76,26 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
 
     // Person 构造参数描述（用于日志配置头）
     const std::string personParams =
-        "三维=9272, 暴击=10.12, 急速=38.18, 幸运=23.21, 精通=74.8, 全能=20.88, "
-        "攻击=8151, 精炼=1100, 元素=430, 攻速=0, 施速=0, "
-        "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(cfg.fantasyConfig);
+        "三维=" + std::to_string(cfg.primaryAttributes) 
+        + ", 暴击=" + std::to_string(cfg.critical) 
+        + ", 急速=" + std::to_string(cfg.quickness) 
+        + ", 幸运=" + std::to_string(cfg.lucky) 
+        + ", 精通=" + std::to_string(cfg.proficient) 
+        + ", 全能=" + std::to_string(cfg.almighty) 
+        + ", 攻击=" + std::to_string(cfg.atk) 
+        + ", 精炼=" + std::to_string(cfg.refineATK) 
+        + ", 元素=" + std::to_string(cfg.elementATK) 
+        + ", 攻速=" + std::to_string(cfg.attackSpeed) 
+        + ", 施速=" + std::to_string(cfg.castingSpeed) 
+        + ", 爆伤=" + std::to_string(cfg.criticaldamage_set) 
+        + ", 增伤=" + std::to_string(cfg.increasedamage_set) 
+        + ", 元素增伤=" + std::to_string(cfg.elementdamage_set) 
+        + ", 幻想配置=" + std::to_string(cfg.fantasyConfig)
+        + ", 流派配置=" + std::to_string(cfg.flowConfig)
+        + ", 武器第一属性=" + std::to_string(static_cast<int>(cfg.weapon.first))
+        + ", 武器第二属性=" + std::to_string(static_cast<int>(cfg.weapon.second))
+        + ", 武器增效=" + std::to_string(cfg.weapon.enhanceIncrease)
+        + ", 武器额外增伤=" + std::to_string(cfg.weapon.extraIncrease);
 
     // 循环执行指定次数的模拟
     while (times > 0)
