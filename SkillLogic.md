@@ -4,10 +4,16 @@
 > 所有数值以代码为准（1 tick = 1ms，模拟时长默认 180000ms = 180s）。
 > 阅读顺序建议：第一节先看框架套路，后面各节按职业查具体类。
 >
-> **同步状态**：已对齐到「属性双通道 + 机器人幻想」这一版——
+> **同步状态**：已对齐到「生命波动 + 自动化回归测试」这一版——
+> 新增固有 Buff `LifeFluctuationBuff`（最高副属性 **+10%**，见 4.5）、
 > `FantasyPassiveBonus` / `reclassifyXxxPercentToExtra`（见 7.4）、`weaponConfig` 重新归类、
 > `JQR` + `JQRBuff`、施法速度重做（`baseDamageTriggerInterval` / `canAffectedBySpeed`）、
 > `FloodLuckyBuff` 随灌注开关、`EquipmentSetEffectBuff_Beam` 的消费即清除、11 段爆发轴。
+>
+> **2026-10-21 起有了自动化回归**（`ctest`：不变量 6 例 + 黄金基线 3 例）。
+> 改本文记录的机制后，请顺手跑一遍测试：基线红 ≠ 测试坏了，而是"数值变了，该重钉了"。
+> 详见 [`tests/README.md`](tests/README.md)。
+>
 > 改动后若数值有变，请顺手更新对应小节。
 
 ---
@@ -340,8 +346,33 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 | `ConquerorBuff`（叠势迸破） | 射线出伤 8 次 → 上一层 `StackMomentumBuff` |
 | `StackMomentumBuff`（叠势） | 最多 5 层，持续 8s，`number = 74` |
 | `OccupationalFactorBuff_Beam`（职业因子） | 给冰箭/霜爆 `dreamIncreaseAdd += 0.211`、给射线 `+= 0.097`；冰箭灌注期 +6 层（否则 +2 层），满则回因子能量；灌注技能回 400 因子能量；每秒回 20 因子能量。**当前未注册**（`registerBuffs` 里没有它）；析构曾有多余的 `PrimaryAttributesPercent/Count` 回滚，已删除 |
-| `FloatingExtraSecondaryAttributesBuff_Beam` | 找出**当前数值最高的副属性**并给它 +800 点；监听 5 种副属性修改事件，变化时重算 |
+| `FloatingExtraSecondaryAttributesBuff_Beam` | 找出**点数最高**的副属性（`getXxxCount()`）并给它 **+3.5% 百分比**；监听 5 种副属性点数修改事件，变化时"先减旧、重找最高、再加新"。固有常驻 |
+| `LifeFluctuationBuff`（生命波动） | 找出**百分比最高**的副属性（`getXxx()`）并给它 **+10%**；监听 5 种副属性点数修改事件，变化时同样"先减旧、重找最高、再加新"。固有常驻（`kPermanentBuffDuration`），析构只删监听、**不回滚**那 10%——它只在模拟结束时销毁，不影响数值 |
 | `OtherExtraEnhanceBuff` | 通用额外增效：构造 `dreamIncrease += 0.03×3`、`attackIncrease += 0.03×7`（析构对称回滚）；创建技能时给**水龙卷** `dreamIncreaseAdd += 0.112×10`，给**射线** `+= 0` |
+
+> ⚠️ **两个"最高副属性"Buff 比较口径不同，容易看错**：
+> `FloatingExtraSecondaryAttributesBuff_Beam` 用**点数**比较，`LifeFluctuationBuff` 用**百分比**比较。
+> 默认面板下二者恰好都落在**精通**（百分比 74.8% 最大；点数 183,140 最大 ——
+> 这是机器人被动归类后的值，归类前是 337,634），
+> 但某属性"额外通道很大、点数很小"时两者会挑到不同目标，各加各的。
+>
+> ⚠️ **旧文档写的 `+800 点` 是过期值**：那是**冰矛侧** `FloatingExtraSecondaryAttributesBuff_Icicle`
+> 的数值（`number = 800`，点数通道）；射线侧早就改成 `number = 0.035`（百分比通道）。
+>
+> 📌 **三个"面板已含"来源的叠加**（默认面板 + 机器人幻想）：
+>
+> | 来源 | 通道 | 数值 |
+> | --- | --- | --- |
+> | `weaponConfig`（武器第一属性=精通） | 额外百分比 | +6% |
+> | `LifeFluctuationBuff`（生命波动） | 额外百分比 | +10% |
+> | `FloatingExtraSecondaryAttributesBuff_Beam` | 额外百分比 | +3.5% |
+> | `JQR` 被动（见 7.4） | 额外百分比 | +15% |
+> | **合计 `ProficientExtraPercent`** | | **34.5%** |
+>
+> 于是 180s 内精通峰值 = `6%(base) + 64.68%(点数翻倍) + 34.5%(额外) = 105.18%`（见 7.4 的数值示例）。
+>
+> 📌 `LifeFluctuationBuff` 构造函数里的注释写着"给最大固定值的属性 **+3.5%**"，
+> 是从 `FloatingExtra` 复制过来的**过期注释**，实际 `number = 0.1`。改注释时别被它带偏。
 
 ### 4.6 计数触发型
 
@@ -557,16 +588,22 @@ void JQR::setPassiveEffect(Person *p)
 > 若在战斗中调用，`DoubleProficientBuff` / `FloatingExtraSecondaryAttributesBuff*` / `JQRBuff`
 > 的缓存值会脱钩，而且**不会报错**。
 
-**数值效果示例**（面板精通 74.8%、武器 6%、机器人 15%、代码 +10%）：
+**数值效果示例**（面板精通 74.8%、武器 6%、机器人 15%、生命波动 10%、最高副属性 3.5%）：
 
 | 步骤 | 精通总值 | `ExtraPercent` | `ProficientCount` | 可点数化 |
 | --- | --- | --- | --- | --- |
 | 面板 | 74.8% | 0 | — | — |
-| 武器归类 6% | 74.8% | 6% | 262,963 | 62.8% |
-| 代码 +10% | 84.8% | 16% | 262,963 | 62.8% |
-| 机器人归类 15% | 84.8% | 31% | **183,140** | **47.8%** |
-| 最高副属性 +3.5% | 88.3% | 34.5% | 183,140 | 47.8% |
+| ① 武器归类 6%（`Person` 构造函数） | 74.8% | 6% | 337,634 | 62.8% |
+| ② 机器人归类 15%（`equipSkills`） | 74.8% | 21% | **183,140** | **47.8%** |
+| ③ 生命波动 +10%（`initializePerson`） | 84.8% | 31% | 183,140 | 47.8% |
+| ④ 最高副属性 +3.5%（同上） | 88.3% | 34.5% | 183,140 | 47.8% |
 | 双倍精通（射线期间） | **105.18%** | 34.5% | 翻倍后 64.68% | — |
+
+> **顺序很关键**：①②在 `equipSkills`，③④在 `initializePerson`，**`equipSkills` 先执行**
+> （见第一节的 `Initialize()` 流程）。所以机器人那 15% 先归位，生命波动与最高副属性
+> 看到的是**已经归位过的**面板（可点数化 47.8% 而不是 62.8%）。
+>
+> 这也会影响"最高副属性"的判定：③按百分比挑、④按点数挑，两者都选中精通。
 
 ---
 
@@ -603,6 +640,11 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
            └──> (暴击+幸运, 陨星已满) → MeteoriteSynergyBuff → 陨星连携
 
 幸运命中 ──> FantasyImpactBuff  ──> 幻想冲击 / 极运
+
+任意副属性点数变化（Critical/Quickness/Lucky/Proficient/Almighty × CountModifyAction）
+    ├──> FloatingExtraSecondaryAttributesBuff_Beam  (重挑「点数最高」的副属性，把 +3.5% 挪过去)
+    └──> LifeFluctuationBuff                        (重挑「百分比最高」的副属性，把 +10% 挪过去)
+         ⚠️ 两者都监听同一批事件，但比较口径不同（点数 vs 百分比）
 ```
 
 ### 8.2 三处"看起来像 bug"的对称性问题（改前先确认是否有意）
@@ -645,10 +687,17 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 | **自动战斗轴（阶段顺序 / 时长）** | `Mage/Beam/AutoAttack.cpp` → `setupHardcodedOutBurstAxis()` 与 `registerOutBurstLogic()`，见 3.8 节 |
 | **施法速度对出伤频率的影响** | `core/Person.cpp` → `Person::modifySkillInterval()`；技能侧看 `canAffectedBySpeed` |
 | **灌注期的幸运增伤（+35% / +8% 幸运 / -5% 暴击）** | `Mage/Beam/Buff.cpp` → `FloodLuckyBuff`（监听 `CreateBuffAction` 的 `FloodBuff_Beam`） |
-| 流派切换（急速精通/幸运） | `Mage/Beam/Initializer.hpp` → `registerBuffs()` 的 `m_flowConfig` 分支 |
+| 流派切换（急速精通/幸运） | `Mage/Beam/Initializer.hpp` → `registerBuffs()` 的 `m_flowConfig` 分支；入口在 `main_Beam.cpp` 的 `cfg.flowConfig`（已接通，见下方说明） |
 | 幻想组合 | `Mage/Beam/Initializer.hpp` → `equipSkills()` 的 `m_fantasyConfig` 分支 |
+| **生命波动（最高副属性 +10%）** | `Mage/Beam/Buff.cpp` → `LifeFluctuationBuff`，见 4.5 节；注册在 `Initializer.hpp` 的 `registerBuffs()` |
+| **站街面板 / 武器 / 幻想配置** | `main_Beam.cpp` 的 `executeSimulation_Beam` 与 `tests/test_golden_beam.cpp` 的 `defaultBeamSimConfig()` —— **两份，改要一起改** |
+| **跑回归测试 / 重钉数值** | `cd build && ctest -C Release`；流程见 [`tests/README.md`](tests/README.md) |
 
-> ⚠️ **切换流派时注意**：`main_Beam.cpp` 里虽然有个 `int flowConfig = 0;` 变量，但**它没有传给 `Initializer_Mage_Beam`**（构造调用只传了 `fantasyConfig`），所以改那个变量**不生效**——真正的流派来自 `Initializer_Mage_Beam` 构造函数的默认实参 `flowConfig = 0`。要切换必须写成 `std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime, fantasyConfig, flowConfig)`。
+> 📌 **`flowConfig` 曾经是死变量，现已接通**：旧版 `main_Beam.cpp` 里有个孤立的 `int flowConfig = 0;`，
+> 但构造 `Initializer_Mage_Beam` 时只传了 3 个参数，所以改它不生效。
+> 现在 `main_Beam.cpp` 走 `runBeamSimulationOnceWithHook(cfg, ...)`，而 `SimulationHelper.h` 里是
+> `Initializer_Mage_Beam(person, deltaTime, cfg.fantasyConfig, cfg.flowConfig)` —— **4 个参数**，
+> 所以把 `cfg.flowConfig` 改成 1 就会真正切到幸运流。
 
 ## 附录 B：新增一个 Buff/Skill 的最小步骤
 
@@ -666,6 +715,19 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 > Debug 构建下 `Initializer::Initialize()` 末尾会断言 `kInherent` 与 `isInherent` 一致——忘了第 2 步会直接报错。
 > ⚠️ 但**只有 `isInherent` 而没有 `kInherent` 时不会报错**：`registerCertainBuff` 里是 `if constexpr`，
 > 缺 `kInherent` 就根本不会进 `inherentBuffs`，这个 Buff 会**静默地永不创建**（`FloodLuckyBuff` 曾踩过这个坑）。
+
+### 加完之后一定要做的三件验证
+
+新 Buff 最典型的三种事故都能用现有测试挡住：
+
+| 检查 | 怎么做 | 挡得住什么 |
+| --- | --- | --- |
+| **它真的被创建了吗** | 在构造函数里加一行 `Logger::warning`，或临时改它的 `number` 看 DPS 动没动 | 忘注册 / 忘 `kInherent` → **静默永不创建**（`LifeFluctuationBuff` 就差点这样，它被误用 `registerCertainSkill` 注册过） |
+| **数值有没有漂** | `cd build && ctest -C Release` | 黄金基线红 = 数值变了 → 确认后重钉 |
+| **静态状态清干净了吗** | 同上（`golden_beam_canary`） | 忘 `deleteListener` → 第二遍模拟结果不同 |
+
+> 基准数值见 `tests/test_golden_beam.cpp` 的钉值：`totalDPS ≈ 5372804.29`（seed=42），
+> 计数 `6872 / 1406 / 4318 / 2594`。改机制后这些数变了是**正常的**，但从"没注意就变了"变成"有据可查地变了"。
 
 **新增 Skill 时额外注意时间字段**：
 
