@@ -10,6 +10,7 @@
 #include "Info.h"
 #include "AutoAttack.h"
 #include "Statistics.h"
+#include "ActionListeners.h"
 
 class Skill;
 class Buff;
@@ -113,6 +114,18 @@ private:
 	// ==== 随机系统 ====
 	mutable std::mt19937 randomEngine;                              // 随机数引擎（线程安全）
 	mutable std::uniform_int_distribution<int> intDist{0, 9999};    
+
+public:
+	// ==== 监听器注册表（每个 Person 一份） ====
+	//
+	// ⚠️ 声明顺序即生命线：必须在 buffList **之前**声明。
+	//    成员按**声明逆序**析构，所以 buffList 会先于 actionListeners 销毁；
+	//    而 Buff 的析构里要调 actionListeners.remove<>(...) 注销监听器，
+	//    若顺序反过来（表先销毁）就是 use-after-free。
+	//    （Person::~Person 函数体里也显式调用了 clearBuffs()，是第二道保险。）
+	//
+	// 必须 public：Buff 及其子类通过 p->actionListeners 访问，而 friendship 不继承。
+	ActionListeners actionListeners;
 
 protected:
     // ==== 受保护成员：子类可以访问 ====

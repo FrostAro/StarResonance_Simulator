@@ -2,6 +2,7 @@
 #include "GameConstants.h"
 #include "Skill.h"
 #include "Action.h"
+#include "Person.h"   // p->actionListeners 需要 Person 完整定义（Buff.h 里只是前向声明）
 
 // 静态成员初始化
 std::atomic<int> Buff::ID{0};  // 静态ID计数器初始化为0
@@ -87,7 +88,7 @@ SkillReleasedTimesStatistics::SkillReleasedTimesStatistics(Person *p, double) : 
     auto info2 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info2));
+    p->actionListeners.add<CreateSkillAction>(std::move(info2));
 }
 
 void SkillReleasedTimesStatistics::listenerCallback(Skill *const skill) 
@@ -109,5 +110,5 @@ std::string SkillReleasedTimesStatistics::getBuffName() const { return SkillRele
 SkillReleasedTimesStatistics::~SkillReleasedTimesStatistics()
 {
     this->skillReleasedTimesMap.clear();
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }

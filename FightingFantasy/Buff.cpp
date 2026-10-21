@@ -156,7 +156,7 @@ SXMQBuff::SXMQBuff(Person *p, double) : Buff(p)
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 }
 
 void SXMQBuff::listenerCallback(Skill *const skill) 
@@ -187,7 +187,7 @@ std::string SXMQBuff::getBuffName() const { return SXMQBuff::name; }
 
 SXMQBuff::~SXMQBuff() 
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 嗜血毛球(被动)
@@ -204,7 +204,7 @@ SXMQBuff_Passive::SXMQBuff_Passive(Person *p, double) : Buff(p)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void SXMQBuff_Passive::listenerCallback(const DamageInfo &info) 
@@ -242,7 +242,7 @@ bool SXMQBuff_Passive::shouldBeRemoved() { return this->duration < 0; }
 std::string SXMQBuff_Passive::getBuffName() const { return SXMQBuff_Passive::name; }
 SXMQBuff_Passive::~SXMQBuff_Passive() 
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 
@@ -335,12 +335,12 @@ JQRBuff::JQRBuff(Person *p, double) : Buff(p)
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 
     auto info4 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback2(n); });
-    ProficientCountModifyAction::addListener(std::move(info4));
+    p->actionListeners.add<ProficientCountModifyAction>(std::move(info4));
 }
 
 void JQRBuff::listenerCallback(Skill *const skill) 
@@ -372,7 +372,7 @@ std::string JQRBuff::getBuffName() const { return JQRBuff::name; }
 
 JQRBuff::~JQRBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
-    ProficientCountModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
+    p->actionListeners.remove<ProficientCountModifyAction>(this->getBuffID());
     this->p->triggerAction<RefineATKCountModifyAction>(-this->tempValue);
 }

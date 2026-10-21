@@ -9,6 +9,7 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -233,8 +234,24 @@ public:
     void Initialize()
     {
         registerCertainBuff<SkillReleasedTimesStatistics>();
-        this->registerSkills();
-        this->registerBuffs();
+
+        // ⚠️ 全局注册表串行化
+        //
+        // SkillCreator::creatorMap / BuffCreator::creatorMap 是**进程级**的
+        // unordered_map，每次 Initialize 都会往里 insert（重复键不覆盖，只是查一下）。
+        // 单线程时无所谓，但两个 Person 并行初始化时并发 insert 会破坏哈希表
+        // （一个线程扩容重排桶、另一个线程正在遍历 → 崩溃或丢注册）。
+        //
+        // 这里只锁"写入全局表 + 本实例的 inherentBuffs 登记"这一段；
+        // 后续的 equipSkills/initializePerson/initializeAutoAttack 全是实例私有的，
+        // 不持锁，所以两个线程的模拟部分仍然是真并行。
+        static std::mutex registrationMutex;
+        {
+            std::lock_guard<std::mutex> guard(registrationMutex);
+            this->registerSkills();
+            this->registerBuffs();
+        }
+
         this->equipSkills();
         this->initializePerson();
         this->initializeAutoAttack();

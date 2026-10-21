@@ -21,7 +21,7 @@ void AttackAction::execute(const double, Person *p)
                             ", damage: " + std::to_string(damageInfo.damageNum) +
                             ", lucky: " + std::to_string(damageInfo.luckyNum));
     // 遍历监听，触发回调
-    for (const auto &listener : AttackAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AttackAction>())
     {
         if (listener && listener->callback)
         {
@@ -42,7 +42,7 @@ void ResourceConsumeAction::execute(const double n, Person *p)
                         "triggered, consumed resource: " + std::to_string(n) +
                             ", current resource: " + std::to_string(p->resourceNum));
     // 遍历监听，触发回调
-    for (const auto &listener : ResourceConsumeAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<ResourceConsumeAction>())
     {
         if (listener && listener->callback)
         {
@@ -62,7 +62,7 @@ void ResourceRevertAction::execute(const double n, Person *p)
                         "ResourceRevertAction executed, resourceNumber: " +
                             std::to_string(p->resourceNum));
     // 遍历监听，触发回调
-    for (const auto &listener : ResourceRevertAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<ResourceRevertAction>())
     {
         if (listener && listener->callback)
         {
@@ -94,7 +94,7 @@ void EnergyConsumeAction::execute(double n, Person *p)
                                 "skill.energyReduceDOWN:" + std::to_string(this->skill ? this->skill->getEnergyReduceDOWN() : 0) +
                                         + ", p.energyReduceDOWN:" + std::to_string(p->energyReduceDOWN));
     // 遍历监听，触发回调
-    for (const auto &listener : EnergyConsumeAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<EnergyConsumeAction>())
     {
         if (listener && listener->callback)
         {
@@ -122,7 +122,7 @@ void EnergyRevertAction::execute(double n, Person *p)
                  "triggered, reverted energy: " + std::to_string(n)
                         + ", currentEnengy:" + std::to_string(p->present_energy));
     // 遍历监听，触发回调
-    for (const auto &listener : EnergyRevertAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<EnergyRevertAction>())
     {
         if (listener && listener->callback)
         {
@@ -145,7 +145,7 @@ void CDReduceAction::execute(const double n, Person *p)
                         "triggered, reduced CD of " + this->skillName +
                             " by " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : CDReduceAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<CDReduceAction>())
     {
         if (listener && listener->callback)
         {
@@ -198,7 +198,7 @@ void CDRefreshAction::execute(const double n, Person *p)
                                 ", Stack: " + std::to_string(skill->getStackRef()) +
                                 "/" + std::to_string(skill->getMaxStack()));
         // 遍历监听，触发回调
-        for (const auto &listener : CDRefreshAction::listeners)
+        for (const auto &listener : p->actionListeners.listOf<CDRefreshAction>())
         {
             if (listener && listener->callback)
             {
@@ -221,7 +221,7 @@ void CreateSkillAction::execute(double, Person *p)
     {
         // 遍历监听，触发回调
         // 方便回调函数对创建的技能进行修改
-        for (const auto &listener : CreateSkillAction::listeners)
+        for (const auto &listener : p->actionListeners.listOf<CreateSkillAction>())
         {
             if (listener && listener->callback)
             {
@@ -313,7 +313,7 @@ void CreateBuffAction::execute(double n, Person *p)
 
     int newBuffID = it->getBuffID();
 
-    for (const auto &listener : listeners)
+    for (const auto &listener : p->actionListeners.listOf<CreateBuffAction>())
     {
         if (listener && listener->callback)
             listener->trigger(it.get());
@@ -332,7 +332,7 @@ void AddFactorEnergyAction::execute(double n, Person *p)
 {
     Logger::debugAction(p->getSimulationTime(), this->getActionName(),
                         "triggered, add factor energy: " + std::to_string(n));
-    for (const auto &listener : AddFactorEnergyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AddFactorEnergyAction>())
     {
         if (listener && listener->callback)
         {
@@ -351,7 +351,7 @@ void CriticalCountModifyAction::execute(double n, Person *p)
     p->changeCriticalCount(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
-    for (const auto &listener : CriticalCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<CriticalCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -369,7 +369,7 @@ void CriticalPercentModifyAction::execute(double n, Person *p)
     p->changeCritialPercent(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
-    for (const auto &listener : CriticalPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<CriticalPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -388,7 +388,7 @@ void QuicknessCountModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : QuicknessCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<QuicknessCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -406,7 +406,7 @@ void QuicknessPercentModifyAction::execute(double n, Person *p)
     p->changeQuicknessPercent(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : QuicknessPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<QuicknessPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -425,7 +425,7 @@ void LuckyCountModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : LuckyCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<LuckyCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -444,7 +444,7 @@ void LuckyPercentModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : LuckyPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<LuckyPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -463,7 +463,7 @@ void ProficientCountModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : ProficientCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<ProficientCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -482,7 +482,7 @@ void ProficientPercentModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : ProficientPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<ProficientPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -501,7 +501,7 @@ void AlmightyCountModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : AlmightyCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AlmightyCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -520,7 +520,7 @@ void AlmightyPercentModifyAction::execute(double n, Person *p)
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
 
     // 遍历监听，触发回调
-    for (const auto &listener : AlmightyPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AlmightyPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -538,7 +538,7 @@ void PrimaryAttributesCountModifyAction::execute(double n, Person *p)
     p->changePrimaryAttributesByCount(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : PrimaryAttributesCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<PrimaryAttributesCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -556,7 +556,7 @@ void PrimaryAttributesPercentModifyAction::execute(double n, Person *p)
     p->changePrimaryAttributesByPercent(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : PrimaryAttributesPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<PrimaryAttributesPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -574,7 +574,7 @@ void CastingSpeedPercentModifyAction::execute(double n, Person *p)
     p->addCastingSpeed(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : CastingSpeedPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<CastingSpeedPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -592,7 +592,7 @@ void AttackSpeedPercentModifyAction::execute(double n, Person *p)
     p->addAttackSpeed(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : AttackSpeedPercentModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AttackSpeedPercentModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -610,7 +610,7 @@ void AttackCountModifyAction::execute(double n, Person *p)
     p->changeATKCount(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : AttackCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AttackCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -628,7 +628,7 @@ void AttackIncreaseModifyAction::execute(double n, Person *p)
     p->changeAattackIncrease(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : AttackIncreaseModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AttackIncreaseModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -646,7 +646,7 @@ void RefineATKCountModifyAction::execute(double n, Person *p)
     p->changeRefineATKCount(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : RefineATKCountModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<RefineATKCountModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -664,7 +664,7 @@ void DamageIncreaseModifyAction::execute(double n, Person *p)
     p->changeDamageIncrease(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : DamageIncreaseModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<DamageIncreaseModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -682,7 +682,7 @@ void ElementIncreaseModifyAction::execute(double n, Person *p)
     p->changeElementIncreaseByElementIncrease(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : ElementIncreaseModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<ElementIncreaseModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -700,7 +700,7 @@ void AlmightyIncreaseModifyAction::execute(double n, Person *p)
     p->changeAlmightyIncrease(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : AlmightyIncreaseModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<AlmightyIncreaseModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -718,7 +718,7 @@ void CriticalDamageModifyAction::execute(double n, Person *p)
     p->changeCriticalDamage(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : CriticalDamageModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<CriticalDamageModifyAction>())
     {
         if (listener && listener->callback)
         {
@@ -736,7 +736,7 @@ void DreamIncreaseModifyAction::execute(double n, Person *p)
     p->changeDreamIncrease(n);
     Logger::debugAction(p->getSimulationTime(), this->getActionName(), "triggered, value: " + std::to_string(n));
     // 遍历监听，触发回调
-    for (const auto &listener : DreamIncreaseModifyAction::listeners)
+    for (const auto &listener : p->actionListeners.listOf<DreamIncreaseModifyAction>())
     {
         if (listener && listener->callback)
         {

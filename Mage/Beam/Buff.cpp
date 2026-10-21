@@ -29,16 +29,16 @@ BeamBuildBuff::BeamBuildBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 
     auto info2 = std::make_unique<ResourceListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback2(n); });
-    ResourceConsumeAction::addListener(std::move(info2));
+    p->actionListeners.add<ResourceConsumeAction>(std::move(info2));
     auto info3 = std::make_unique<ResourceListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback2(n); });
-    ResourceRevertAction::addListener(std::move(info3));
+    p->actionListeners.add<ResourceRevertAction>(std::move(info3));
 }
 
 void BeamBuildBuff::listenerCallback(DamageInfo &info)
@@ -104,9 +104,9 @@ std::string BeamBuildBuff::getBuffName() const { return BeamBuildBuff::name; }
 
 BeamBuildBuff::~BeamBuildBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
-    ResourceConsumeAction::deleteListener(this->getBuffID());
-    ResourceRevertAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
+    p->actionListeners.remove<ResourceConsumeAction>(this->getBuffID());
+    p->actionListeners.remove<ResourceRevertAction>(this->getBuffID());
 }
 
 // 自然回能
@@ -150,7 +150,7 @@ IcePromiseBuff::IcePromiseBuff(Person *p, double) : Buff(p)
     auto createSkillInfo = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(createSkillInfo));
+    p->actionListeners.add<CreateSkillAction>(std::move(createSkillInfo));
 }
 
 void IcePromiseBuff::listenerCallback(Skill *const skill)
@@ -171,7 +171,7 @@ bool IcePromiseBuff::shouldBeRemoved() { return this->duration < 0; }
 
 IcePromiseBuff::~IcePromiseBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 std::string IcePromiseBuff::getBuffName() const { return IcePromiseBuff::name; }
@@ -190,12 +190,12 @@ FrostCrystalResonanceBuff::FrostCrystalResonanceBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 
     auto info2 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback2(skill); });
-    CreateSkillAction::addListener(std::move(info2));
+    p->actionListeners.add<CreateSkillAction>(std::move(info2));
 }
 
 void FrostCrystalResonanceBuff::listenerCallback(DamageInfo &info)
@@ -252,8 +252,8 @@ std::string FrostCrystalResonanceBuff::getBuffName() const { return FrostCrystal
 
 FrostCrystalResonanceBuff::~FrostCrystalResonanceBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 寒意留存
@@ -270,7 +270,7 @@ ChillPersistenceBuff::ChillPersistenceBuff(Person *p, double)
     auto createSkillInfo = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(createSkillInfo));
+    p->actionListeners.add<CreateSkillAction>(std::move(createSkillInfo));
 }
 
 void ChillPersistenceBuff::listenerCallback(Skill *const skill)
@@ -299,7 +299,7 @@ std::string ChillPersistenceBuff::getBuffName() const { return ChillPersistenceB
 
 ChillPersistenceBuff::~ChillPersistenceBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 灌注
@@ -364,11 +364,11 @@ IntellectCrystalBuff::IntellectCrystalBuff(Person *p, double)
     auto info = std::make_unique<PrimaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    PrimaryAttributesCountModifyAction::addListener(std::move(info));
+    p->actionListeners.add<PrimaryAttributesCountModifyAction>(std::move(info));
     auto info2 = std::make_unique<PrimaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    PrimaryAttributesPercentModifyAction::addListener(std::move(info2));
+    p->actionListeners.add<PrimaryAttributesPercentModifyAction>(std::move(info2));
 }
 
 void IntellectCrystalBuff::listenerCallback(double)
@@ -395,8 +395,8 @@ std::string IntellectCrystalBuff::getBuffName() const { return IntellectCrystalB
 
 IntellectCrystalBuff::~IntellectCrystalBuff()
 {
-    PrimaryAttributesCountModifyAction::deleteListener(this->getBuffID());
-    PrimaryAttributesPercentModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<PrimaryAttributesCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<PrimaryAttributesPercentModifyAction>(this->getBuffID());
 }
 
 // 玄冰潮汐
@@ -413,7 +413,7 @@ IceTideBuff::IceTideBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void IceTideBuff::listenerCallback(DamageInfo &info)
@@ -452,7 +452,7 @@ std::string IceTideBuff::getBuffName() const { return IceTideBuff::name; }
 
 IceTideBuff::~IceTideBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 元素增伤buff（用于玄冰潮汐）
@@ -493,17 +493,17 @@ IceInfiniteBuff::IceInfiniteBuff(Person *p, double)
     auto info = std::make_unique<EnergyListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    EnergyConsumeAction::addListener(std::move(info));
+    p->actionListeners.add<EnergyConsumeAction>(std::move(info));
 
     auto info2 = std::make_unique<ResourceListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback2(n); });
-    ResourceConsumeAction::addListener(std::move(info2));
+    p->actionListeners.add<ResourceConsumeAction>(std::move(info2));
 
     auto info3 = std::make_unique<ResourceListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback2(n); });
-    ResourceRevertAction::addListener(std::move(info3));
+    p->actionListeners.add<ResourceRevertAction>(std::move(info3));
 }
 
 void IceInfiniteBuff::listenerCallback(double n)
@@ -550,9 +550,9 @@ std::string IceInfiniteBuff::getBuffName() const { return IceInfiniteBuff::name;
 
 IceInfiniteBuff::~IceInfiniteBuff()
 {
-    EnergyConsumeAction::deleteListener(this->getBuffID());
-    ResourceConsumeAction::deleteListener(this->getBuffID());
-    ResourceRevertAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<EnergyConsumeAction>(this->getBuffID());
+    p->actionListeners.remove<ResourceConsumeAction>(this->getBuffID());
+    p->actionListeners.remove<ResourceRevertAction>(this->getBuffID());
 }
 
 // 射线绝唱
@@ -568,7 +568,7 @@ BeamMagnumOpusBuff::BeamMagnumOpusBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void BeamMagnumOpusBuff::listenerCallback(DamageInfo &info)
@@ -590,7 +590,7 @@ std::string BeamMagnumOpusBuff::getBuffName() const { return BeamMagnumOpusBuff:
 
 BeamMagnumOpusBuff::~BeamMagnumOpusBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 双倍精通（用于射线绝唱）
@@ -606,7 +606,7 @@ DoubleProficientBuff::DoubleProficientBuff(Person *p, double)
     auto info = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    ProficientCountModifyAction::addListener(std::move(info));
+    p->actionListeners.add<ProficientCountModifyAction>(std::move(info));
 
     p->triggerAction<ProficientCountModifyAction>(this->number);
     Logger::debugBuff(this->p->getSimulationTime(),this->getBuffName(),"triggered, current proficient: " + std::to_string(this->p->getProficient()));
@@ -633,7 +633,7 @@ std::string DoubleProficientBuff::getBuffName() const { return DoubleProficientB
 
 DoubleProficientBuff::~DoubleProficientBuff()
 {
-    ProficientCountModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<ProficientCountModifyAction>(this->getBuffID());
     this->p->triggerAction<ProficientCountModifyAction>(-this->number);
 }
 
@@ -650,7 +650,7 @@ FrostwindFocusBuff::FrostwindFocusBuff(Person *p, double)
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 }
 
 void FrostwindFocusBuff::listenerCallback(Skill *const skill)
@@ -670,7 +670,7 @@ std::string FrostwindFocusBuff::getBuffName() const { return FrostwindFocusBuff:
 
 FrostwindFocusBuff::~FrostwindFocusBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 快速吟唱
@@ -726,12 +726,12 @@ FrostCrystalPowerBuff::FrostCrystalPowerBuff(Person *p, double)
     auto info = std::make_unique<EnergyListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    EnergyConsumeAction::addListener(std::move(info));
+    p->actionListeners.add<EnergyConsumeAction>(std::move(info));
 
     auto info2 = std::make_unique<EnergyListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    EnergyRevertAction::addListener(std::move(info2));
+    p->actionListeners.add<EnergyRevertAction>(std::move(info2));
 }
 
 void FrostCrystalPowerBuff::listenerCallback(double)
@@ -759,8 +759,8 @@ std::string FrostCrystalPowerBuff::getBuffName() const { return FrostCrystalPowe
 
 FrostCrystalPowerBuff::~FrostCrystalPowerBuff()
 {
-    EnergyRevertAction::deleteListener(this->getBuffID());
-    EnergyConsumeAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<EnergyRevertAction>(this->getBuffID());
+    p->actionListeners.remove<EnergyConsumeAction>(this->getBuffID());
 }
 
 // 涌能法则
@@ -776,7 +776,7 @@ EnergySurgeLawBuff::EnergySurgeLawBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void EnergySurgeLawBuff::listenerCallback(DamageInfo &info)
@@ -806,7 +806,7 @@ std::string EnergySurgeLawBuff::getBuffName() const { return EnergySurgeLawBuff:
 
 EnergySurgeLawBuff::~EnergySurgeLawBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 能量回复（用于涌能法则）
@@ -890,7 +890,7 @@ EquipmentSetEffectBuff_Beam::EquipmentSetEffectBuff_Beam(Person *p, double) : Bu
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 }
 
 void EquipmentSetEffectBuff_Beam::listenerCallback(Skill *const skill)
@@ -970,7 +970,7 @@ std::string EquipmentSetEffectBuff_Beam::getBuffName() const { return EquipmentS
 
 EquipmentSetEffectBuff_Beam::~EquipmentSetEffectBuff_Beam()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 射线心相仪：迷幻梦境（征服者）
@@ -991,7 +991,7 @@ IllusoryDreamBuff::IllusoryDreamBuff(Person *p, double) : Buff(p)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void IllusoryDreamBuff::listenerCallback(DamageInfo &info)
@@ -1035,7 +1035,7 @@ std::string IllusoryDreamBuff::getBuffName() const { return IllusoryDreamBuff::n
 IllusoryDreamBuff::~IllusoryDreamBuff()
 {
     this->p->triggerAction<RefineATKCountModifyAction>(this->number * -0.1);
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 攻击力增加（用于迷幻梦境）
@@ -1146,23 +1146,23 @@ FloatingExtraSecondaryAttributesBuff_Beam::FloatingExtraSecondaryAttributesBuff_
     auto info1 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    CriticalCountModifyAction::addListener(std::move(info1));
+    p->actionListeners.add<CriticalCountModifyAction>(std::move(info1));
     auto info2 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    QuicknessCountModifyAction::addListener(std::move(info2));
+    p->actionListeners.add<QuicknessCountModifyAction>(std::move(info2));
     auto info3 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    LuckyCountModifyAction::addListener(std::move(info3));
+    p->actionListeners.add<LuckyCountModifyAction>(std::move(info3));
     auto info4 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    ProficientCountModifyAction::addListener(std::move(info4));
+    p->actionListeners.add<ProficientCountModifyAction>(std::move(info4));
     auto info5 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    AlmightyCountModifyAction::addListener(std::move(info5));
+    p->actionListeners.add<AlmightyCountModifyAction>(std::move(info5));
 }
 
 void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
@@ -1237,11 +1237,11 @@ std::string FloatingExtraSecondaryAttributesBuff_Beam::getBuffName() const { ret
 
 FloatingExtraSecondaryAttributesBuff_Beam::~FloatingExtraSecondaryAttributesBuff_Beam()
 {
-    CriticalCountModifyAction::deleteListener(this->getBuffID());
-    QuicknessCountModifyAction::deleteListener(this->getBuffID());
-    LuckyCountModifyAction::deleteListener(this->getBuffID());
-    ProficientCountModifyAction::deleteListener(this->getBuffID());
-    AlmightyCountModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CriticalCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<QuicknessCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<LuckyCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<ProficientCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<AlmightyCountModifyAction>(this->getBuffID());
 }
 
 // 生命波动
@@ -1311,23 +1311,23 @@ LifeFluctuationBuff::LifeFluctuationBuff(Person *p, double)
     auto info1 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    CriticalCountModifyAction::addListener(std::move(info1));
+    p->actionListeners.add<CriticalCountModifyAction>(std::move(info1));
     auto info2 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    QuicknessCountModifyAction::addListener(std::move(info2));
+    p->actionListeners.add<QuicknessCountModifyAction>(std::move(info2));
     auto info3 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    LuckyCountModifyAction::addListener(std::move(info3));
+    p->actionListeners.add<LuckyCountModifyAction>(std::move(info3));
     auto info4 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    ProficientCountModifyAction::addListener(std::move(info4));
+    p->actionListeners.add<ProficientCountModifyAction>(std::move(info4));
     auto info5 = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    AlmightyCountModifyAction::addListener(std::move(info5));
+    p->actionListeners.add<AlmightyCountModifyAction>(std::move(info5));
 }
 
 void LifeFluctuationBuff::listenerCallback(double n)
@@ -1387,11 +1387,11 @@ std::string LifeFluctuationBuff::getBuffName() const { return LifeFluctuationBuf
 
 LifeFluctuationBuff::~LifeFluctuationBuff()
 {
-    CriticalCountModifyAction::deleteListener(this->getBuffID());
-    QuicknessCountModifyAction::deleteListener(this->getBuffID());
-    LuckyCountModifyAction::deleteListener(this->getBuffID());
-    ProficientCountModifyAction::deleteListener(this->getBuffID());
-    AlmightyCountModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CriticalCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<QuicknessCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<LuckyCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<ProficientCountModifyAction>(this->getBuffID());
+    p->actionListeners.remove<AlmightyCountModifyAction>(this->getBuffID());
 }
 
 // 冰令脉冲
@@ -1407,7 +1407,7 @@ FrostDecreePulseBuff::FrostDecreePulseBuff(Person *p, double n) : Buff(p)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo& info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void FrostDecreePulseBuff::listenerCallback(DamageInfo& info)
@@ -1430,7 +1430,7 @@ std::string FrostDecreePulseBuff::getBuffName() const { return FrostDecreePulseB
 
 FrostDecreePulseBuff::~FrostDecreePulseBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 冷却瞬息
@@ -1446,7 +1446,7 @@ InstantCooldownBuff_Beam::InstantCooldownBuff_Beam(Person *p, double n) : Buff(p
     auto info = std::make_unique<EnergyListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    EnergyRevertAction::addListener(std::move(info));
+    p->actionListeners.add<EnergyRevertAction>(std::move(info));
 }
 
 void InstantCooldownBuff_Beam::listenerCallback(double n)
@@ -1467,7 +1467,7 @@ std::string InstantCooldownBuff_Beam::getBuffName() const { return InstantCooldo
 
 InstantCooldownBuff_Beam::~InstantCooldownBuff_Beam()
 {
-    EnergyRevertAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<EnergyRevertAction>(this->getBuffID());
 }
 
 // 广域冰箭
@@ -1484,7 +1484,7 @@ ExtensiveArrowBuff::ExtensiveArrowBuff(Person *p, double n) : Buff(p)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo& info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void ExtensiveArrowBuff::listenerCallback(DamageInfo& info)
@@ -1519,7 +1519,7 @@ std::string ExtensiveArrowBuff::getBuffName() const { return ExtensiveArrowBuff:
 
 ExtensiveArrowBuff::~ExtensiveArrowBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 龙卷真实因子
@@ -1535,12 +1535,12 @@ WaterSpoutRealBuff::WaterSpoutRealBuff(Person *p, double n) : RealFactor(p)
     auto info1 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback1(skill); });
-    CreateSkillAction::addListener(std::move(info1));
+    p->actionListeners.add<CreateSkillAction>(std::move(info1));
 
     auto info2 = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo& info)
         { this->listenerCallback2(info); });
-    AttackAction::addListener(std::move(info2));
+    p->actionListeners.add<AttackAction>(std::move(info2));
 }
 
 void WaterSpoutRealBuff::listenerCallback1(Skill* const skill)
@@ -1575,8 +1575,8 @@ std::string WaterSpoutRealBuff::getBuffName() const { return WaterSpoutRealBuff:
 
 WaterSpoutRealBuff::~WaterSpoutRealBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 9冰真实因子
@@ -1593,7 +1593,7 @@ IceRealBuff::IceRealBuff(Person *p, double n) : Factor(p)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo& info)
         { this->listenerCallback(info); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void IceRealBuff::listenerCallback(DamageInfo& info)
@@ -1615,7 +1615,7 @@ std::string IceRealBuff::getBuffName() const { return IceRealBuff::name; }
 
 IceRealBuff::~IceRealBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 9冰
@@ -1632,7 +1632,7 @@ NineIceBuff::NineIceBuff(Person *p, double n) : Buff(p)
     auto info2 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info2));
+    p->actionListeners.add<CreateSkillAction>(std::move(info2));
 }
 
 void NineIceBuff::listenerCallback(Skill* const skill)
@@ -1651,7 +1651,7 @@ std::string NineIceBuff::getBuffName() const { return NineIceBuff::name; }
 
 NineIceBuff::~NineIceBuff()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
     this->p->maxResourceNum -= 3;
     if(this->p->resourceNum > this->p->maxResourceNum)
     {
@@ -1672,12 +1672,12 @@ IceArrowLuckyRealBuff::IceArrowLuckyRealBuff(Person *p, double n) : Factor(p)
     auto info1 = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback1(skill); });
-    CreateSkillAction::addListener(std::move(info1));
+    p->actionListeners.add<CreateSkillAction>(std::move(info1));
 
     auto info2 = std::make_unique<CreateBuffListener>(
         this->getBuffID(), [this](Buff* const buff)
         { this->listenerCallback2(buff); });
-    CreateBuffAction::addListener(std::move(info2));
+    p->actionListeners.add<CreateBuffAction>(std::move(info2));
 }
 
 void IceArrowLuckyRealBuff::listenerCallback1(Skill *const skill)
@@ -1704,8 +1704,8 @@ std::string IceArrowLuckyRealBuff::getBuffName() const { return IceArrowLuckyRea
 
 IceArrowLuckyRealBuff::~IceArrowLuckyRealBuff()
 {
-    CreateBuffAction::deleteListener(this->getBuffID());
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateBuffAction>(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
     this->p->luckyFinalIncrease -= 0.4;
 }
 
@@ -1721,7 +1721,7 @@ FloodLuckyBuff::FloodLuckyBuff(Person *p, double n) : Buff(p)
     auto info1 = std::make_unique<CreateBuffListener>(
         this->getBuffID(), [this](Buff *const buff)
         { this->listenerCallback(buff); });
-    CreateBuffAction::addListener(std::move(info1));
+    p->actionListeners.add<CreateBuffAction>(std::move(info1));
 }
 
 void FloodLuckyBuff::update(const double) 
@@ -1751,7 +1751,7 @@ bool FloodLuckyBuff::shouldBeRemoved() { return this->duration < 0; }
 std::string FloodLuckyBuff::getBuffName() const { return FloodLuckyBuff::name; }
 FloodLuckyBuff::~FloodLuckyBuff() 
 {
-    CreateBuffAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateBuffAction>(this->getBuffID());
     if(this->triggered)
     {
         this->p->luckyDreamIncrease -= 0.35;
@@ -1773,7 +1773,7 @@ VortexLuckyDoubledBuff::VortexLuckyDoubledBuff(Person *p, double n) : Buff(p)
     auto info = std::make_unique<SecondaryAttributeListener>(
         this->getBuffID(), [this](double n)
         { this->listenerCallback(n); });
-    LuckyCountModifyAction::addListener(std::move(info));
+    p->actionListeners.add<LuckyCountModifyAction>(std::move(info));
 
     p->triggerAction<LuckyCountModifyAction>(this->number);
     this->p->luckyMultiplyingExtra += 0.2;
@@ -1796,7 +1796,7 @@ bool VortexLuckyDoubledBuff::shouldBeRemoved() { return this->duration < 0; }
 std::string VortexLuckyDoubledBuff::getBuffName() const { return VortexLuckyDoubledBuff::name; }
 VortexLuckyDoubledBuff::~VortexLuckyDoubledBuff() 
 {
-    LuckyCountModifyAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<LuckyCountModifyAction>(this->getBuffID());
     this->p->triggerAction<LuckyCountModifyAction>(-this->number);
     this->p->luckyMultiplyingExtra -= 0.2;
 }
@@ -1819,7 +1819,7 @@ ConquerorBuff::ConquerorBuff(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void ConquerorBuff::listenerCallback(DamageInfo &info)
@@ -1843,7 +1843,7 @@ std::string ConquerorBuff::getBuffName() const { return ConquerorBuff::name; }
 
 ConquerorBuff::~ConquerorBuff()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 叠势
@@ -1990,7 +1990,7 @@ OccupationalFactorBuff_Beam::OccupationalFactorBuff_Beam(Person *p, double) : Fa
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill *const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 }
 
 void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
@@ -2054,7 +2054,7 @@ std::string OccupationalFactorBuff_Beam::getBuffName() const { return Occupation
 
 OccupationalFactorBuff_Beam::~OccupationalFactorBuff_Beam()
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
 }
 
 // 幻想冲击
@@ -2077,7 +2077,7 @@ FantasyImpactBuff_Beam::FantasyImpactBuff_Beam(Person *p, double)
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void FantasyImpactBuff_Beam::listenerCallback(DamageInfo &info)
@@ -2118,7 +2118,7 @@ std::string FantasyImpactBuff_Beam::getBuffName() const { return FantasyImpactBu
 
 FantasyImpactBuff_Beam::~FantasyImpactBuff_Beam()
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 极运
@@ -2157,7 +2157,7 @@ CoefficientAdjustmentBuff_Beam::CoefficientAdjustmentBuff_Beam(Person *p, double
     auto info = std::make_unique<DamageListener>(
         this->getBuffID(), [this](DamageInfo &damageInfo)
         { this->listenerCallback(damageInfo); });
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 void CoefficientAdjustmentBuff_Beam::listenerCallback(DamageInfo& info) 
@@ -2182,7 +2182,7 @@ std::string CoefficientAdjustmentBuff_Beam::getBuffName() const { return Coeffic
 
 CoefficientAdjustmentBuff_Beam::~CoefficientAdjustmentBuff_Beam() 
 {
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
 }
 
 // 其他额外杂项增益
@@ -2201,7 +2201,7 @@ OtherExtraEnhanceBuff::OtherExtraEnhanceBuff(Person *p, double) : Buff(p)
     auto info = std::make_unique<CreateSkillListener>(
         this->getBuffID(), [this](Skill* const skill)
         { this->listenerCallback(skill); });
-    CreateSkillAction::addListener(std::move(info));
+    p->actionListeners.add<CreateSkillAction>(std::move(info));
 }
 
 void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill) 
@@ -2224,7 +2224,7 @@ std::string OtherExtraEnhanceBuff::getBuffName() const { return OtherExtraEnhanc
 
 OtherExtraEnhanceBuff::~OtherExtraEnhanceBuff() 
 {
-    CreateSkillAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<CreateSkillAction>(this->getBuffID());
     // 属性部分
     this->p->triggerAction<DreamIncreaseModifyAction>(-0.03*3);
     this->p->triggerAction<AttackIncreaseModifyAction>(-0.03*7);

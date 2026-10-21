@@ -77,43 +77,24 @@ public:
 };
 
 /**
- * @brief 类型化动作基类，封装每类动作的静态监听器管理逻辑
- * 
- * 通过 CRTP 实现：每个派生动作只需继承 TypedAction<Derived, ListenerType>
- * 即可自动获得静态监听器列表、add/delete/get 等统一管理接口。
+ * @brief 类型化动作基类：把「监听器类型」绑定到具体动作上
+ *
+ * 通过 CRTP 实现：每个派生动作继承 TypedAction<Derived, ListenerType>，
+ * 从而获得自己的 ListenerPtr / ListenerVector 类型别名。
+ *
+ * @note 监听器**不再**存在这里。原来这里是
+ *       `inline static std::vector<ListenerPtr> listeners;` —— 进程级全局表，
+ *       导致多个 Person 互相污染（A 的回调被 B 的事件触发 → 递归栈溢出）。
+ *       现在表在 Person::actionListeners（见 core/ActionListeners.h），
+ *       按 Action 类型分槽，每个 Person 一份。
+ *       所以本类只留类型别名，不再持有状态。
  */
 template <typename Derived, typename ListenerType>
 class TypedAction : public Action
 {
 public:
     using ListenerPtr = std::unique_ptr<ListenerType>;
-
-    inline static std::vector<ListenerPtr> listeners;
-
-    static void addListener(ListenerPtr listener)
-    {
-        listeners.push_back(std::move(listener));
-    }
-
-    static void deleteListener(int buffID)
-    {
-        const auto it = std::find_if(
-            listeners.begin(), listeners.end(),
-            [buffID](const ListenerPtr &item)
-            {
-                return item && item->buffID == buffID;
-            });
-
-        if (it != listeners.end())
-        {
-            listeners.erase(it);
-        }
-    }
-
-    static auto &getListeners()
-    {
-        return listeners;
-    }
+    using ListenerVector = std::vector<ListenerPtr>;
 
     std::string getActionName() override
     {
