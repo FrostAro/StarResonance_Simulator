@@ -165,6 +165,7 @@ add_test(NAME unit_tests COMMAND $<TARGET_FILE:dps_unit_tests>)
 
 add_executable(dps_golden_tests
     tests/test_golden_beam.cpp
+    tests/test_parallel_isolation.cpp
     tests/test_main.cpp
     ${BEAM_SOURCES}
 )
