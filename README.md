@@ -241,6 +241,44 @@ make([](SimConfig& c){ c.fantasyConfig = 0; }, "换幻想0");     // 幻想：�
 - 对比结果用于**提升排序**（哪个配置提升大），而非绝对 DPS 预测
 - 基准的 N 对结果只跑一次并缓存（模拟对种子是确定性的），多个候选共享，因此 `候选数 × 配对数` 份模拟量级并不大
 
+## 自动化回归测试
+
+改完机制后跑一遍，确认数值没被意外改动：
+
+```bash
+# 只编测试
+cmake --build build --config Release --target dps_unit_tests dps_golden_tests
+
+# 跑全部（只看退出码，不看输出）
+cd build && ctest -C Release --output-on-failure
+```
+
+```
+1/2 Test #1: unit_tests .......   Passed    0.01 sec
+2/2 Test #2: golden_beam ......   Passed    0.36 sec
+100% tests passed, 0 tests failed out of 2
+```
+
+| 目标 | 测什么 | 抓什么 |
+|---|---|---|
+| `dps_unit_tests` | 属性换算、边界、守恒等**不变量** | 「算错了」 |
+| `dps_golden_tests` | 固定种子跑完整 180 秒，对比**钉值** + 金丝雀 | 「变了」 |
+
+改数值时：不变量测试应仍绿，黄金基线**必然红**——那不是失败，是「提醒你该重钉了」。
+流程是「记录新值 → 更新钉值 → 提交信息写明旧值→新值」。
+
+**改了机制就顺手跑一遍 MinGW**（MSVC 能过不代表 GCC 能过）：
+
+```bash
+cmake -S . -B build-mingw -G "MinGW Makefiles" \
+  -DCMAKE_MAKE_PROGRAM=C:/MinGW/mingw64/bin/mingw32-make.exe \
+  -DCMAKE_CXX_COMPILER=C:/MinGW/mingw64/bin/g++.exe
+cmake --build build-mingw --target dps_unit_tests dps_golden_tests -- -j8
+./build-mingw/bin/dps_unit_tests.exe
+```
+
+> 完整 API 与约定见 [`tests/README.md`](tests/README.md)；`SkillLogic.md` 里的数值口径改动后记得同步。
+
 ## 程序当前配置
 
 ### 射线

@@ -16,6 +16,12 @@
    - [`CHECK_NEAR(actual, expected, tol)`](#25-check_nearactual-expected-tol)
 3. [内部 API（一般不用直接调）](#3-内部-api一般不用直接调)
 4. [怎么跑](#4-怎么跑)
+   - [两个测试目标的分工](#两个测试目标的分工)
+   - [两套测试抓的东西不一样](#核心概念两套测试抓的东西不一样)
+   - [黄金基线的口径](#黄金基线的口径很容易搞错)
+   - [钉值优先级：整数计数 &gt; 浮点 DPS](#钉值优先级整数计数--浮点-dps)
+   - [金丝雀：为什么必须顺序跑](#金丝雀为什么必须顺序跑)
+   - [重钉（re-pin）流程](#重钉re-pin流程)
 5. [加一个新测试](#5-加一个新测试)
 6. [约定与限制](#6-约定与限制)
 7. [常见错误](#7-常见错误)
@@ -208,19 +214,51 @@ CHECK_NEAR(reverse(0.478), 0.478, 1e-6);     // 通过
 
 ```
        [FAIL] tests\xxx.cpp:44
-              0.5 ≈ 0.6 失败: 实际=0.500000 期望=0.600000 容差=0.010000
+              0.5 ≈ 0.6 失败: 实际=0.5 期望=0.6 容差=0.01
 ```
+
+> 浮点值用 `std::numeric_limits<double>::max_digits10`（=17 位有效数字）打印，
+> 保证「打出来的数读回去 == 原值」。所以只差 1e-9 的两个值也能看出区别 ——
+> 这对金丝雀（逐位比较）尤其重要。
 
 **容差怎么定**（重要）：
 
 | 场景 | 建议容差 | 理由 |
 |---|---|---|
 | 纯数学往返 | `1e-9` | 双精度有效位约 15~17 位 |
-| **经过 `int` 截断的换算** | **`1e-6`** | 截断误差量级 ≈ `(1−y)²/200000 ≈ 7e-7`，`1e-9` **永远做不到** |
+| **经过 `int` 截断的换算** | **`(1−y)² / 系数`** × 1.5 | 见下方推导，**不能写固定值** |
 | 总 DPS（大数值） | `±0.01%` 相对 | 用 `totalDps * 0.0001`，别写死绝对值 |
-| 技能伤害占比 | `±0.5pp` | 百分点，写成 `0.005`（因为占比是 0~1 的小数） |
+| 技能伤害占比 | `±0.5pp` | 百分点，写成 `0.5`（占比本身已是 0~100 的数） |
 
 > **容差不是拍脑袋定的，要按"物理下限"推。** 定太严 → 跨编译器永远红；定太松 → 抓不到真实漂移。
+
+## 为什么 int 截断的容差**不能写固定值**
+
+`count = coeff·y/(1−y)` 反算时 `static_cast<int>` 向下截断，最多丢 1 个点数。
+而 1 个点数对应的百分比误差是 `dy/dc = coeff/(c+coeff)²`，代入 `c+coeff = coeff/(1−y)` 得：
+
+```
+最坏误差 = (1−y)² / coeff
+```
+
+**它随 y 变化**，所以固定容差必然出错（对低 y 太严、对高 y 太松）。实测（coeff = 200000）：
+
+| y | count | 实际误差 | `(1−y)²/coeff` |
+|---|---|---|---|
+| 0.0 | 0 | 0 | 5.0e-6 |
+| 0.1 | 22222 | 9.0e-7 | **4.05e-6** |
+| 0.3 | 85714 | 7.0e-7 | 2.45e-6 |
+| **0.478** | 183141 | **1.04e-6** | 1.36e-6 |
+| 0.628 | 337634 | 2.8e-7 | 6.9e-7 |
+| 0.9 | 1800000 | 0 | 5.0e-8 |
+
+> ⚠️ 注意 `y=0.478` 那行：误差 **1.04e-6 > 固定 1e-6** —— 这就是"固定容差不可靠"的直接证据。
+> 正确写法是按每个样本自己的上界断言：
+>
+> ```cpp
+> const double bound = (1.0 - y) * (1.0 - y) / K * 1.5;   // 理论下限 × 1.5 余量
+> CHECK_NEAR(back, y, bound);
+> ```
 
 **三个参数都只求值一次**，副作用安全。
 
@@ -308,6 +346,29 @@ std::string toStr(const char*);                          // nullptr → "(null)"
 
 普通重载优先于模板，所以常见类型都能正确打印；其他类型落回 `"?"`。
 
+**浮点特殊处理**：`double` / `float` 用 `std::numeric_limits<T>::max_digits10`
+（double = 17 位、float = 9 位有效数字）而不是 `std::to_string`。
+
+```cpp
+inline std::string toStr(double v)
+{
+    std::ostringstream oss;
+    oss << std::setprecision(std::numeric_limits<double>::max_digits10) << v;
+    return oss.str();
+}
+```
+
+**为什么不能用 `std::to_string`**：它固定 6 位小数，
+`5411840.9800661234` 和 `5411840.9800661299` 会打印成一模一样，
+断言失败时你会盯着两条相同的数字发呆 —— 金丝雀（逐位比较）尤其受影响。
+
+对比：
+
+| | `std::to_string` | `max_digits10` |
+|---|---|---|
+| 实际值 | `5411840.980066` | `5411840.9800661234` |
+| 期望值 | `5372804.289026` | `5372804.2890256951` |
+
 ---
 
 ## 4. 怎么跑
@@ -360,12 +421,91 @@ $LASTEXITCODE            # PowerShell 查退出码
 
 ### 两个测试目标的分工
 
-| 目标 | 文件 | 跑什么 | 耗时 |
-|---|---|---|---|
-| `dps_unit_tests` | `tests/test_attributes.cpp` | 属性换算、边界、守恒等**不变量** | 毫秒级 |
-| `dps_golden_tests` | `tests/test_golden_beam.cpp` | 完整 180 秒模拟，对比**钉值** | 十几秒 |
+| 目标 | 文件 | 跑什么 | 当前内容 | 耗时 |
+|---|---|---|---|---|
+| `dps_unit_tests` | `tests/test_attributes.cpp` | 属性换算、边界、守恒等**不变量** | 6 个用例 / 16 条断言 | 毫秒级 |
+| `dps_golden_tests` | `tests/test_golden_beam.cpp` | 完整 180 秒模拟，对比**钉值** + 金丝雀 | 3 个用例 | **0.36 秒** |
 
-**为什么拆两个 exe**：项里有大量进程级 `static`（`TypedAction<...>::listeners`、`Buff::ID`、`AutoAttack::timer`），拆进程是最彻底的隔离。
+**为什么拆两个 exe**：项目里有大量进程级 `static`（`TypedAction<...>::listeners`、`Buff::ID`、`AutoAttack::timer`），拆进程是最彻底的隔离。
+
+### 核心概念：两套测试抓的东西不一样
+
+| | 不变量测试 | 黄金基线 |
+|---|---|---|
+| 问的问题 | 「还算得对吗？」 | 「变了吗？」 |
+| 改**数值**（如 `0.08` → `0.09`） | ✅ 应该仍然绿 | ❌ **必然红**（这就是它的职责） |
+| 改**逻辑但行为不变**（重构） | ✅ 绿 | ✅ 绿 |
+| 引入 bug 导致**算错** | 🎯 **第一时间红** | 红 |
+| 引入 bug 只**偏移数值** | 绿（抓不到） | 🎯 **只有它能抓** |
+
+**两者缺一不可**，别指望用一套覆盖另一套。
+
+### 黄金基线的口径（很容易搞错）
+
+照抄 `printDamageStatistics`，**不要"统一"成一样的**，它们本来就不一样：
+
+| 量 | 公式 | 注意 |
+|---|---|---|
+| 总 DPS | `Σ(damage + luckyDamage) / 秒数` | **含**幸运 |
+| 技能占比 | `skill.damage / Σ(damage + luckyDamage)` | 分子**不含**幸运 |
+| 暴击率 | `Σ CritDamageCount / Σ damageCount` | **次数比次数**，不是次数比伤害 |
+
+校验方法：各技能占比之和 ≈ `1 − 幸运伤害占比`（我实测 86.93% + 13.07% = 100%）。
+
+### 钉值优先级：整数计数 > 浮点 DPS
+
+除了 DPS，一定要钉**精确整数计数**：
+
+```cpp
+CHECK_EQ(totalDamageCount,      6872);
+CHECK_EQ(totalLuckyDamageCount, 1406);
+CHECK_EQ(totalCritCount,        4318);
+CHECK_EQ(totalReleasedTimes,    2594);
+```
+
+理由：
+
+1. **整数无浮点误差** → 精确比较，不需要容差
+2. **比 DPS 敏感几百倍** → `releasedTimes` 从 2594 变 2593 立刻红，而 DPS 的 ±537 容差可能吸收掉
+3. **覆盖"整体乘区"盲区** → 占比是比值，全局乘数变化时比值不变；只有 DPS + 计数能抓住那类改动
+
+> ⚠️ 注意这些是**所有技能之和**，不是某个技能的。单技能量级完全不同
+> （水龙卷 `damageCount` = 1793、Beam `luckyDamageCount` = 385）。
+> 别写成 `stats.at(WaterSpout::name).damageCount == 6872`。
+
+### 金丝雀：为什么必须**顺序**跑
+
+```cpp
+// ✅ 正确：两次调用不重叠，Person 在函数内部创建并销毁
+const auto first  = runBeamSimulationOnce(cfg, 42, 180000, 10);
+const auto second = runBeamSimulationOnce(cfg, 42, 180000, 10);
+```
+
+```cpp
+// ❌ 错误：两个 Person 同时存活 → 实测栈溢出（退出码 0xC00000FD）
+auto p1 = makePerson();   // 不销毁
+auto p2 = makePerson();   // 又建一个
+```
+
+原因推测：`CreateSkillAction` 这类静态监听表里的回调指向**另一个还活着的 Person**，
+A 的监听器被 B 的事件触发后又回头操作 A，互相激发形成无限递归。
+
+产品代码（GUI 多轮、`main_Beam` 的 `times>1`）都是「先销毁再建下一个」，所以不受影响；
+**只有测试里的金丝雀容易写错**。
+
+### 重钉（re-pin）流程
+
+黄金基线变红 **不等于测试失败**，而是"数值变了"。流程：
+
+```
+① 红线出现
+② 确认是不是有意的机制改动
+③ 是 → 重跑记录新值 → 更新钉值常量 → 提交信息写明「旧值 → 新值」
+   否 → 真 bug，去改代码
+```
+
+**这一步是给"机制改动"立的规矩**：让每一次数值变化都留下证据（哪个提交、因为什么、变了多少），
+而不是几个月后拉表才发现、且查不出是哪次改动导致的。
 
 ---
 
@@ -382,11 +522,12 @@ TEST(proficient_count_roundtrip, "精通点数往返")
 {
     // 准备：造一个 Person（示例，实际参数按需要填）
     // ...
+    const double K = static_cast<double>(p->getPropertyTransformationCoeffcient_General());
     const double y = 0.478;
     const int count = p->getProficientCount(y);
-    const double back = static_cast<double>(count) / (count + 200000.0);
+    const double back = static_cast<double>(count) / (count + K);
 
-    CHECK_NEAR(back, y, 1e-6);   // ← 不能写 1e-9，int 截断误差约 7e-7
+    CHECK_NEAR(back, y, (1.0 - y) * (1.0 - y) / K * 1.5);   // ← 容差随 y 变化，见 2.5 节的推导
 }
 ```
 
@@ -548,11 +689,12 @@ TEST(count_pin_values, "点数钉值")
 // 浮点的用 CHECK_NEAR
 TEST(count_percent_roundtrip, "换算往返")
 {
+    const double K = static_cast<double>(p->getPropertyTransformationCoeffcient_General());
     for (double y : {0.0, 0.1, 0.478, 0.628, 0.9})
     {
         const int c = p->getProficientCount(y);
-        const double back = static_cast<double>(c) / (c + 200000.0);
-        CHECK_NEAR(back, y, 1e-6);
+        const double back = static_cast<double>(c) / (c + K);
+        CHECK_NEAR(back, y, (1.0 - y) * (1.0 - y) / K * 1.5);
     }
 }
 
