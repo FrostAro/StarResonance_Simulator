@@ -10,9 +10,9 @@
 // ============================================================================
 
 /**
- * @brief 静态ID计数器初始化
+ * @brief 静态ID计数器初始化（atomic，见 Skill.h 里的说明）
  */
-int Skill::ID = 0;
+std::atomic<int> Skill::ID{0};
 
 /**
  * @brief 静态技能名称初始化
@@ -27,10 +27,10 @@ std::string Skill::name = "skill";
  * @brief Skill构造函数
  * @details 分配技能ID并递增计数器
  */
-Skill::Skill() 
-    : skillID(ID)  // 使用当前ID值
+Skill::Skill()
+    // 取号 + 自增一步完成：fetch_add 返回自增前的旧值，等价于原来的 skillID(ID); ID++
+    : skillID(Skill::ID.fetch_add(1, std::memory_order_relaxed))
 {
-    ID++;  // 递增静态ID计数器
 }
 
 /**
