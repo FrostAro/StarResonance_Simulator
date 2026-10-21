@@ -116,7 +116,7 @@ NewBuff::NewBuff(Person *p) : Buff(p) {
             this->listenerCallback(damageInfo);
         }
     );
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
     
     //（可选）初始化角色属性
     this->p->changeDamageIncrease(this->number);
@@ -142,7 +142,7 @@ NewBuff::NewBuff(Person *p, double n) : Buff(p) {
             this->listenerCallback(damageInfo);
         }
     );
-    AttackAction::addListener(std::move(info));
+    p->actionListeners.add<AttackAction>(std::move(info));
 }
 
 // 监听器回调函数（可选，以出伤回调为例）
@@ -208,7 +208,7 @@ std::string NewBuff::getBuffName() const {
 // 析构函数（可选，用于清理监听器）
 NewBuff::~NewBuff() {
     // 1. 移除监听器
-    AttackAction::deleteListener(this->getBuffID());
+    p->actionListeners.remove<AttackAction>(this->getBuffID());
     
     // 2. 恢复角色属性
     this->p->changeDamageIncrease(-this->number);

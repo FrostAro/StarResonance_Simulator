@@ -424,9 +424,15 @@ $LASTEXITCODE            # PowerShell 查退出码
 | 目标 | 文件 | 跑什么 | 当前内容 | 耗时 |
 |---|---|---|---|---|
 | `dps_unit_tests` | `tests/test_attributes.cpp` | 属性换算、边界、守恒等**不变量** | 6 个用例 / 16 条断言 | 毫秒级 |
-| `dps_golden_tests` | `tests/test_golden_beam.cpp` | 完整 180 秒模拟，对比**钉值** + 金丝雀 | 3 个用例 | **0.36 秒** |
+| `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 并行隔离 | 4 个用例 | **0.7 秒** |
 
-**为什么拆两个 exe**：项目里有大量进程级 `static`（`TypedAction<...>::listeners`、`Buff::ID`、`AutoAttack::timer`），拆进程是最彻底的隔离。
+**为什么拆两个 exe**：拆进程是最彻底的隔离手段。`dps_golden_tests` 里还要跑双线程并行，
+单独一个可执行文件能保证它不受单元测试留下的状态影响。
+
+> 注意：监听器表已经下放到 `Person`（`core/ActionListeners.hpp`），
+> 不再是 `TypedAction` 的 `inline static`。但**库里仍有进程级状态**会跨模拟留存
+> （`Buff::ID` / `Skill::ID` 计数器、`creatorMap`、`Logger` 配置），
+> 所以拆 exe 与金丝雀仍然有必要。
 
 ### 核心概念：两套测试抓的东西不一样
 
@@ -473,25 +479,48 @@ CHECK_EQ(totalReleasedTimes,    2594);
 > （水龙卷 `damageCount` = 1793、Beam `luckyDamageCount` = 385）。
 > 别写成 `stats.at(WaterSpout::name).damageCount == 6872`。
 
-### 金丝雀：为什么必须**顺序**跑
+### 金丝雀：检测「进程级状态残留」
 
 ```cpp
-// ✅ 正确：两次调用不重叠，Person 在函数内部创建并销毁
+// 两次调用各自创建、各自销毁 Person，结果必须逐位相等
 const auto first  = runBeamSimulationOnce(cfg, 42, 180000, 10);
 const auto second = runBeamSimulationOnce(cfg, 42, 180000, 10);
+CHECK_EQ(first.size(), second.size());   // 再逐技能比对 6 个字段
 ```
+
+它盯的是**跨模拟残留**。监听器表已经下放到 `Person`（`core/ActionListeners.hpp`）
+后，原先"两个 Person 同时存活 → 栈溢出 `0xC00000FD`"的问题已消失，
+但库里仍有进程级状态会跨模拟留存：
+
+| 状态 | 说明 |
+|---|---|
+| `Buff::ID` / `Skill::ID` | 只增不清的计数器（已 atomic，唯一性 OK，但号码会继续增长） |
+| `SkillCreator` / `BuffCreator::creatorMap` | 每次 `Initialize()` 都会 insert（`Initializer` 里已加锁） |
+| `Logger` / `SimulationLog` | 全局配置与文件句柄 |
+
+**典型症状**：某个 Buff 忘了在析构里 `remove<T>` 监听器 → 第二遍模拟时
+上一次的回调仍在 → 出伤次数偏移 → 金丝雀红。
+
+### 并行隔离：多 Person 同时跑必须和单线程一致
+
+`tests/test_parallel_isolation.cpp` 里两个线程各跑一遍 seed=42 的完整模拟，
+结果与单线程**逐位**比对。
 
 ```cpp
-// ❌ 错误：两个 Person 同时存活 → 实测栈溢出（退出码 0xC00000FD）
-auto p1 = makePerson();   // 不销毁
-auto p2 = makePerson();   // 又建一个
+std::thread workerA([&]{ threadA = runBeamSimulationOnce(cfgA, 42, 180000, 10); });
+std::thread workerB([&]{ threadB = runBeamSimulationOnce(cfgB, 42, 180000, 10); });
+workerA.join(); workerB.join();
+// 比对放在主线程做
 ```
 
-原因推测：`CreateSkillAction` 这类静态监听表里的回调指向**另一个还活着的 Person**，
-A 的监听器被 B 的事件触发后又回头操作 A，互相激发形成无限递归。
+⚠️ **三个约束**：
 
-产品代码（GUI 多轮、`main_Beam` 的 `times>1`）都是「先销毁再建下一个」，所以不受影响；
-**只有测试里的金丝雀容易写错**。
+1. `CHECK_*` 会改全局失败计数器，**不是线程安全的** → 线程里只算，主线程比对
+2. 线程函数里抛异常会 `std::terminate` → 测试里不允许抛
+3. `Logger` 是全局的，并发写会交错 → 数值不受影响，但屏幕会花
+
+**这条测试是「监听器表下放 Person」的毕业证**。把 `ActionListeners` 的表改回
+进程级共享（`inline static`），它会立刻崩溃 —— 已验证。
 
 ### 重钉（re-pin）流程
 

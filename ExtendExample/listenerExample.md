@@ -71,8 +71,9 @@ public:
 ### 3.2.在Action中添加Listener支持
 
 ```cpp
-// 推荐直接继承 TypedAction<自身, 监听器类型>，listeners / addListener / deleteListener
-// 都由它提供，不用手写。
+// 继承 TypedAction<自身, 监听器类型> 只是拿到 ListenerPtr / ListenerVector 两个别名。
+// 监听器表**不在这里** —— 它在 Person::actionListeners（每个 Person 一份），
+// 用 typeid(ActionT) 分槽，所以同一个 Action 在不同 Person 上互不相干。
 class NewAction : public TypedAction<NewAction, NewEventListener> {
 public:
     static std::string name;
@@ -80,8 +81,8 @@ public:
     void execute(double n, Person* p) override {
         // 1. 执行逻辑
 
-        // 2. 触发监听器（遍历 TypedAction 提供的 static listeners）
-        for (const auto &listener : NewAction::listeners) {
+        // 2. 触发监听器（表在 p 上，用 Action 类型分槽）
+        for (const auto &listener : p->actionListeners.listOf<NewAction>()) {
             if (listener && listener->callback) {
                 listener->trigger(info);
             }
@@ -90,9 +91,20 @@ public:
 };
 ```
 
-> 如果确实要手写监听器容器，记得 `addListener` / `deleteListener` 要成对使用：
-> Buff 构造里 `addListener`，析构里必须 `deleteListener(this->getBuffID())`，
-> 否则静态表里会留下指向已析构对象的回调。
+> **监听器表为什么挂在 Person 上而不是 Action 上**
+>
+> 旧实现是 `TypedAction::inline static std::vector<ListenerPtr> listeners` —— 进程级全局。
+> 后果：两个 Person 同时存活时，A 的 Buff 注册的回调会被 B 触发的事件调用，
+> 互相激活形成无限递归（实测栈溢出 `0xC00000FD`），并且 `Buff::ID` 被迫全局唯一。
+>
+> 现在表在 `Person::actionListeners`，天然做到：
+> · 不同 Person 的表互不相干 → 可以多线程并行跑
+> · 同一个 Person 仍只允许单线程访问（`unordered_map` 非线程安全）
+>
+> ⚠️ **注册与注销必须成对且类型一致**：
+> 构造里 `add<NewAction>(...)`，析构里必须 `remove<NewAction>(this->getBuffID())`。
+> 类型写错（例如注册用 `NewAction`、注销用 `NewAction_Icicle`）不会报错，
+> 只会让监听器永远留在表里 —— 表现为"第二遍模拟结果和第一遍不同"（金丝雀测试会抓）。
 
 ### 3.3.在Buff中创建和使用Listener
 
@@ -115,12 +127,12 @@ public:
         );
         
         // 添加到对应的Action中
-        NewAction::addListener(std::move(listener));
+        p->actionListeners.add<NewAction>(std::move(listener));
     }
     
     ~NewBuff() override {
         // 清理时移除监听器
-        NewAction::deleteListener(this->getBuffID());
+        p->actionListeners.remove<NewAction>(this->getBuffID());
     }
     
 private:

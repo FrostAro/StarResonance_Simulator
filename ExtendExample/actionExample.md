@@ -13,18 +13,39 @@ class Action {
     
     
     // 使用说明
-    // 1. 每个Action子类需定义静态name和listeners
+    // 1. 每个Action子类需定义静态name；监听器表**不在 Action 里**（见下）
     // 2. execute()中应调用Person相关方法并触发监听器
     // 3. Action通过Person::triggerAction()触发
 };
 ```
+
+> ⚠️ **监听器表已经不在 Action 里了**
+>
+> 旧版本 `TypedAction` 里有 `inline static std::vector<ListenerPtr> listeners` ——
+> 那是**进程级**表，两个 Person 同时存活时会互相污染（A 的 Buff 回调被 B 的事件触发，
+> 形成无限递归，实测栈溢出 `0xC00000FD`）。
+>
+> 现在表在 **`Person::actionListeners`**（`core/ActionListeners.hpp`），每个 Person 一份，
+> 按 Action 类型分槽。`TypedAction` 只剩两个类型别名：
+>
+> ```cpp
+> template <typename Derived, typename ListenerType>
+> class TypedAction : public Action
+> {
+> public:
+>     using ListenerPtr    = std::unique_ptr<ListenerType>;
+>     using ListenerVector = std::vector<ListenerPtr>;
+>     std::string getActionName() override { return Derived::name; }
+> };
+> ```
 
 ## 2.拓展新的Action
 
 ### 2.1.在Action.h中声明
 
 ```cpp
-// 第一个模板参数是**这个 Action 自己**（CRTP，用于让 listeners 成为该子类独有的静态表），
+// 第一个模板参数是**这个 Action 自己**（CRTP，用于给该子类生成独有的
+// ListenerPtr / ListenerVector 类型别名，监听器表按这个类型分槽），
 // 第二个是监听器类型。
 class NewAction : public TypedAction<NewAction, ResourceListener> {
 private:
@@ -46,7 +67,8 @@ public:
 ```
 
 > 注意 `TypedAction<Derived, ListenerType>` 的第一个参数**必须是派生类自身**。
-> 写成 `TypedAction<ResourceRevertAction, ...>` 会让监听器表与父类共享，派生类失去独立性。
+> 写成 `TypedAction<ResourceRevertAction, ...>` 会让派生类与父类**共用同一个分槽类型**，
+> 于是两边的监听器混在一张表里（`listOf<T>()` 用 `typeid` 区分，类型相同就是同一槽）。
 
 ### 2.2.在Action.cpp中实现
 
@@ -61,8 +83,8 @@ NewAction::NewAction(std::string targetName) : targetName(targetName) {}
 void NewAction::execute(double n, Person *p) {
     // 1. 调用Person方法
 
-    // 2. 触发监听器（可选）
-    for (const auto &listener : NewAction::listeners) {
+    // 2. 触发监听器（可选）—— 表在 Person 上，不是 NewAction 上
+    for (const auto &listener : p->actionListeners.listOf<NewAction>()) {
         if (listener && listener->callback) {
             listener->trigger(参数); // 参数类型需匹配Listener
         }
@@ -80,7 +102,12 @@ void NewAction::execute(double n, Person *p) {
 // 幸运数值
 class LuckyCountModifyAction_Icicle : public LuckyCountModifyAction
 {
-// 直接使用父类的监听器与对应方法，无需再次定义
+// 复用父类的监听器槽：本类的 execute 会调用 LuckyCountModifyAction::execute，
+// 而父类遍历的是 listOf<LuckyCountModifyAction>()。
+//
+// ⚠️ 因此不能用 add<LuckyCountModifyAction_Icicle>(...) 注册监听器 ——
+//    那会建出一个**没人遍历**的新槽（execute 从来不看它），症状是"注册了但永不触发"。
+//    注册与删除都必须用 LuckyCountModifyAction。
 private:
     static std::string name;
 

@@ -4,13 +4,15 @@
 > 所有数值以代码为准（1 tick = 1ms，模拟时长默认 180000ms = 180s）。
 > 阅读顺序建议：第一节先看框架套路，后面各节按职业查具体类。
 >
-> **同步状态**：已对齐到「生命波动 + 自动化回归测试」这一版——
-> 新增固有 Buff `LifeFluctuationBuff`（最高副属性 **+10%**，见 4.5）、
+> **同步状态**：已对齐到「监听器表下放 Person + 生命波动 + 自动化回归」这一版——
+> 监听器表从 `TypedAction` 的 `inline static` 搬到 `Person::actionListeners`
+> （`core/ActionListeners.hpp`，见 1.3 模式 B 的说明；多 Person 可并行）、
+> `LifeFluctuationBuff`（最高副属性 **+10%**，见 4.5）、
 > `FantasyPassiveBonus` / `reclassifyXxxPercentToExtra`（见 7.4）、`weaponConfig` 重新归类、
 > `JQR` + `JQRBuff`、施法速度重做（`baseDamageTriggerInterval` / `canAffectedBySpeed`）、
 > `FloodLuckyBuff` 随灌注开关、`EquipmentSetEffectBuff_Beam` 的消费即清除、11 段爆发轴。
 >
-> **2026-10-21 起有了自动化回归**（`ctest`：不变量 6 例 + 黄金基线 3 例）。
+> **2026-10-21 起有了自动化回归**（`ctest`：不变量 6 例 + 黄金基线 3 例 + 并行隔离 1 例）。
 > 改本文记录的机制后，请顺手跑一遍测试：基线红 ≠ 测试坏了，而是"数值变了，该重钉了"。
 > 详见 [`tests/README.md`](tests/README.md)。
 >
@@ -67,9 +69,22 @@ p->triggerAction<AttackIncreaseModifyAction>(-0.15);
 ```cpp
 auto info = std::make_unique<DamageListener>(
     this->getBuffID(), [this](DamageInfo& d){ this->listenerCallback(d); });
-AttackAction::addListener(std::move(info));
-// 析构里必须：AttackAction::deleteListener(this->getBuffID());
+p->actionListeners.add<AttackAction>(std::move(info));
+// 析构里必须：p->actionListeners.remove<AttackAction>(this->getBuffID());
 ```
+
+> **监听器表挂在 `Person` 上，不是 `Action` 的静态成员。**
+>
+> 早期实现是 `TypedAction::inline static std::vector<ListenerPtr> listeners`（进程级），
+> 导致两个 `Person` 同时存活时互相激活：A 的 Buff 回调被 B 的事件触发、又回头操作 A，
+> 形成无限递归（实测栈溢出 `0xC00000FD`）。现在表在 `Person::actionListeners`
+> （`core/ActionListeners.hpp`），按 `typeid(ActionT)` 分槽，每个 `Person` 一份，
+> 所以多 `Person` 可并行（`tests/test_parallel_isolation.cpp` 守着这一点）。
+>
+> ⚠️ **注册与注销的类型必须完全一致**。分槽键是 `typeid(具体类)`，写错类型不会报错，
+> 只会留下永远不被触发的槽 / 永远删不掉的监听器。
+> 特别地：`LuckyCountModifyAction_Icicle` 这类派生 Action 的 `execute` 会调用父类实现，
+> 而父类遍历的是 `listOf<LuckyCountModifyAction>()` —— 所以**必须用父类名注册**。
 
 可监听的事件（`core/Action.h` 里的 Action 类型）与对应回调签名：
 
@@ -94,7 +109,7 @@ if (this->timer >= this->triggerInterval) { /* 做事 */ this->timer -= this->tr
 
 ### 1.4 两个必要的实现约定
 
-1. **每个注册了监听器的 Buff，析构里必须 `deleteListener(this->getBuffID())`**，否则静态监听器表里会留下指向已析构对象的回调。
+1. **每个注册了监听器的 Buff，析构里必须 `p->actionListeners.remove<对应Action>(this->getBuffID())`**，否则监听器表里会留下指向已析构对象的回调（表现为后续模拟读到野指针 / 结果漂移）。
 2. **回调里不要直接改容器**。`Person::cleanupFinishedBuffs` 之所以先把待销毁 Buff 移出容器再析构，就是因为 Buff 析构可能触发新 Buff 创建。
 
 ---
@@ -706,7 +721,7 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 1. 在 `<职业>/Buff.h` 里声明类，**并写 `static std::string name;`**
 2. 若是固有 Buff，**必须同时**加 `static constexpr bool kInherent = true;`（编译期判定）**和**构造函数里 `this->isInherent = true;`（运行期标记）——两者缺一都不对
 3. 在 `<职业>/Buff.cpp` 里：定义 `name`、写构造函数、**实现 `update` / `shouldBeRemoved` / `getBuffName`**
-4. **若构造函数里 `addListener`，析构里必须 `deleteListener`**
+4. **若构造函数里 `p->actionListeners.add<T>(...)`，析构里必须 `p->actionListeners.remove<T>(...)`**（`T` 必须一致）
 5. **若构造函数里 `triggerAction` 加属性，析构里必须减回去**（数值要严格对称）
 6. 在 `<职业>/Initializer.hpp` 的 `registerBuffs()` 里注册
 7. 固有 Buff 靠 `kInherent` 自动进 `inherentBuffs`，无需手动加
@@ -724,7 +739,7 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 | ---------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **它真的被创建了吗**   | 在构造函数里加一行 `Logger::warning`，或临时改它的 `number` 看 DPS 动没动 | 忘注册 / 忘 `kInherent` → **静默永不创建**（`LifeFluctuationBuff` 就差点这样，它被误用 `registerCertainSkill` 注册过） |
 | **数值有没有漂**       | `cd build && ctest -C Release`                                              | 黄金基线红 = 数值变了 → 确认后重钉                                                                                                 |
-| **静态状态清干净了吗** | 同上（`golden_beam_canary`）                                                | 忘 `deleteListener` → 第二遍模拟结果不同                                                                                         |
+| **静态状态清干净了吗** | 同上（`golden_beam_canary`）                                                | 忘 `remove<T>` → 第二遍模拟结果不同（监听器残留）                                                                                         |
 
 > 基准数值见 `tests/test_golden_beam.cpp` 的钉值：`totalDPS ≈ 5372804.29`（seed=42），
 > 计数 `6872 / 1406 / 4318 / 2594`。改机制后这些数变了是**正常的**，但从"没注意就变了"变成"有据可查地变了"。

@@ -255,14 +255,14 @@ cd build && ctest -C Release --output-on-failure
 
 ```
 1/2 Test #1: unit_tests .......   Passed    0.01 sec
-2/2 Test #2: golden_beam ......   Passed    0.36 sec
+2/2 Test #2: golden_beam ......   Passed    0.59 sec
 100% tests passed, 0 tests failed out of 2
 ```
 
 | 目标 | 测什么 | 抓什么 |
 |---|---|---|
 | `dps_unit_tests` | 属性换算、边界、守恒等**不变量** | 「算错了」 |
-| `dps_golden_tests` | 固定种子跑完整 180 秒，对比**钉值** + 金丝雀 | 「变了」 |
+| `dps_golden_tests` | 固定种子跑完整 180 秒，对比**钉值** + 金丝雀 + **双线程并行隔离** | 「变了」 |
 
 改数值时：不变量测试应仍绿，黄金基线**必然红**——那不是失败，是「提醒你该重钉了」。
 流程是「记录新值 → 更新钉值 → 提交信息写明旧值→新值」。
