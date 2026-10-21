@@ -141,12 +141,20 @@ TEST(golden_beam_default, "黄金基线：默认面板")
 // ---------------------------------------------------------------------------
 // 金丝雀：同种子连跑两遍，必须逐位一致
 // ---------------------------------------------------------------------------
-// 检测「静态状态残留」——例如某个 Buff 忘了在析构里 deleteListener，
-// 第一次模拟留下的回调就会影响第二次（TypedAction::listeners / Buff::ID /
-// AutoAttack::timer 都是进程级 static）。
+// 检测「进程级状态残留」——例如某个 Buff 忘了在析构里移除监听器，
+// 第一次模拟留下的回调就会影响第二次。
 //
-// ⚠️ 必须**顺序**跑：runBeamSimulationOnce 内部创建 Person 并在返回时销毁，
-//    两次调用不重叠。实测若同时持有两个 Person，会栈溢出（0xC00000FD）。
+// 现在监听器表已经下放到 Person（core/ActionListeners.h），不再是
+// TypedAction 的 inline static；但**库里仍有进程级状态**会跨模拟留存：
+//   · Buff::ID / Skill::ID 计数器（只增不清）
+//   · SkillCreator / BuffCreator 的 creatorMap
+//   · Logger / SimulationLog 的全局配置
+// 所以这条金丝雀仍然必要：它盯的是"第二遍结果和第一遍一致"。
+//
+// ⚠️ 必须**顺序**跑：runBeamSimulationOnce 内部创建 Person 并在返回时销毁。
+//    （历史上两个 Person 同时存活会栈溢出 0xC00000FD，那是监听器表全局共享
+//     导致的互相激活；下放 Person 后该问题已消失，并行用例见
+//     tests/test_parallel_isolation.cpp。）
 TEST(golden_beam_canary, "金丝雀：同种子连跑两遍")
 {
     const auto first  = runBeamSimulationOnce(defaultBeamSimConfig(), kSeed, kMaxTime, kDeltaTime);
