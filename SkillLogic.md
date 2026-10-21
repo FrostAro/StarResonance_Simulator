@@ -22,23 +22,23 @@
 
 ### 1.1 三种技能形态（决定 `use()` 何时被调用）
 
-| 基类 | 形态 | `use()` 的行为 | 典型用途 |
-| --- | --- | --- | --- |
-| `InstantSkill` | 立即触发 | 只触发**一次**（`triggered` 置位后不再触发） | 大招、灌注、瞬发技能 |
-| `ContinuousSkill` | 持续触发 | 每 tick 累加 `damageTriggerTimer`，满 `damageTriggerInterval` 就 `trigger()` 一次，并把 interval 扣除 | 涡流、水龙卷 |
-| `FacilitationSkill` | 引导型 | 同上按间隔触发；另有 `canEndFacilitation()` 决定何时结束引导 | 射线（Beam） |
+| 基类                  | 形态     | `use()` 的行为                                                                                            | 典型用途             |
+| --------------------- | -------- | ----------------------------------------------------------------------------------------------------------- | -------------------- |
+| `InstantSkill`      | 立即触发 | 只触发**一次**（`triggered` 置位后不再触发）                                                        | 大招、灌注、瞬发技能 |
+| `ContinuousSkill`   | 持续触发 | 每 tick 累加 `damageTriggerTimer`，满 `damageTriggerInterval` 就 `trigger()` 一次，并把 interval 扣除 | 涡流、水龙卷         |
+| `FacilitationSkill` | 引导型   | 同上按间隔触发；另有 `canEndFacilitation()` 决定何时结束引导                                              | 射线（Beam）         |
 
 **关键点**：`InstantSkill` 的"只触发一次"由 `triggered` 标志保证——所以**同一个技能实例被复用时要小心 `triggered` 状态**。
 
 ### 1.2 技能的两个"前摇/间隔"概念
 
-| 字段 | 含义 |
-| --- | --- |
-| `releasingTime` | **前摇**：从"创建技能"到"开始出伤"的等待。为 0 表示立即出伤 |
-| `baseDamageTriggerInterval` | **基础出伤间隔**（不含速度），构造时定死，之后不再变 |
-| `damageTriggerInterval` | **实际出伤间隔** = `baseDamageTriggerInterval / (1 + 施法速度)`，由 `Person::modifySkillInterval()` 在施法速度变化时重算 |
-| `canAffectedBySpeed` | 标记该技能是否参与速度重算（目前只有 `Beam` 和 `WaterSpout` 开启） |
-| `isNoReleasing` | 标记"无前摇"：`Person::createSkill` 会直接把它塞进 `continuousSkillList`，不占用正在释放槽 |
+| 字段                          | 含义                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `releasingTime`             | **前摇**：从"创建技能"到"开始出伤"的等待。为 0 表示立即出伤                                                                  |
+| `baseDamageTriggerInterval` | **基础出伤间隔**（不含速度），构造时定死，之后不再变                                                                         |
+| `damageTriggerInterval`     | **实际出伤间隔** = `baseDamageTriggerInterval / (1 + 施法速度)`，由 `Person::modifySkillInterval()` 在施法速度变化时重算 |
+| `canAffectedBySpeed`        | 标记该技能是否参与速度重算（目前只有 `Beam` 和 `WaterSpout` 开启）                                                             |
+| `isNoReleasing`             | 标记"无前摇"：`Person::createSkill` 会直接把它塞进 `continuousSkillList`，不占用正在释放槽                                     |
 
 **施法速度如何影响出伤频率（重要）**
 
@@ -73,17 +73,17 @@ AttackAction::addListener(std::move(info));
 
 可监听的事件（`core/Action.h` 里的 Action 类型）与对应回调签名：
 
-| Action | 监听器类型 | 回调参数 | 触发时机 |
-| --- | --- | --- | --- |
-| `AttackAction` | `DamageListener` | `DamageInfo&` | 每次出伤 |
-| `CreateSkillAction` | `CreateSkillListener` | `Skill* const` | 创建技能时 |
-| `CreateBuffAction` | `CreateBuffListener` | `Buff*` | 创建 Buff 时 |
-| `EnergyConsumeAction` | `EnergyListener` | `double` | 消耗能量 |
-| `EnergyRevertAction` | `EnergyListener` | `double` | 回复能量 |
-| `ResourceConsumeAction` | `ResourceListener` | `double` | 消耗玄冰 |
-| `ResourceRevertAction` | `ResourceListener` | `double` | 回复玄冰 |
-| `CDReduceAction` / `CDRefreshAction` | `CDListener` | `double` | 减 CD / 刷新 CD |
-| `*CountModifyAction` / `*PercentModifyAction` | `SecondaryAttributeListener` / `PrimaryAttributeListener` | `double` | 属性被修改时 |
+| Action                                            | 监听器类型                                                    | 回调参数         | 触发时机        |
+| ------------------------------------------------- | ------------------------------------------------------------- | ---------------- | --------------- |
+| `AttackAction`                                  | `DamageListener`                                            | `DamageInfo&`  | 每次出伤        |
+| `CreateSkillAction`                             | `CreateSkillListener`                                       | `Skill* const` | 创建技能时      |
+| `CreateBuffAction`                              | `CreateBuffListener`                                        | `Buff*`        | 创建 Buff 时    |
+| `EnergyConsumeAction`                           | `EnergyListener`                                            | `double`       | 消耗能量        |
+| `EnergyRevertAction`                            | `EnergyListener`                                            | `double`       | 回复能量        |
+| `ResourceConsumeAction`                         | `ResourceListener`                                          | `double`       | 消耗玄冰        |
+| `ResourceRevertAction`                          | `ResourceListener`                                          | `double`       | 回复玄冰        |
+| `CDReduceAction` / `CDRefreshAction`          | `CDListener`                                                | `double`       | 减 CD / 刷新 CD |
+| `*CountModifyAction` / `*PercentModifyAction` | `SecondaryAttributeListener` / `PrimaryAttributeListener` | `double`       | 属性被修改时    |
 
 **模式 C：定时更新 —— 在 `update(deltaTime)` 里自己数时间**
 
@@ -103,12 +103,12 @@ if (this->timer >= this->triggerInterval) { /* 做事 */ this->timer -= this->tr
 
 ### 2.1 `SkillReleasedTimesStatistics`（`core/Buff.cpp`）
 
-| 项 | 内容 |
-| --- | --- |
-| 类型 | Buff（`isInherent = true`，永久） |
-| 监听 | `CreateSkillAction` → 每次创建技能给对应技能名计数 +1 |
-| 数据 | `skillReleasedTimesMap[name] = 次数` |
-| 用途 | 统计"释放次数"，`Person::calculateDamageStatistics` 把结果写进 `DamageStats.releasedTimes` |
+| 项   | 内容                                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------ |
+| 类型 | Buff（`isInherent = true`，永久）                                                              |
+| 监听 | `CreateSkillAction` → 每次创建技能给对应技能名计数 +1                                         |
+| 数据 | `skillReleasedTimesMap[name] = 次数`                                                           |
+| 用途 | 统计"释放次数"，`Person::calculateDamageStatistics` 把结果写进 `DamageStats.releasedTimes`   |
 | 注意 | 它不产生任何伤害，纯粹是统计。是 `Initializer::Initialize()` 里唯一**硬编码注册**的 Buff |
 
 ### 2.2 `Factor` / `RealFactor`（`core/Buff.h`）
@@ -124,19 +124,19 @@ if (this->timer >= this->triggerInterval) { /* 做事 */ this->timer -= this->tr
 
 ## 第三节 射线（Beam）技能
 
-| 技能 | 形态 | 倍率 / 固定值 | 前摇 | CD | 关键行为 |
-| --- | --- | --- | --- | --- | --- |
-| `Beam` 寒冰射线 | Facilitation | 0.42 / 150 | 850 ÷(1+施法) | 0 | 见下 |
-| `Vortex` 涡流 | Continuous | 0.2 / 120 | — | 100 | 无前摇，持续 10s，间隔 500÷(1+施法)（**构造时除一次，不随速度更新**），回能 2 |
-| `WaterSpout` 水龙卷 | Continuous | 1.4448 / 514 | — | 100 | 无前摇，持续 20s，间隔 500÷(1+施法)，**`canAffectedBySpeed`**；射线一停立刻 `duration = 0` |
-| `FrostWind` 冻结寒风 | Instant | 1.75 / 1050 | 10 | 1000 | 触发 4 个联动 |
-| `Flood_Beam` 灌注 | Instant | 0 | **75** | 42290 | 只负责上灌注 Buff |
-| `CrystalsHail` 冰晶坠落 | Instant | 6 / 0 | — | — | 无前摇，回能 30 |
-| `FrostDecreePulse` 冰令脉冲 | Instant | 5 / 0 | — | — | 无前摇 |
-| `IceArrow_Beam` 冰箭 | Instant | 0.28 / 0 | — | 0 | 无前摇，**打两段**，`canTriggerLucky = false`（无幸运伤害） |
-| `FrostBurst` 霜爆 | Instant | 0.28 / 0 | — | 0 | 无前摇，可幸运 |
-| `Ultimate_Beam` 大招 | Instant | 12.6 / 5400 | 100 | 54000 | 上大招增伤 Buff |
-| `FantasyImpact_Beam` 幻想冲击 | Instant | 13.75 / 0 | — | — | 无前摇，**不可暴击** |
+| 技能                            | 形态         | 倍率 / 固定值 | 前摇           | CD    | 关键行为                                                                                              |
+| ------------------------------- | ------------ | ------------- | -------------- | ----- | ----------------------------------------------------------------------------------------------------- |
+| `Beam` 寒冰射线               | Facilitation | 0.42 / 150    | 850 ÷(1+施法) | 0     | 见下                                                                                                  |
+| `Vortex` 涡流                 | Continuous   | 0.2 / 120     | —             | 100   | 无前摇，持续 10s，间隔 500÷(1+施法)（**构造时除一次，不随速度更新**），回能 2                  |
+| `WaterSpout` 水龙卷           | Continuous   | 1.4448 / 514  | —             | 100   | 无前摇，持续 20s，间隔 500÷(1+施法)，**`canAffectedBySpeed`**；射线一停立刻 `duration = 0` |
+| `FrostWind` 冻结寒风          | Instant      | 1.75 / 1050   | 10             | 1000  | 触发 4 个联动                                                                                         |
+| `Flood_Beam` 灌注             | Instant      | 0             | **75**   | 42290 | 只负责上灌注 Buff                                                                                     |
+| `CrystalsHail` 冰晶坠落       | Instant      | 6 / 0         | —             | —    | 无前摇，回能 30                                                                                       |
+| `FrostDecreePulse` 冰令脉冲   | Instant      | 5 / 0         | —             | —    | 无前摇                                                                                                |
+| `IceArrow_Beam` 冰箭          | Instant      | 0.28 / 0      | —             | 0     | 无前摇，**打两段**，`canTriggerLucky = false`（无幸运伤害）                                   |
+| `FrostBurst` 霜爆             | Instant      | 0.28 / 0      | —             | 0     | 无前摇，可幸运                                                                                        |
+| `Ultimate_Beam` 大招          | Instant      | 12.6 / 5400   | 100            | 54000 | 上大招增伤 Buff                                                                                       |
+| `FantasyImpact_Beam` 幻想冲击 | Instant      | 13.75 / 0     | —             | —    | 无前摇，**不可暴击**                                                                            |
 
 ### 3.1 `Beam` 寒冰射线（核心输出）
 
@@ -248,11 +248,11 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 - ⚠️ 目前**所有 7 个调用点都只传第 1 个实参**，所以第 5 波恒为 `pureBurst`；
 - 阶段时长：4 种爆发阶段都是 **18000ms**，`window` 是 **5000ms**（比早期版本的 20000 / 6000 都缩短了）。
 
-| 改动点 | 位置 |
-| --- | --- |
-| 阶段时长 | `registerOutBurstLogic()` 里每个 `m_outBurstLogicMap[...] = { 时长, lambda }` |
-| 阶段顺序 | `setupHardcodedOutBurstAxis()` 里连续的 `addOutBurstLogicToQueue` |
-| 每阶段放哪些技能 | `AutoAttack_Mage_Beam_*` 构造函数的 `m_stages` 表 |
+| 改动点           | 位置                                                                              |
+| ---------------- | --------------------------------------------------------------------------------- |
+| 阶段时长         | `registerOutBurstLogic()` 里每个 `m_outBurstLogicMap[...] = { 时长, lambda }` |
+| 阶段顺序         | `setupHardcodedOutBurstAxis()` 里连续的 `addOutBurstLogicToQueue`             |
+| 每阶段放哪些技能 | `AutoAttack_Mage_Beam_*` 构造函数的 `m_stages` 表                             |
 
 ---
 
@@ -262,30 +262,30 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 
 #### `FloodBuff_Beam` 灌注（触发源：`Flood_Beam` 技能）
 
-| 项 | 值 |
-| --- | --- |
-| 持续时间 | 15000ms |
-| 回能 | 每 100ms 回 `number = 0.6`（即每秒 6 点） |
+| 项         | 值                                                                            |
+| ---------- | ----------------------------------------------------------------------------- |
+| 持续时间   | 15000ms                                                                       |
+| 回能       | 每 100ms 回 `number = 0.6`（即每秒 6 点）                                   |
 | 构造副作用 | `QuicknessCountModifyAction(1040)` + `QuicknessPercentModifyAction(0.21)` |
-| 析构回滚 | ✅ **对称**：`~FloodBuff_Beam` 里 `-1040` / `-0.21` |
+| 析构回滚   | ✅ **对称**：`~FloodBuff_Beam` 里 `-1040` / `-0.21`               |
 
 > ⚠️ 灌注抬高的急速会改变 `p->castingSpeed`，进而触发 `Person::modifySkillInterval()` 重算射线与水龙卷的出伤间隔。
 > 另外灌注还是若干"条件型 Buff"的开关（见下表），以及 `FloodLuckyBuff` 的应用/回滚依据。
 
 **灌注是全局开关**：下面这些 Buff 都以"灌注是否在场"作为条件——
 
-| Buff | 灌注期效果 |
-| --- | --- |
-| `ChillPersistenceBuff` | 射线耗能 **-25%** |
-| `FrostCrystalResonanceBuff` | 冰箭回能 **×2**；射线期间每 0.5s 自动触发冰箭，且灌注期**一次触发两支** |
-| `SwiftCastBuff` | 施法速度 **+15%** |
-| `EquipmentSetEffectBuff_Beam` | 每秒 +2% 施法（累计上限 10%），满 10% 后改为 +5% 主属性 |
+| Buff                            | 灌注期效果                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------ |
+| `ChillPersistenceBuff`        | 射线耗能 **-25%**                                                              |
+| `FrostCrystalResonanceBuff`   | 冰箭回能 **×2**；射线期间每 0.5s 自动触发冰箭，且灌注期**一次触发两支** |
+| `SwiftCastBuff`               | 施法速度 **+15%**                                                              |
+| `EquipmentSetEffectBuff_Beam` | 每秒 +2% 施法（累计上限 10%），满 10% 后改为 +5% 主属性                              |
 
 #### `EquipmentSetEffectBuff_Beam` 装备套装（最复杂的一个）
 
-| 项 | 值 |
-| --- | --- |
-| 类型 | 永久固有 |
+| 项   | 值                    |
+| ---- | --------------------- |
+| 类型 | 永久固有              |
 | 监听 | `CreateSkillAction` |
 
 逻辑分两条：
@@ -301,54 +301,54 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 
 ### 4.2 能量相关
 
-| Buff | 机制 |
-| --- | --- |
-| `IntellectCrystalBuff` | **智力 → 能量上限**：`max_energy += min(getPrimaryAttributes()/50, 100)`；监听智力数量/百分比修改事件，**重算时先减旧的再加新的**（正确的对称做法） |
-| `EnergySurgeLawBuff` | 每支冰箭 +2 层计数，**满 50 层**时让接下来一次 `FrostWind` 伤害 **×3**，并上 `EnergyRevertBuff_EnergySurgeLaw` |
-| `EnergyRevertBuff_EnergySurgeLaw` | 持续 10s，每 `100/(1+施法)` ms 回 `3% 最大能量` |
-| `IceInfiniteBuff` | 玄冰上限 +3；累计消耗能量每满 50 回 1 玄冰；**每 1 玄冰给射线 +5% 增伤**（在玄冰变化时重算，先减旧的再加新的） |
-| `FrostCrystalPowerBuff` | 能量 ≥ 50% 上限时 +8% 元素增伤，掉下去就撤（用 `triggered` 标志防重复加减） |
-| `UltiIncreaseBuff_Beam` | 大招 Buff：**+45% 冰伤**（构造加、析构减，对称），持续 10s，每秒回 22 点能量 |
+| Buff                                | 机制                                                                                                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `IntellectCrystalBuff`            | **智力 → 能量上限**：`max_energy += min(getPrimaryAttributes()/50, 100)`；监听智力数量/百分比修改事件，**重算时先减旧的再加新的**（正确的对称做法） |
+| `EnergySurgeLawBuff`              | 每支冰箭 +2 层计数，**满 50 层**时让接下来一次 `FrostWind` 伤害 **×3**，并上 `EnergyRevertBuff_EnergySurgeLaw`                                    |
+| `EnergyRevertBuff_EnergySurgeLaw` | 持续 10s，每 `100/(1+施法)` ms 回 `3% 最大能量`                                                                                                                |
+| `IceInfiniteBuff`                 | 玄冰上限 +3；累计消耗能量每满 50 回 1 玄冰；**每 1 玄冰给射线 +5% 增伤**（在玄冰变化时重算，先减旧的再加新的）                                               |
+| `FrostCrystalPowerBuff`           | 能量 ≥ 50% 上限时 +8% 元素增伤，掉下去就撤（用 `triggered` 标志防重复加减）                                                                                     |
+| `UltiIncreaseBuff_Beam`           | 大招 Buff：**+45% 冰伤**（构造加、析构减，对称），持续 10s，每秒回 22 点能量                                                                                 |
 
 ### 4.3 玄冰与增伤
 
-| Buff | 机制 |
-| --- | --- |
-| `IceTideBuff` | 射线出伤**概率回玄冰**：初始 20%，失败则每次 +10% 直到成功；**玄冰已满时改为上 3s 的 `ElementIncreaseBuff_IceTide`** |
-| `ElementIncreaseBuff_IceTide` | 玄冰满溢转化来的元素增伤：**+5% 元素，持续 3s**（对称回滚） |
-| `NaturalEnergyRegenBuff` | **自然回能**：每 `1000/(1+急速)` ms 回 2 点能量（常驻固有） |
-| `BeamMagnumOpusBuff` | 射线每次出伤都尝试上 `DoubleProficientBuff`（精通翻倍） |
-| `DoubleProficientBuff` | 持续 3s；把当前精通点数**再加一遍**（即翻倍），并监听精通修改事件做重算 |
-| `FrostwindFocusBuff` | 持续 15s，**射线耗能 -27%**（`number = 0.03 × 9`） |
-| `BeamBuildBuff` | 射线出伤 13 次减 1s 灌注 CD；**冰箭暴击时创建 `FrostBurst`** |
-| `IcePromiseBuff` | 让 `Vortex` 的回能 ×3 |
-| `FrostCrystalResonanceBuff` | 见上（灌注期冰箭 ×2 回能 + 自动冰箭） |
+| Buff                            | 机制                                                                                                                               |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `IceTideBuff`                 | 射线出伤**概率回玄冰**：初始 20%，失败则每次 +10% 直到成功；**玄冰已满时改为上 3s 的 `ElementIncreaseBuff_IceTide`** |
+| `ElementIncreaseBuff_IceTide` | 玄冰满溢转化来的元素增伤：**+5% 元素，持续 3s**（对称回滚）                                                                  |
+| `NaturalEnergyRegenBuff`      | **自然回能**：每 `1000/(1+急速)` ms 回 2 点能量（常驻固有）                                                                |
+| `BeamMagnumOpusBuff`          | 射线每次出伤都尝试上 `DoubleProficientBuff`（精通翻倍）                                                                          |
+| `DoubleProficientBuff`        | 持续 3s；把当前精通点数**再加一遍**（即翻倍），并监听精通修改事件做重算                                                      |
+| `FrostwindFocusBuff`          | 持续 15s，**射线耗能 -27%**（`number = 0.03 × 9`）                                                                        |
+| `BeamBuildBuff`               | 射线出伤 13 次减 1s 灌注 CD；**冰箭暴击时创建 `FrostBurst`**                                                               |
+| `IcePromiseBuff`              | 让 `Vortex` 的回能 ×3                                                                                                           |
+| `FrostCrystalResonanceBuff`   | 见上（灌注期冰箭 ×2 回能 + 自动冰箭）                                                                                             |
 
 ### 4.4 幸运相关（`flowConfig = 1` 时启用）
 
 > 注意：本节里 `IceArrowLuckyRealBuff` 是**幸运流专属**，而 `FloodLuckyBuff` 与 `VortexLuckyDoubledBuff`
 > 在**两个流派都注册**。
 
-| Buff | 机制 |
-| --- | --- |
-| `IceArrowLuckyRealBuff` | 构造：`p->luckyFinalIncrease += 0.3`（析构 -0.4，**注意不对称**）；监听创建技能，命中冰箭时 `setCanTriggerLucky(true)`。它原本还负责在灌注时创建 `FloodLuckyBuff`，现在那段已注释（`FloodLuckyBuff` 已改为固有 Buff），但构造函数仍注册着 `CreateBuffListener` → 死监听器 |
-| `FloodLuckyBuff` | **固有 Buff，随灌注开关生效**：监听 `CreateBuffAction`，当灌注（`FloodBuff_Beam`）被创建时 `luckyDreamIncrease += 0.35`、暴击 **-5%**、幸运 **+8%**；`update()` 里发现灌注消失就全部回滚。在**两个流派都注册** |
-| `VortexLuckyDoubledBuff` | 把当前幸运点数**再加一遍**（幸运值翻倍），并让 `luckyMultiplyingExtra += 0.2`；监听幸运修改事件重算 |
-| `IceRealBuff` | 射线每 15 次出伤 → 上 `NineIceBuff` |
-| `NineIceBuff` | 持续 15s，玄冰上限 +3，射线能量消耗 -2.5%（每次创建技能时改技能） |
+| Buff                       | 机制                                                                                                                                                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `IceArrowLuckyRealBuff`  | 构造：`p->luckyFinalIncrease += 0.3`（析构 -0.4，**注意不对称**）；监听创建技能，命中冰箭时 `setCanTriggerLucky(true)`。它原本还负责在灌注时创建 `FloodLuckyBuff`，现在那段已注释（`FloodLuckyBuff` 已改为固有 Buff），但构造函数仍注册着 `CreateBuffListener` → 死监听器 |
+| `FloodLuckyBuff`         | **固有 Buff，随灌注开关生效**：监听 `CreateBuffAction`，当灌注（`FloodBuff_Beam`）被创建时 `luckyDreamIncrease += 0.35`、暴击 **-5%**、幸运 **+8%**；`update()` 里发现灌注消失就全部回滚。在**两个流派都注册**                                             |
+| `VortexLuckyDoubledBuff` | 把当前幸运点数**再加一遍**（幸运值翻倍），并让 `luckyMultiplyingExtra += 0.2`；监听幸运修改事件重算                                                                                                                                                                                |
+| `IceRealBuff`            | 射线每 15 次出伤 → 上 `NineIceBuff`                                                                                                                                                                                                                                                     |
+| `NineIceBuff`            | 持续 15s，玄冰上限 +3，射线能量消耗 -2.5%（每次创建技能时改技能）                                                                                                                                                                                                                          |
 
 ### 4.5 心相仪与因子
 
-| Buff | 机制 |
-| --- | --- |
-| `IllusoryDreamBuff`（迷幻梦境/征服者） | 精炼攻击 +15%；**计数**：射线出伤 +1，且"不在释放技能"时每 0.5s 额外 +1（模拟普攻）；满 12 层给一层 `ATKIncreaseBuff_IllusoryDream` |
-| `ATKIncreaseBuff_IllusoryDream` | 可叠 13 层，每层 +50 攻击，持续 8s；用 `lastStack` 比较实现"层数变化才重算" |
-| `ConquerorBuff`（叠势迸破） | 射线出伤 8 次 → 上一层 `StackMomentumBuff` |
-| `StackMomentumBuff`（叠势） | 最多 5 层，持续 8s，`number = 74` |
-| `OccupationalFactorBuff_Beam`（职业因子） | 给冰箭/霜爆 `dreamIncreaseAdd += 0.211`、给射线 `+= 0.097`；冰箭灌注期 +6 层（否则 +2 层），满则回因子能量；灌注技能回 400 因子能量；每秒回 20 因子能量。**当前未注册**（`registerBuffs` 里没有它）；析构曾有多余的 `PrimaryAttributesPercent/Count` 回滚，已删除 |
-| `FloatingExtraSecondaryAttributesBuff_Beam` | 找出**点数最高**的副属性（`getXxxCount()`）并给它 **+3.5% 百分比**；监听 5 种副属性点数修改事件，变化时"先减旧、重找最高、再加新"。固有常驻 |
-| `LifeFluctuationBuff`（生命波动） | 找出**百分比最高**的副属性（`getXxx()`）并给它 **+10%**；监听 5 种副属性点数修改事件，变化时同样"先减旧、重找最高、再加新"。固有常驻（`kPermanentBuffDuration`），析构只删监听、**不回滚**那 10%——它只在模拟结束时销毁，不影响数值 |
-| `OtherExtraEnhanceBuff` | 通用额外增效：构造 `dreamIncrease += 0.03×3`、`attackIncrease += 0.03×7`（析构对称回滚）；创建技能时给**水龙卷** `dreamIncreaseAdd += 0.112×10`，给**射线** `+= 0` |
+| Buff                                          | 机制                                                                                                                                                                                                                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IllusoryDreamBuff`（迷幻梦境/征服者）      | 精炼攻击 +15%；**计数**：射线出伤 +1，且"不在释放技能"时每 0.5s 额外 +1（模拟普攻）；满 12 层给一层 `ATKIncreaseBuff_IllusoryDream`                                                                                                                                     |
+| `ATKIncreaseBuff_IllusoryDream`             | 可叠 13 层，每层 +50 攻击，持续 8s；用 `lastStack` 比较实现"层数变化才重算"                                                                                                                                                                                                   |
+| `ConquerorBuff`（叠势迸破）                 | 射线出伤 8 次 → 上一层 `StackMomentumBuff`                                                                                                                                                                                                                                   |
+| `StackMomentumBuff`（叠势）                 | 最多 5 层，持续 8s，`number = 74`                                                                                                                                                                                                                                             |
+| `OccupationalFactorBuff_Beam`（职业因子）   | 给冰箭/霜爆 `dreamIncreaseAdd += 0.211`、给射线 `+= 0.097`；冰箭灌注期 +6 层（否则 +2 层），满则回因子能量；灌注技能回 400 因子能量；每秒回 20 因子能量。**当前未注册**（`registerBuffs` 里没有它）；析构曾有多余的 `PrimaryAttributesPercent/Count` 回滚，已删除 |
+| `FloatingExtraSecondaryAttributesBuff_Beam` | 找出**点数最高**的副属性（`getXxxCount()`）并给它 **+3.5% 百分比**；监听 5 种副属性点数修改事件，变化时"先减旧、重找最高、再加新"。固有常驻                                                                                                                       |
+| `LifeFluctuationBuff`（生命波动）           | 找出**百分比最高**的副属性（`getXxx()`）并给它 **+10%**；监听 5 种副属性点数修改事件，变化时同样"先减旧、重找最高、再加新"。固有常驻（`kPermanentBuffDuration`），析构只删监听、**不回滚**那 10%——它只在模拟结束时销毁，不影响数值                      |
+| `OtherExtraEnhanceBuff`                     | 通用额外增效：构造 `dreamIncrease += 0.03×3`、`attackIncrease += 0.03×7`（析构对称回滚）；创建技能时给**水龙卷** `dreamIncreaseAdd += 0.112×10`，给**射线** `+= 0`                                                                                       |
 
 > ⚠️ **两个"最高副属性"Buff 比较口径不同，容易看错**：
 > `FloatingExtraSecondaryAttributesBuff_Beam` 用**点数**比较，`LifeFluctuationBuff` 用**百分比**比较。
@@ -361,13 +361,13 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 >
 > 📌 **三个"面板已含"来源的叠加**（默认面板 + 机器人幻想）：
 >
-> | 来源 | 通道 | 数值 |
-> | --- | --- | --- |
-> | `weaponConfig`（武器第一属性=精通） | 额外百分比 | +6% |
-> | `LifeFluctuationBuff`（生命波动） | 额外百分比 | +10% |
-> | `FloatingExtraSecondaryAttributesBuff_Beam` | 额外百分比 | +3.5% |
-> | `JQR` 被动（见 7.4） | 额外百分比 | +15% |
-> | **合计 `ProficientExtraPercent`** | | **34.5%** |
+> | 来源                                          | 通道       | 数值            |
+> | --------------------------------------------- | ---------- | --------------- |
+> | `weaponConfig`（武器第一属性=精通）         | 额外百分比 | +6%             |
+> | `LifeFluctuationBuff`（生命波动）           | 额外百分比 | +10%            |
+> | `FloatingExtraSecondaryAttributesBuff_Beam` | 额外百分比 | +3.5%           |
+> | `JQR` 被动（见 7.4）                        | 额外百分比 | +15%            |
+> | **合计 `ProficientExtraPercent`**     |            | **34.5%** |
 >
 > 于是 180s 内精通峰值 = `6%(base) + 64.68%(点数翻倍) + 34.5%(额外) = 105.18%`（见 7.4 的数值示例）。
 >
@@ -376,40 +376,40 @@ twoFantasyAndUlti → window → burst2 → window → twoFantasyAndUlti → win
 
 ### 4.6 计数触发型
 
-| Buff | 触发条件 | 结果 |
-| --- | --- | --- |
-| `FrostDecreePulseBuff` | 射线出伤累计 **50 次** | 创建 `FrostDecreePulse`（5 倍率瞬发） |
-| `InstantCooldownBuff_Beam` | 能量回复累计 **35 点** | 冻结寒风 CD **-1300ms** |
-| `ExtensiveArrow`（广域冰箭） | **只在水龙卷 / 冻结寒风 / 涡流的命中里计数**（`count` 上限 `triggerMax = 20`，超出丢弃）；命中累计满 `triggerNum = 10` 且距上次触发 ≥`triggerInterval = 500ms` → `count -= 10`、`timer = 0` 并创建冰箭。判定已收在技能过滤**内部** | 创建 `IceArrow_Beam` |
-| `FantasyImpactBuff_Beam` | **幸运命中**叠层（非幻想冲击自身），且计时器累计 ≥10s；层数满 20+20 才触发 | 创建 `FantasyImpact_Beam`；每 10 层额外上 `ExtremeLuckBuff_Beam` |
-| `ExtremeLuckBuff_Beam` | 由上面触发 | `luckyFinalIncrease += 0.4` |
+| Buff                           | 触发条件                                                                                                                                                                                                                                                     | 结果                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `FrostDecreePulseBuff`       | 射线出伤累计 **50 次**                                                                                                                                                                                                                                 | 创建 `FrostDecreePulse`（5 倍率瞬发）                              |
+| `InstantCooldownBuff_Beam`   | 能量回复累计 **35 点**                                                                                                                                                                                                                                 | 冻结寒风 CD **-1300ms**                                        |
+| `ExtensiveArrow`（广域冰箭） | **只在水龙卷 / 冻结寒风 / 涡流的命中里计数**（`count` 上限 `triggerMax = 20`，超出丢弃）；命中累计满 `triggerNum = 10` 且距上次触发 ≥`triggerInterval = 500ms` → `count -= 10`、`timer = 0` 并创建冰箭。判定已收在技能过滤**内部** | 创建 `IceArrow_Beam`                                               |
+| `FantasyImpactBuff_Beam`     | **幸运命中**叠层（非幻想冲击自身），且计时器累计 ≥10s；层数满 20+20 才触发                                                                                                                                                                            | 创建 `FantasyImpact_Beam`；每 10 层额外上 `ExtremeLuckBuff_Beam` |
+| `ExtremeLuckBuff_Beam`       | 由上面触发                                                                                                                                                                                                                                                   | `luckyFinalIncrease += 0.4`                                        |
 
 > ⚠️ `IllusoryDreamBuff` 的析构是 `RefineATKCountModifyAction(-number * 0.1)`，而构造是 `+number * 0.15` —— **加减不对称（0.15 vs 0.1）**，看起来是笔误。
 
 ### 4.7 其它因子类
 
-| Buff | 机制 |
-| --- | --- |
+| Buff                               | 机制                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `WaterSpoutRealBuff`（3 风因子） | 创建水龙卷时把 **`baseDamageTriggerInterval /= 3`**，再按当前施法速度同步 `damageTriggerInterval`（这就是"三风"的来源：间隔变 1/3 → 出伤次数约 ×3）。两个**未实装项**：`number`（注释写"龙卷伤害增加"，实际恒为 `0.0`）、`listenerCallback2`（原位是"每次命中额外打两段"，现已整段注释） |
-| `VortexLuckyDoubledBuff` | 见 4.4 |
-| `CoefficientAdjustmentBuff_Beam` | 系数修正（当前未启用） |
+| `VortexLuckyDoubledBuff`         | 见 4.4                                                                                                                                                                                                                                                                                                           |
+| `CoefficientAdjustmentBuff_Beam` | 系数修正（当前未启用）                                                                                                                                                                                                                                                                                           |
 
 ---
 
 ## 第五节 冰矛（Icicle）技能
 
-| 技能 | 形态 | 倍率 / 固定值 | 前摇 | CD | 关键行为 |
-| --- | --- | --- | --- | --- | --- |
-| `Flood_Icicle` 灌注 | Instant | 0 | 1000 | 40500 | 上 `FloodBuff_Icicle`，回能 6 |
-| `Ultimate_Icicle` 大招 | Instant | 12.6 / 5400 | 100 | 54000 | 上 `UltiIncreaseBuff_Icicle`，回能 22 |
-| `IceArrow_Icicle` 冰箭 | Instant | 0.28 / 0 | — | 0 | 无前摇，打两段，创建时回 1 玄冰 |
-| `Spear` 冰矛 | Instant | 2.1 / 870 | 400÷(1+攻速) | 0 | 耗能 10、耗玄冰 1 |
-| `PierceSpear` 贯穿冰矛 | Instant | 2.5 / 0 | — | 0 | 无前摇，**打三段** |
-| `Meteorite` 陨星 | Instant | 1.0266 / 405 | 1000÷(1+攻速) | 13500（2 层充能，充能 CD 500） | **打四段** |
-| `SynergyMeteorite` 陨星连携 | Instant | 1.0266 / 405 | 0 | 0 | 无前摇，**打四段**，`finalIncreaseAdd = -0.5` |
-| `WaterDrop` 水珠 | Instant | 0 | 800÷(1+攻速) | 22500（2 层充能） | 上 `IceRevertBuff` |
-| `FrostComet` 冰霜彗星 | Instant | 2.5 / 0 | — | 0 | 无前摇 |
-| `FantasyImpact` 幻想冲击 | Instant | 12.5 / 0 | — | 0 | 无前摇，**50% 概率再打一次** |
+| 技能                          | 形态    | 倍率 / 固定值 | 前摇           | CD                             | 关键行为                                              |
+| ----------------------------- | ------- | ------------- | -------------- | ------------------------------ | ----------------------------------------------------- |
+| `Flood_Icicle` 灌注         | Instant | 0             | 1000           | 40500                          | 上 `FloodBuff_Icicle`，回能 6                       |
+| `Ultimate_Icicle` 大招      | Instant | 12.6 / 5400   | 100            | 54000                          | 上 `UltiIncreaseBuff_Icicle`，回能 22               |
+| `IceArrow_Icicle` 冰箭      | Instant | 0.28 / 0      | —             | 0                              | 无前摇，打两段，创建时回 1 玄冰                       |
+| `Spear` 冰矛                | Instant | 2.1 / 870     | 400÷(1+攻速)  | 0                              | 耗能 10、耗玄冰 1                                     |
+| `PierceSpear` 贯穿冰矛      | Instant | 2.5 / 0       | —             | 0                              | 无前摇，**打三段**                              |
+| `Meteorite` 陨星            | Instant | 1.0266 / 405  | 1000÷(1+攻速) | 13500（2 层充能，充能 CD 500） | **打四段**                                      |
+| `SynergyMeteorite` 陨星连携 | Instant | 1.0266 / 405  | 0              | 0                              | 无前摇，**打四段**，`finalIncreaseAdd = -0.5` |
+| `WaterDrop` 水珠            | Instant | 0             | 800÷(1+攻速)  | 22500（2 层充能）              | 上 `IceRevertBuff`                                  |
+| `FrostComet` 冰霜彗星       | Instant | 2.5 / 0       | —             | 0                              | 无前摇                                                |
+| `FantasyImpact` 幻想冲击    | Instant | 12.5 / 0      | —             | 0                              | 无前摇，**50% 概率再打一次**                    |
 
 ### 5.1 `Spear` 冰矛（核心）
 
@@ -462,26 +462,26 @@ multiplying = 1.0266, fixedValue = 405
 
 ### 6.1 灌注与核心增伤
 
-| Buff | 机制 |
-| --- | --- |
-| `FloodBuff_Icicle` | 灌注；`isInherent = true`（是常驻**监听型**，不是限时） |
-| `SpearCritialToRevertIceBuff` | **冰矛暴击时以 30% 概率创建一支冰箭** |
-| `SpearCritialBuff` | 冰矛暴击相关增伤（非固有，由其他链路触发） |
-| `EndlessColdBuff`（无尽苦寒） | 最多 40 层、持续 10s；`update()` **每 tick 刷新陨星 CD**（所以只要它在场，陨星几乎无 CD）；同时被陨星读取，给陨星加增伤 |
-| `UltiIncreaseBuff_Icicle` | 大招：+45% 冰伤，持续 10s（对称加减） |
-| `MeteoriteRefreshBuff` | **冰矛"暴击且幸运"且陨星层数未满时，刷新陨星 CD** |
-| `MeteoriteSynergyBuff` | **冰矛"暴击且幸运"且陨星层数已满时，创建陨星连携** |
-| `FrostCometBuff` | 冰矛命中时 **21% 概率** 触发冰霜彗星 |
-| `DoubleSpearBuff` | 让冰矛多打一段 |
-| `IceRevertBuff` | 由水珠触发（回玄冰） |
-| `ConsumedEnergyCountBuff` | 累计消耗能量，**每满 25 点减少水珠 CD 1000ms** |
-| `EquipmentSetEffectBuff_Icicle` | 套装效果（监听出伤） |
-| `FantasyImpactBuff` | 幸运叠层触发幻想冲击；`triggerInterval` 额外 **+5000ms 内置 CD**（与 Beam 版的 10s 不同）；每 10 层上 `ExtremeLuckFactor` |
-| `ExtremeLuckFactor` | `PrimaryAttributesPercentModifyAction(+0.1)`，持续 5s（对称回滚） |
-| `OccupationalFactor_Icicle` | **灌注期幸运伤害 ×1.583**；给冰霜彗星/贯穿冰矛 `dreamIncreaseAdd += 0.35` |
-| `FloatingExtraSecondaryAttributesBuff_Icicle` | 最高副属性 +800 |
-| `InstantCooldownBuff_Icicle` | 能量回复累计 35 → 减 CD |
-| `PierceSpearBuff` / `SimulateNormalAttackToRevertIceBuff` / `UltiIncreaseBuff_Icicle` | 见上表 |
+| Buff                                                                                        | 机制                                                                                                                                |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `FloodBuff_Icicle`                                                                        | 灌注；`isInherent = true`（是常驻**监听型**，不是限时）                                                                     |
+| `SpearCritialToRevertIceBuff`                                                             | **冰矛暴击时以 30% 概率创建一支冰箭**                                                                                         |
+| `SpearCritialBuff`                                                                        | 冰矛暴击相关增伤（非固有，由其他链路触发）                                                                                          |
+| `EndlessColdBuff`（无尽苦寒）                                                             | 最多 40 层、持续 10s；`update()` **每 tick 刷新陨星 CD**（所以只要它在场，陨星几乎无 CD）；同时被陨星读取，给陨星加增伤     |
+| `UltiIncreaseBuff_Icicle`                                                                 | 大招：+45% 冰伤，持续 10s（对称加减）                                                                                               |
+| `MeteoriteRefreshBuff`                                                                    | **冰矛"暴击且幸运"且陨星层数未满时，刷新陨星 CD**                                                                             |
+| `MeteoriteSynergyBuff`                                                                    | **冰矛"暴击且幸运"且陨星层数已满时，创建陨星连携**                                                                            |
+| `FrostCometBuff`                                                                          | 冰矛命中时 **21% 概率** 触发冰霜彗星                                                                                          |
+| `DoubleSpearBuff`                                                                         | 让冰矛多打一段                                                                                                                      |
+| `IceRevertBuff`                                                                           | 由水珠触发（回玄冰）                                                                                                                |
+| `ConsumedEnergyCountBuff`                                                                 | 累计消耗能量，**每满 25 点减少水珠 CD 1000ms**                                                                                |
+| `EquipmentSetEffectBuff_Icicle`                                                           | 套装效果（监听出伤）                                                                                                                |
+| `FantasyImpactBuff`                                                                       | 幸运叠层触发幻想冲击；`triggerInterval` 额外 **+5000ms 内置 CD**（与 Beam 版的 10s 不同）；每 10 层上 `ExtremeLuckFactor` |
+| `ExtremeLuckFactor`                                                                       | `PrimaryAttributesPercentModifyAction(+0.1)`，持续 5s（对称回滚）                                                                 |
+| `OccupationalFactor_Icicle`                                                               | **灌注期幸运伤害 ×1.583**；给冰霜彗星/贯穿冰矛 `dreamIncreaseAdd += 0.35`                                                  |
+| `FloatingExtraSecondaryAttributesBuff_Icicle`                                             | 最高副属性 +800                                                                                                                     |
+| `InstantCooldownBuff_Icicle`                                                              | 能量回复累计 35 → 减 CD                                                                                                            |
+| `PierceSpearBuff` / `SimulateNormalAttackToRevertIceBuff` / `UltiIncreaseBuff_Icicle` | 见上表                                                                                                                              |
 
 > **冰矛与射线在"灌注"上的语义不同**：射线灌注是**限时 15s 的窗口**，冰矛灌注是**常驻监听型**。对比两个职业的节奏时这是关键差异。
 
@@ -499,17 +499,17 @@ class MukuChief : public FightingFantasy, public InstantSkill
 
 ### 7.1 幻想总表
 
-| 幻想 | 主动 CD / 层数 | 主动效果（Buff） | 被动效果（`setPassiveEffect`） |
-| --- | --- | --- | --- |
-| `MukuChief` 姆克头目 | 60000 / 2 层 | `MukuChiefBuff`：暴击点数 **+44800**、爆伤 **+40%**，20s | 爆伤 **+25%** |
-| `MukuScout` 姆克尖兵 | 80000 / 1 层 | `MukuScoutBuff`：攻击增加 **+15%**，20s | 攻击增加 **+15%** |
-| `BYS` 博伊斯 | 80000 / 2 层 | `BYSBuff`：攻击增加 +26%、攻速 +10%，20s | 主属性百分比 **+15%** |
-| `YGLWS` 伊戈雷乌斯 | 60000 / 2 层 | `YGLWSBuff`：暴击点数 +56000、暴击 **+14%**，20s + 暴击上限修正 | 爆伤 **+35%** |
-| `SXMQ` 嗜血毛球 | 80000 / 1 层 | `SXMQBuff`：见 7.2 | **无被动**（但构造时直接上 `SXMQBuff_Passive`） |
-| `HYXZ` 幻妖蟹蛛 | 80000 / 1 层 | `HYXZBuff`：精通 **+20%**，20s | 无（代码被注释） |
-| `LSZZ` 掠食蜘蛛 | 80000 / 1 层 | `LSZZBuff`：攻击增加 **+35%**，20s | 攻击增加 **+21%** |
-| `YZ` 游子 | 80000 / 1 层 | `YZBuff`：幸运 **+20%**，20s | 无（代码被注释） |
-| `JQR` 机器人 | 80000 / 2 层 | `JQRBuff`：精炼攻击 = 总攻击 × (精通/5 × 1.2)，且**专精/特定技能 +30% 增伤**，20s | 精通 **+15%**（走「重新归类」，见 7.4） |
+| 幻想                   | 主动 CD / 层数 | 主动效果（Buff）                                                                            | 被动效果（`setPassiveEffect`）                        |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `MukuChief` 姆克头目 | 60000 / 2 层   | `MukuChiefBuff`：暴击点数 **+44800**、爆伤 **+40%**，20s                      | 爆伤 **+25%**                                     |
+| `MukuScout` 姆克尖兵 | 80000 / 1 层   | `MukuScoutBuff`：攻击增加 **+15%**，20s                                             | 攻击增加 **+15%**                                 |
+| `BYS` 博伊斯         | 80000 / 2 层   | `BYSBuff`：攻击增加 +26%、攻速 +10%，20s                                                  | 主属性百分比 **+15%**                             |
+| `YGLWS` 伊戈雷乌斯   | 60000 / 2 层   | `YGLWSBuff`：暴击点数 +56000、暴击 **+14%**，20s + 暴击上限修正                     | 爆伤 **+35%**                                     |
+| `SXMQ` 嗜血毛球      | 80000 / 1 层   | `SXMQBuff`：见 7.2                                                                        | **无被动**（但构造时直接上 `SXMQBuff_Passive`） |
+| `HYXZ` 幻妖蟹蛛      | 80000 / 1 层   | `HYXZBuff`：精通 **+20%**，20s                                                      | 无（代码被注释）                                        |
+| `LSZZ` 掠食蜘蛛      | 80000 / 1 层   | `LSZZBuff`：攻击增加 **+35%**，20s                                                  | 攻击增加 **+21%**                                 |
+| `YZ` 游子            | 80000 / 1 层   | `YZBuff`：幸运 **+20%**，20s                                                        | 无（代码被注释）                                        |
+| `JQR` 机器人         | 80000 / 2 层   | `JQRBuff`：精炼攻击 = 总攻击 × (精通/5 × 1.2)，且**专精/特定技能 +30% 增伤**，20s | 精通 **+15%**（走「重新归类」，见 7.4）           |
 
 **共性**：主动技能本身倍率为 0（不直接出伤），作用全靠上 Buff；`releasingTime` 都是 100ms 且 `/= (1 + attackSpeed)`。
 
@@ -560,11 +560,11 @@ targetReduction = (暴击 > 0.6) ? (暴击 - 0.6) * 0.3 : 0;
 
 对应的 API 在 `Person`：
 
-| 函数 | 作用 |
-| --- | --- |
-| `FantasyPassiveBonus` | 声明一组「面板已含」的百分比被动（精通/急速/暴击/幸运/全能） |
-| `Person::applyFantasyPassiveBonus(bonus, apply)` | 应用 / 移除（内部按属性分派） |
-| `Person::reclassifyXxxPercentToExtra(percent)` | 单项重新归类；传负值即反向 |
+| 函数                                               | 作用                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| `FantasyPassiveBonus`                            | 声明一组「面板已含」的百分比被动（精通/急速/暴击/幸运/全能） |
+| `Person::applyFantasyPassiveBonus(bonus, apply)` | 应用 / 移除（内部按属性分派）                                |
+| `Person::reclassifyXxxPercentToExtra(percent)`   | 单项重新归类；传负值即反向                                   |
 
 `JQR` 的实现只有三步：
 
@@ -590,14 +590,14 @@ void JQR::setPassiveEffect(Person *p)
 
 **数值效果示例**（面板精通 74.8%、武器 6%、机器人 15%、生命波动 10%、最高副属性 3.5%）：
 
-| 步骤 | 精通总值 | `ExtraPercent` | `ProficientCount` | 可点数化 |
-| --- | --- | --- | --- | --- |
-| 面板 | 74.8% | 0 | — | — |
-| ① 武器归类 6%（`Person` 构造函数） | 74.8% | 6% | 337,634 | 62.8% |
-| ② 机器人归类 15%（`equipSkills`） | 74.8% | 21% | **183,140** | **47.8%** |
-| ③ 生命波动 +10%（`initializePerson`） | 84.8% | 31% | 183,140 | 47.8% |
-| ④ 最高副属性 +3.5%（同上） | 88.3% | 34.5% | 183,140 | 47.8% |
-| 双倍精通（射线期间） | **105.18%** | 34.5% | 翻倍后 64.68% | — |
+| 步骤                                     | 精通总值          | `ExtraPercent` | `ProficientCount` | 可点数化        |
+| ---------------------------------------- | ----------------- | ---------------- | ------------------- | --------------- |
+| 面板                                     | 74.8%             | 0                | —                  | —              |
+| ① 武器归类 6%（`Person` 构造函数）    | 74.8%             | 6%               | 337,634             | 62.8%           |
+| ② 机器人归类 15%（`equipSkills`）     | 74.8%             | 21%              | **183,140**   | **47.8%** |
+| ③ 生命波动 +10%（`initializePerson`） | 84.8%             | 31%              | 183,140             | 47.8%           |
+| ④ 最高副属性 +3.5%（同上）              | 88.3%             | 34.5%            | 183,140             | 47.8%           |
+| 双倍精通（射线期间）                     | **105.18%** | 34.5%            | 翻倍后 64.68%       | —              |
 
 > **顺序很关键**：①②在 `equipSkills`，③④在 `initializePerson`，**`equipSkills` 先执行**
 > （见第一节的 `Initialize()` 流程）。所以机器人那 15% 先归位，生命波动与最高副属性
@@ -649,21 +649,21 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 
 ### 8.2 三处"看起来像 bug"的对称性问题（改前先确认是否有意）
 
-| 位置 | 现象 |
-| --- | --- |
-| `IllusoryDreamBuff` | 构造 `+number × 0.15`，析构 `-number × 0.1` —— **不对称** |
+| 位置                      | 现象                                                                      |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `IllusoryDreamBuff`     | 构造 `+number × 0.15`，析构 `-number × 0.1` —— **不对称**   |
 | `IceArrowLuckyRealBuff` | 构造 `luckyFinalIncrease += 0.3`，析构 `-= 0.4` —— **不对称** |
-| `FantasyImpact_Beam` | `dreamIncreaseAdd` 连续赋值 `1.0` → `0.15`，**前者无效** |
+| `FantasyImpact_Beam`    | `dreamIncreaseAdd` 连续赋值 `1.0` → `0.15`，**前者无效**     |
 
 ### 8.3 加减配对的核对结论
 
-| 类别 | 结论 |
-| --- | --- |
+| 类别                                                                                                                                                                                             | 结论                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **限时 Buff**（`FloodBuff_Beam`、`MukuChiefBuff`、`MukuScoutBuff`、`BYSBuff`、`YZBuff`、`HYXZBuff`、`LSZZBuff`、`UltiIncreaseBuff_*`、`ElementIncreaseBuff_IceTide` 等） | **都做了析构回滚**，配对正确。例如 `~FloodBuff_Beam` 明确有 `QuicknessCountModifyAction(-1040)` 与 `QuicknessPercentModifyAction(-0.21)` |
-| **永久固有 Buff** | 多数不回滚（终身存在），属正常设计 |
-| **随条件开关的 Buff** | `FloodLuckyBuff` 不是靠析构，而是 `update()` 里检测"灌注消失"后回滚（`triggered` 标记防重复） |
-| ⚠️ `IllusoryDreamBuff` | 构造 `+number × 0.15` vs 析构 `-number × 0.1` —— **不对称** |
-| ⚠️ `IceArrowLuckyRealBuff` | 构造 `+= 0.3` vs 析构 `-= 0.4` —— **不对称** |
+| **永久固有 Buff**                                                                                                                                                                          | 多数不回滚（终身存在），属正常设计                                                                                                                   |
+| **随条件开关的 Buff**                                                                                                                                                                      | `FloodLuckyBuff` 不是靠析构，而是 `update()` 里检测"灌注消失"后回滚（`triggered` 标记防重复）                                                  |
+| ⚠️ `IllusoryDreamBuff`                                                                                                                                                                       | 构造 `+number × 0.15` vs 析构 `-number × 0.1` —— **不对称**                                                                            |
+| ⚠️ `IceArrowLuckyRealBuff`                                                                                                                                                                   | 构造 `+= 0.3` vs 析构 `-= 0.4` —— **不对称**                                                                                             |
 
 **关于速度的一条注意**：`FloodBuff_Beam` 的急速加成会改变 `p->castingSpeed`，从而触发 `modifySkillInterval()` 重算
 标了 `canAffectedBySpeed` 的技能（射线、水龙卷）的出伤间隔。改灌注频率会连带影响出伤频率。
@@ -672,26 +672,26 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 
 ## 附录 A：快速定位表
 
-| 想改的东西 | 去哪里 |
-| --- | --- |
-| 射线本体倍率/间隔/耗能 | `Mage/Beam/Skill.cpp` → `Beam::Beam` 与 `Beam::trigger` |
-| 灌注窗口长短/回能 | `Mage/Beam/Buff.cpp` → `FloodBuff_Beam` |
-| 灌注期各种加成 | 搜 `findBuffInBuffList(FloodBuff_Beam::name)` |
-| 三风（龙卷出伤频率） | `WaterSpoutRealBuff::listenerCallback1` 的 `baseDamageTriggerInterval /= 3` |
-| 龙卷必爆 / 可幸运 | `EquipmentSetEffectBuff_Beam::listenerCallback` |
-| **幻想的「面板已含」被动（如机器人 +15% 精通）** | `Person::applyFantasyPassiveBonus` + 各幻想的 `setPassiveEffect`，见 7.4 节 |
-| **武器第一/第二属性（面板已含的部分）** | `core/Person.cpp` 构造函数里的 `weaponConfig` 分支（同样走 `reclassify`） |
-| 属性「点数 ↔ 额外百分比」的通道切换 | `Person::reclassifyXxxPercentToExtra`（**仅限初始化期调用**） |
-| 冰箭本体（倍率 / 必暴 / 精通增伤 / 玄冰回复） | `Mage/Beam/Skill.cpp` → `IceArrow_Beam::IceArrow_Beam` |
-| 冰箭触发源 | 搜 `IceArrow_Beam::name` 的 `CreateSkillAction`；广域冰箭见 `ExtensiveArrow` |
-| **自动战斗轴（阶段顺序 / 时长）** | `Mage/Beam/AutoAttack.cpp` → `setupHardcodedOutBurstAxis()` 与 `registerOutBurstLogic()`，见 3.8 节 |
-| **施法速度对出伤频率的影响** | `core/Person.cpp` → `Person::modifySkillInterval()`；技能侧看 `canAffectedBySpeed` |
-| **灌注期的幸运增伤（+35% / +8% 幸运 / -5% 暴击）** | `Mage/Beam/Buff.cpp` → `FloodLuckyBuff`（监听 `CreateBuffAction` 的 `FloodBuff_Beam`） |
-| 流派切换（急速精通/幸运） | `Mage/Beam/Initializer.hpp` → `registerBuffs()` 的 `m_flowConfig` 分支；入口在 `main_Beam.cpp` 的 `cfg.flowConfig`（已接通，见下方说明） |
-| 幻想组合 | `Mage/Beam/Initializer.hpp` → `equipSkills()` 的 `m_fantasyConfig` 分支 |
-| **生命波动（最高副属性 +10%）** | `Mage/Beam/Buff.cpp` → `LifeFluctuationBuff`，见 4.5 节；注册在 `Initializer.hpp` 的 `registerBuffs()` |
-| **站街面板 / 武器 / 幻想配置** | `main_Beam.cpp` 的 `executeSimulation_Beam` 与 `tests/test_golden_beam.cpp` 的 `defaultBeamSimConfig()` —— **两份，改要一起改** |
-| **跑回归测试 / 重钉数值** | `cd build && ctest -C Release`；流程见 [`tests/README.md`](tests/README.md) |
+| 想改的东西                                               | 去哪里                                                                                                                                              |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 射线本体倍率/间隔/耗能                                   | `Mage/Beam/Skill.cpp` → `Beam::Beam` 与 `Beam::trigger`                                                                                      |
+| 灌注窗口长短/回能                                        | `Mage/Beam/Buff.cpp` → `FloodBuff_Beam`                                                                                                        |
+| 灌注期各种加成                                           | 搜 `findBuffInBuffList(FloodBuff_Beam::name)`                                                                                                     |
+| 三风（龙卷出伤频率）                                     | `WaterSpoutRealBuff::listenerCallback1` 的 `baseDamageTriggerInterval /= 3`                                                                     |
+| 龙卷必爆 / 可幸运                                        | `EquipmentSetEffectBuff_Beam::listenerCallback`                                                                                                   |
+| **幻想的「面板已含」被动（如机器人 +15% 精通）**   | `Person::applyFantasyPassiveBonus` + 各幻想的 `setPassiveEffect`，见 7.4 节                                                                     |
+| **武器第一/第二属性（面板已含的部分）**            | `core/Person.cpp` 构造函数里的 `weaponConfig` 分支（同样走 `reclassify`）                                                                     |
+| 属性「点数 ↔ 额外百分比」的通道切换                     | `Person::reclassifyXxxPercentToExtra`（**仅限初始化期调用**）                                                                               |
+| 冰箭本体（倍率 / 必暴 / 精通增伤 / 玄冰回复）            | `Mage/Beam/Skill.cpp` → `IceArrow_Beam::IceArrow_Beam`                                                                                         |
+| 冰箭触发源                                               | 搜 `IceArrow_Beam::name` 的 `CreateSkillAction`；广域冰箭见 `ExtensiveArrow`                                                                  |
+| **自动战斗轴（阶段顺序 / 时长）**                  | `Mage/Beam/AutoAttack.cpp` → `setupHardcodedOutBurstAxis()` 与 `registerOutBurstLogic()`，见 3.8 节                                          |
+| **施法速度对出伤频率的影响**                       | `core/Person.cpp` → `Person::modifySkillInterval()`；技能侧看 `canAffectedBySpeed`                                                           |
+| **灌注期的幸运增伤（+35% / +8% 幸运 / -5% 暴击）** | `Mage/Beam/Buff.cpp` → `FloodLuckyBuff`（监听 `CreateBuffAction` 的 `FloodBuff_Beam`）                                                     |
+| 流派切换（急速精通/幸运）                                | `Mage/Beam/Initializer.hpp` → `registerBuffs()` 的 `m_flowConfig` 分支；入口在 `main_Beam.cpp` 的 `cfg.flowConfig`（已接通，见下方说明） |
+| 幻想组合                                                 | `Mage/Beam/Initializer.hpp` → `equipSkills()` 的 `m_fantasyConfig` 分支                                                                      |
+| **生命波动（最高副属性 +10%）**                    | `Mage/Beam/Buff.cpp` → `LifeFluctuationBuff`，见 4.5 节；注册在 `Initializer.hpp` 的 `registerBuffs()`                                     |
+| **站街面板 / 武器 / 幻想配置**                     | `main_Beam.cpp` 的 `executeSimulation_Beam` 与 `tests/test_golden_beam.cpp` 的 `defaultBeamSimConfig()` —— **两份，改要一起改**     |
+| **跑回归测试 / 重钉数值**                          | `cd build && ctest -C Release`；流程见 [`tests/README.md`](tests/README.md)                                                                      |
 
 > 📌 **`flowConfig` 曾经是死变量，现已接通**：旧版 `main_Beam.cpp` 里有个孤立的 `int flowConfig = 0;`，
 > 但构造 `Initializer_Mage_Beam` 时只传了 3 个参数，所以改它不生效。
@@ -720,11 +720,11 @@ Flood_Beam ──> FloodBuff_Beam（灌注窗口）
 
 新 Buff 最典型的三种事故都能用现有测试挡住：
 
-| 检查 | 怎么做 | 挡得住什么 |
-| --- | --- | --- |
-| **它真的被创建了吗** | 在构造函数里加一行 `Logger::warning`，或临时改它的 `number` 看 DPS 动没动 | 忘注册 / 忘 `kInherent` → **静默永不创建**（`LifeFluctuationBuff` 就差点这样，它被误用 `registerCertainSkill` 注册过） |
-| **数值有没有漂** | `cd build && ctest -C Release` | 黄金基线红 = 数值变了 → 确认后重钉 |
-| **静态状态清干净了吗** | 同上（`golden_beam_canary`） | 忘 `deleteListener` → 第二遍模拟结果不同 |
+| 检查                         | 怎么做                                                                        | 挡得住什么                                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **它真的被创建了吗**   | 在构造函数里加一行 `Logger::warning`，或临时改它的 `number` 看 DPS 动没动 | 忘注册 / 忘 `kInherent` → **静默永不创建**（`LifeFluctuationBuff` 就差点这样，它被误用 `registerCertainSkill` 注册过） |
+| **数值有没有漂**       | `cd build && ctest -C Release`                                              | 黄金基线红 = 数值变了 → 确认后重钉                                                                                                 |
+| **静态状态清干净了吗** | 同上（`golden_beam_canary`）                                                | 忘 `deleteListener` → 第二遍模拟结果不同                                                                                         |
 
 > 基准数值见 `tests/test_golden_beam.cpp` 的钉值：`totalDPS ≈ 5372804.29`（seed=42），
 > 计数 `6872 / 1406 / 4318 / 2594`。改机制后这些数变了是**正常的**，但从"没注意就变了"变成"有据可查地变了"。
