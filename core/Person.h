@@ -10,7 +10,7 @@
 #include "Info.h"
 #include "AutoAttack.h"
 #include "Statistics.h"
-#include "ActionListeners.h"
+#include "ActionListeners.hpp"
 
 class Skill;
 class Buff;
