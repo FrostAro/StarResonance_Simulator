@@ -100,7 +100,7 @@ void executeSimulation_Icicle(std::vector<std::unordered_map<std::string, Damage
 
             // 更新当前时间
             currentTime += deltaTime;
-            p->autoAttackPtr->setTimer() += deltaTime;
+            p->autoAttackPtr->setTimer(p->getSimulationTime() + deltaTime);
         }
 
         // 首次模拟结束：收尾日志文件，后续模拟恢复 INFO 级别避免刷屏

@@ -492,6 +492,24 @@ public:
     double getEnergyReduceDOWN() const;
     
     const AutoAttack* getAutoAttack() const;
+
+    /**
+     * @brief 模拟时钟（毫秒），AutoAttack 尚未创建时返回 0
+     *
+     * 为什么需要这个包装：`autoAttackPtr` 要到 Initializer::initializeAutoAttack()
+     * 才被创建，而 Person / 职业子类的**构造函数**里就会调用 changeXxx* →
+     * triggerAction → Action::execute，那些地方要打带时间戳的日志。
+     * 直接写 `autoAttackPtr->getTimer()` 在构造期是空指针解引用。
+     */
+    double getSimulationTime() const;
+
+    /**
+     * @brief 每 tick 的时间增量，AutoAttack 尚未创建时返回默认值 10
+     *
+     * 同上，供构造期/初始化期的计时器累加使用。
+     */
+    double getSimulationDeltaTime() const;
+
     Skill* const getNowReleasingSkill() const;
 	void clearNowReleasingSkill();
 

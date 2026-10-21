@@ -4,10 +4,6 @@
 #include "Logger.h"
 #include <string_view>
 
-// 静态成员初始化
-double AutoAttack::timer = 0;
-double AutoAttack::deltaTime = 10;  // 1 tick = 1ms
-
 // 构造函数
 AutoAttack::AutoAttack(Person *p)
     : p(p)
@@ -128,7 +124,7 @@ void AutoAttack::createSkillByAuto()
         if(end)
         {
             this->p->addErrorInfoInList(ErrorInfo(
-            "NONE", ErrorInfo::errorTypeEnum::Now_Releasing_Skill));
+            "NONE", this->timer, ErrorInfo::errorTypeEnum::Now_Releasing_Skill));
             return;
         }
     }
@@ -155,7 +151,7 @@ void AutoAttack::createSkillByAuto()
         if (a == -1)
         {
             this->p->addErrorInfoInList(
-                ErrorInfo(i.skillName, ErrorInfo::errorTypeEnum::Skill_Not_Found));
+                ErrorInfo(i.skillName, this->timer, ErrorInfo::errorTypeEnum::Skill_Not_Found));
             return;
         }
 
@@ -163,7 +159,7 @@ void AutoAttack::createSkillByAuto()
         if (this->p->getSkillCDListRef().at(a)->getStackRef() < 1)
         {
             this->p->addErrorInfoInList(
-                ErrorInfo(i.skillName, ErrorInfo::errorTypeEnum::Stack_Not_Enough));
+                ErrorInfo(i.skillName, this->timer, ErrorInfo::errorTypeEnum::Stack_Not_Enough));
             continue;
         }
 
@@ -174,7 +170,7 @@ void AutoAttack::createSkillByAuto()
             if (this->p->getSkillCDListRef().at(a)->getCurrentCD_Value() > 0)
             {
                 this->p->addErrorInfoInList(
-                    ErrorInfo(i.skillName, ErrorInfo::errorTypeEnum::CD_Not_Enough));
+                    ErrorInfo(i.skillName, this->timer, ErrorInfo::errorTypeEnum::CD_Not_Enough));
                 continue;
             }
         }
@@ -184,7 +180,7 @@ void AutoAttack::createSkillByAuto()
             if (this->p->skillCDList[a]->getCurrentChargedCD_Value() > 0)
             {
                 this->p->addErrorInfoInList(
-                    ErrorInfo(i.skillName, ErrorInfo::errorTypeEnum::ChargeCD_Not_Enough));
+                    ErrorInfo(i.skillName, this->timer, ErrorInfo::errorTypeEnum::ChargeCD_Not_Enough));
                 continue;
             }
         }
@@ -197,7 +193,7 @@ void AutoAttack::createSkillByAuto()
             {
                 // 条件不满足，记录错误并跳过该技能
                 this->p->addErrorInfoInList(
-                    ErrorInfo(i.skillName, judgeConditionStruct.errorType));
+                    ErrorInfo(i.skillName, this->timer, judgeConditionStruct.errorType));
                 canCreateSkill = false;
                 break; // 跳出条件检查循环
             }
@@ -270,9 +266,10 @@ void AutoAttack::updateSkillFinish()
 }
 
 // 访问器实现
-double AutoAttack::getTimer() { return AutoAttack::timer; }
-double &AutoAttack::setTimer() { return AutoAttack::timer; }
-double AutoAttack::getDeltaTime() { return AutoAttack::deltaTime; }
+double AutoAttack::getTimer() const { return this->timer; }
+double AutoAttack::setTimer(double newTimer) { this->timer = newTimer; return this->timer; }
+double AutoAttack::getDeltaTime() const { return this->deltaTime; }
+double AutoAttack::setDeltaTime(double newDeltaTime) { this->deltaTime = newDeltaTime; return this->deltaTime; }
 bool AutoAttack::getIsReleasingSkill() const { return this->isReleasingSkill; }
 bool AutoAttack::getIsOutBurst() const { return this->isOutBurst; }
 int AutoAttack::getNextOutBurstType() const { return this->nextOutBurstType; }

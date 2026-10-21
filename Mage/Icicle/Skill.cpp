@@ -29,7 +29,7 @@ void Flood_Icicle::setSkillType()
 
 void Flood_Icicle::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, FloodBuff_Icicle::name);
 }
 
@@ -67,7 +67,7 @@ void Ultimate_Icicle::setSkillType()
 
 void Ultimate_Icicle::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, UltiIncreaseBuff_Icicle::name);
     p->triggerAction<AttackAction>(0, this);
 }
@@ -108,7 +108,7 @@ void IceArrow_Icicle::setSkillType()
 void IceArrow_Icicle::trigger(Person *p)
 {
 
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this); // 冰箭本体伤害
     p->triggerAction<AttackAction>(0, this); // 冰箭爆炸伤害
 }
@@ -154,7 +154,7 @@ void Spear::setSkillType()
 void Spear::trigger(Person *p)
 {
 
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<EnergyConsumeAction>(this->energyReduce,this);
     //p->triggerAction<AttackAction>(0, this->getSkillName());
     if (p->findBuffInBuffList(DoubleSpearBuff::name) != -1)
@@ -204,7 +204,7 @@ void PierceSpear::setSkillType()
 
 void PierceSpear::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     for (int i = 0; i < 3; i++)
     {
         p->triggerAction<AttackAction>(0, this);
@@ -253,7 +253,7 @@ void Meteorite::setSkillType()
 
 void Meteorite::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<EnergyConsumeAction>(this->energyReduce,this);
     int temp = p->findBuffInBuffList<EndlessColdBuff>();
     if (temp != -1)
@@ -313,7 +313,7 @@ void SynergyMeteorite::setSkillType()
 
 void SynergyMeteorite::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     for (int i = 0; i < 4; i++)
     {
         p->triggerAction<AttackAction>(0, this);
@@ -354,7 +354,7 @@ void WaterDrop::setSkillType()
 
 void WaterDrop::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, IceRevertBuff::name);
 }
 
@@ -390,7 +390,7 @@ void FrostComet::setSkillType()
 
 void FrostComet::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this);
 }
 
@@ -427,7 +427,7 @@ void FantasyImpact::setSkillType()
 
 void FantasyImpact::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this);
     // 二重：幻想冲击有50%几率再触发一次
     if (p->isSuccess(0.5) ) {

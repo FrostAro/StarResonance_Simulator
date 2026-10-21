@@ -60,7 +60,7 @@ inline std::unordered_map<std::string, DamageStatistics> runOnceImpl(
     {
         person->autoAttackPtr->update(deltaTime);
         currentTime += deltaTime;
-        person->autoAttackPtr->setTimer() += deltaTime;
+        person->autoAttackPtr->setTimer(person->getSimulationTime() + deltaTime);
     }
 
     person->calculateDamageStatistics();

@@ -16,7 +16,7 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
     this->duration = 20000;
     this->maxDuration = this->duration;
 
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(p->getSimulationTime(),
                         this->getBuffName(),
                         " - before person Crit Count + 4480, percent: " +
                         std::to_string(p->Critical));
@@ -24,7 +24,7 @@ MukuChiefBuff::MukuChiefBuff(Person *p, double) : Buff(p)
     //p->changeCriticalCount(11200);
     this->p->triggerAction<CriticalCountModifyAction>(44800);
 
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(p->getSimulationTime(),
                         this->getBuffName(),
                         " - after person Crit Count + 4480, percent: " +
                         std::to_string(p->Critical));
@@ -55,8 +55,8 @@ MukuScoutBuff::MukuScoutBuff(Person *p, double) : Buff(p)
 
     //p->changeAattackIncrease(this->number);
     this->p->triggerAction<AttackIncreaseModifyAction>(this->number);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease applied");
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease applied");
 }
 
 void MukuScoutBuff::listenerCallback(const DamageInfo &) {}
@@ -68,7 +68,7 @@ MukuScoutBuff::~MukuScoutBuff()
 {
     //this->p->changeAattackIncrease(-this->number);
     this->p->triggerAction<AttackIncreaseModifyAction>(-this->number);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease removed");
 }
 
 // 博伊斯
@@ -80,9 +80,9 @@ BYSBuff::BYSBuff(Person *p, double) : Buff(p)
     this->duration = 20000;
     this->maxDuration = this->duration;
     this->p->triggerAction<AttackIncreaseModifyAction>(0.26);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease applied");
     this->p->triggerAction<AttackSpeedPercentModifyAction>(0.1);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackSpeed applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackSpeed applied");
 }
 
 void BYSBuff::listenerCallback(const DamageInfo &) {}
@@ -94,9 +94,9 @@ std::string BYSBuff::getBuffName() const { return BYSBuff::name; }
 BYSBuff::~BYSBuff()
 {
     this->p->triggerAction<AttackIncreaseModifyAction>(-0.26);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease removed");
     this->p->triggerAction<AttackSpeedPercentModifyAction>(-0.1);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackSpeed removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackSpeed removed");
 }
 
 // 伊戈雷乌斯
@@ -122,14 +122,14 @@ void YGLWSBuff::update(const double)
         if (this->lastReduction != 0.0)
         {
             this->p->triggerAction<CriticalDamageModifyAction>(-this->lastReduction);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "critical damage correction removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "critical damage correction removed");
         }
         if (targetReduction != 0.0)
         {
             this->p->triggerAction<CriticalDamageModifyAction>(targetReduction);
         }
         this->lastReduction = targetReduction;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+        Logger::debugBuff(p->getSimulationTime(), this->getBuffName(),
                           "critical damage adjusted, reduction: " + std::to_string(targetReduction));
     }
 }
@@ -141,7 +141,7 @@ YGLWSBuff::~YGLWSBuff()
     this->p->triggerAction<CriticalCountModifyAction>(-56000);
     this->p->triggerAction<CriticalPercentModifyAction>(-0.14);
     this->p->triggerAction<CriticalDamageModifyAction>(-this->lastReduction);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "critical damage correction removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "critical damage correction removed");
 }
 
 // 嗜血毛球
@@ -172,12 +172,12 @@ void SXMQBuff::listenerCallback(Skill *const skill)
     if(a)
     {
         skill->fixedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "skill fixedValue increased");
+        Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "skill fixedValue increased");
     }
     if(skill->getCanTriggerLucky())
     {
         skill->luckyFixedValue += this->number * this->p->getATK() * (1 + this->p->getAttackIncrease());
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "skill luckyFixedValue increased");
+        Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "skill luckyFixedValue increased");
     }
 }
 
@@ -229,7 +229,7 @@ void SXMQBuff_Passive::listenerCallback(const DamageInfo &info)
         {
             auto willAttackSkill = std::make_unique<temp_InstantSkill>("SXMQ_Passive",4.00,0);
             this->p->triggerAction<AttackAction>(0,willAttackSkill.get());
-            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "SXMQ passive attack triggered");
+            Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "SXMQ passive attack triggered");
             this->stack = 0;
         }
     }
@@ -256,7 +256,7 @@ HYXZBuff::HYXZBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
 
     p->triggerAction<ProficientPercentModifyAction>(0.2);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "proficientPercent applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "proficientPercent applied");
 }
 
 void HYXZBuff::listenerCallback(Skill *const skill) {}
@@ -267,7 +267,7 @@ std::string HYXZBuff::getBuffName() const { return HYXZBuff::name; }
 HYXZBuff::~HYXZBuff() 
 {
     this->p->triggerAction<ProficientPercentModifyAction>(-0.2);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "proficientPercent removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "proficientPercent removed");
 }
 
 // 掠食蜘蛛
@@ -280,7 +280,7 @@ LSZZBuff::LSZZBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
 
     p->triggerAction<AttackIncreaseModifyAction>(this->number);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease applied");
 }
 
 void LSZZBuff::update(const double) {}
@@ -290,7 +290,7 @@ std::string LSZZBuff::getBuffName() const { return LSZZBuff::name; }
 LSZZBuff::~LSZZBuff() 
 {
     this->p->triggerAction<AttackIncreaseModifyAction>(-this->number);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "attackIncrease removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "attackIncrease removed");
 }
 
 // 游子
@@ -302,7 +302,7 @@ YZBuff::YZBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
 
     p->triggerAction<LuckyPercentModifyAction>(0.2);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "luckyPercent applied");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "luckyPercent applied");
 }
 
 void YZBuff::listenerCallback(Skill *const skill) {}
@@ -313,7 +313,7 @@ std::string YZBuff::getBuffName() const { return YZBuff::name; }
 YZBuff::~YZBuff() 
 {
     this->p->triggerAction<LuckyPercentModifyAction>(-0.2);
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "luckyPercent removed");
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "luckyPercent removed");
 }
 
 // 机器人
@@ -325,9 +325,9 @@ JQRBuff::JQRBuff(Person *p, double) : Buff(p)
     this->maxDuration = this->duration;
     this->number = 1.2;
 
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "now proficient is " + std::to_string(this->p->getProficient()));
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "now proficient is " + std::to_string(this->p->getProficient()));
     double proficientIncrease = this->p->getProficient() / 5 * this->number;
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "proficientIncrease is " + std::to_string(proficientIncrease));
+    Logger::debugBuff(p->getSimulationTime(), this->getBuffName(), "proficientIncrease is " + std::to_string(proficientIncrease));
     double refineATKIncrease = this->p->getTotalATK() * proficientIncrease;
     this->tempValue = refineATKIncrease;
     this->p->triggerAction<RefineATKCountModifyAction>(refineATKIncrease);

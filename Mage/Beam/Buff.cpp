@@ -50,9 +50,9 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
         if (this->count >= this->triggerNum)
         {
             this->p->triggerAction<CDReduceAction>(1000, Flood_Beam::name);
-            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Flood_Beam CD reduced");
+            Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "Flood_Beam CD reduced");
             this->count -= this->triggerNum;
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                               this->getBuffName(),
                               "ReduceCD triggered ");
         }
@@ -62,7 +62,7 @@ void BeamBuildBuff::listenerCallback(DamageInfo &info)
     if(info.skillName == IceArrow_Beam::name && info.isCritical)
     {
         this->p->triggerAction<CreateSkillAction>(0,FrostBurst::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "FrostBurst created");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "FrostBurst created");
     }
 }
 
@@ -85,10 +85,10 @@ void BeamBuildBuff::listenerCallback2(double)
         // 重新设置射线增伤与能量增耗
         skill->damageIncreaseAdd += this->lastExtraIncrease;
         skill->changeEnergyReduceUP(this->stack * this->energyRatio);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(),
                           "Beam damage/energy adjusted, stack: " + std::to_string(this->stack));
 
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "current energyReduceUP: " + std::to_string(skill->getEnergyReduceUP()));
     }
@@ -128,7 +128,7 @@ void NaturalEnergyRegenBuff::update(double deltaTime)
     if (this->timer >= this->triggerInterval) 
     {
         this->p->triggerAction<EnergyRevertAction_Beam>(this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "energy reverted");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "energy reverted");
         this->timer -= this->triggerInterval;
     }
 }
@@ -161,7 +161,7 @@ void IcePromiseBuff::listenerCallback(Skill *const skill)
     if (skill->getSkillName() == Vortex::name)
     {
         skill->energyAdd *= 3;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Vortex energyAdd tripled");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "Vortex energyAdd tripled");
     }
 }
 
@@ -213,7 +213,7 @@ void FrostCrystalResonanceBuff::listenerCallback2(Skill *const skill)
         if(this->p->findBuffInBuffList(FloodBuff_Beam::name) != -1)
         {
             skill->energyAdd *= 2;
-            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "IceArrow energyAdd doubled");
+            Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "IceArrow energyAdd doubled");
         }
     }
 }
@@ -235,7 +235,7 @@ void FrostCrystalResonanceBuff::update(const double deltaTime)
             {
                 this->p->triggerAction<CreateSkillAction>(0, IceArrow_Beam::name);
                 this->p->triggerAction<CreateSkillAction>(0, IceArrow_Beam::name);
-                Logger::debugBuff(AutoAttack::getTimer(),
+                Logger::debugBuff(this->p->getSimulationTime(),
                                   this->getBuffName(),
                                   "more iceArrow triggered ");
             }
@@ -283,7 +283,7 @@ void ChillPersistenceBuff::listenerCallback(Skill *const skill)
     {
         skill->changeEnergyReduceDOWN(this->number);
         this->triggered = true;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "beam energyReduce down 25%");
     }
@@ -324,7 +324,7 @@ void FloodBuff_Beam::update(const double deltaTime)
     {
         // 灌注期间每秒回6能量
         this->p->triggerAction<EnergyRevertAction_Beam>(this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "energy reverted");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "energy reverted");
         this->timer -= this->energyRevertInterval;
     }
 }
@@ -357,7 +357,7 @@ IntellectCrystalBuff::IntellectCrystalBuff(Person *p, double)
     }
     p->max_energy += index;
     this->maxEnergyAdd = index;
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+    Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(),
                       "max energy recalculated, add: " + std::to_string(index));
     p->present_energy = p->max_energy;
 
@@ -382,9 +382,9 @@ void IntellectCrystalBuff::listenerCallback(double)
     }
     p->max_energy += index;
     this->maxEnergyAdd = index;
-    Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+    Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(),
                       "max energy recalculated, add: " + std::to_string(index));
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       " triggered ");
 }
@@ -427,7 +427,7 @@ void IceTideBuff::listenerCallback(DamageInfo &info)
         if (this->p->getResourceNum() < this->p->getMaxResourceNum())
         {
             this->p->triggerAction<ResourceRevertAction>(1);
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                               this->getBuffName(),
                               "revert ice by beam");
         }
@@ -435,7 +435,7 @@ void IceTideBuff::listenerCallback(DamageInfo &info)
         else
         {
             this->p->triggerAction<CreateBuffAction>(0, ElementIncreaseBuff_IceTide::name);
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                               this->getBuffName(),
                               "element increased ");
         }
@@ -514,7 +514,7 @@ void IceInfiniteBuff::listenerCallback(double n)
     {
         energyCount -= 50;
         p->triggerAction<ResourceRevertAction>(1);
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "revert ice by 50 energy");
     }
@@ -532,9 +532,9 @@ void IceInfiniteBuff::listenerCallback2(double)
         skill->damageIncreaseAdd -= lastChange;
         lastChange = this->p->getResourceNum() * this->number;
         skill->damageIncreaseAdd += lastChange;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(),
                           "Beam damage adjusted by ice count: " + std::to_string(lastChange));
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "damage increased by ice change");
     }
@@ -577,7 +577,7 @@ void BeamMagnumOpusBuff::listenerCallback(DamageInfo &info)
     if (info.skillName == Beam::name)
     {
         this->p->triggerAction<CreateBuffAction>(0, DoubleProficientBuff::name);
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                 this->getBuffName(),
                 " triggered ");
             
@@ -609,7 +609,7 @@ DoubleProficientBuff::DoubleProficientBuff(Person *p, double)
     ProficientCountModifyAction::addListener(std::move(info));
 
     p->triggerAction<ProficientCountModifyAction>(this->number);
-    Logger::debugBuff(AutoAttack::getTimer(),this->getBuffName(),"triggered, current proficient: " + std::to_string(this->p->getProficient()));
+    Logger::debugBuff(this->p->getSimulationTime(),this->getBuffName(),"triggered, current proficient: " + std::to_string(this->p->getProficient()));
 }
 
 void DoubleProficientBuff::listenerCallback(double n)
@@ -620,7 +620,7 @@ void DoubleProficientBuff::listenerCallback(double n)
     this->number = this->p->getProficientCount();
     this->p->triggerAction<ProficientCountModifyAction>(this->number);
     this->timer = 0;
-    Logger::debugBuff(AutoAttack::getTimer(),this->getBuffName(),"triggered, current proficient: " + std::to_string(this->p->getProficient()));
+    Logger::debugBuff(this->p->getSimulationTime(),this->getBuffName(),"triggered, current proficient: " + std::to_string(this->p->getProficient()));
 }
 
 void DoubleProficientBuff::update(const double deltaTime) 
@@ -659,7 +659,7 @@ void FrostwindFocusBuff::listenerCallback(Skill *const skill)
     if(skill->getSkillName() != Beam::name)
         return;
     skill->changeEnergyReduceDOWN(this->number);
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       " triggered, skill:" + skill->getSkillName() +  ", energyReduceDOWN: " + std::to_string(skill->getEnergyReduceDOWN()));
 }
@@ -695,14 +695,14 @@ void SwiftCastBuff::update(const double)
     if (!triggered && index != -1)
     {
         this->p->triggerAction<CastingSpeedPercentModifyAction>(this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "casting speed increased");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "casting speed increased");
         this->triggered = true;
     }
 
     if (triggered && index == -1)
     {
         this->p->triggerAction<CastingSpeedPercentModifyAction>(-this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "casting speed restored");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "casting speed restored");
         this->triggered = false;
     }
 }
@@ -740,14 +740,14 @@ void FrostCrystalPowerBuff::listenerCallback(double)
     if (this->p->getPresentEnergy() >= this->p->getMaxEnergy() / 2 && !triggered)
     {
         this->p->triggerAction<ElementIncreaseModifyAction>(this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "element increase applied");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "element increase applied");
         this->triggered = true;
     }
 
     if (this->p->getPresentEnergy() < this->p->getMaxEnergy() / 2 && triggered)
     {
         this->p->triggerAction<ElementIncreaseModifyAction>(-this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "element increase removed");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "element increase removed");
         this->triggered = false;
     }
 }
@@ -793,7 +793,7 @@ void EnergySurgeLawBuff::listenerCallback(DamageInfo &info)
         info.damageNum *= 3;
         this->p->triggerAction<CreateBuffAction>(0, EnergyRevertBuff_EnergySurgeLaw::name);
         this->count -= 50;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "triggered");
     }
@@ -830,7 +830,7 @@ void EnergyRevertBuff_EnergySurgeLaw::update(const double deltaTime)
     if (this->timer >= this->triggerInterval)
     {
         this->p->triggerAction<EnergyRevertAction_Beam>(this->number * this->p->getMaxEnergy());
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "triggered");
         this->timer -= triggerInterval;
@@ -861,7 +861,7 @@ void UltiIncreaseBuff_Beam::update(const double deltaTime)
     {
         // 每秒回复22点能量
         this->p->triggerAction<EnergyRevertAction_Beam>(2.2);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "ulti energy reverted");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "ulti energy reverted");
         this->timer -= this->triggerInterval;
     }
 }
@@ -915,7 +915,7 @@ void EquipmentSetEffectBuff_Beam::listenerCallback(Skill *const skill)
         skill->criticalAdd = 1;
         skill->setCanTriggerLucky(true);
         this->canForWSpt = false;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "waterspout crit and lucky triggered");
     }
@@ -930,15 +930,15 @@ void EquipmentSetEffectBuff_Beam::update(const double deltaTime)
         if(this->timer >= this->triggerInterval && this->totalChange < 0.1)
         {
             this->p->triggerAction<CastingSpeedPercentModifyAction>(this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "casting speed increased");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "casting speed increased");
             this->totalChange += this->number;
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                               this->getBuffName(),
                               "triggered, castingSpeed increased by " + std::to_string(this->number));
             if(this->totalChange >= 0.1)
             {
                 this->p->triggerAction<PrimaryAttributesPercentModifyAction>(0.05);
-                Logger::debugBuff(AutoAttack::getTimer(),
+                Logger::debugBuff(this->p->getSimulationTime(),
                                   this->getBuffName(),
                                   "triggered, primaryAttributes increased by 0.05");
                 this->addedAttribute = true;
@@ -949,7 +949,7 @@ void EquipmentSetEffectBuff_Beam::update(const double deltaTime)
     else if(this->totalChange > 0)
     {
         this->p->triggerAction<CastingSpeedPercentModifyAction>(-this->totalChange);
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           "removed, castingSpeed decreased by " + std::to_string(this->totalChange));
         this->totalChange = 0;
@@ -957,7 +957,7 @@ void EquipmentSetEffectBuff_Beam::update(const double deltaTime)
         if(this->addedAttribute)
         {
             this->p->triggerAction<PrimaryAttributesPercentModifyAction>(-0.05);
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                               this->getBuffName(),
                               "removed, primaryAttributes decreased by 0.05");
             this->addedAttribute = false;
@@ -1023,7 +1023,7 @@ void IllusoryDreamBuff::update(const double deltaTime)
     {
         this->p->triggerAction<CreateBuffAction>(1, ATKIncreaseBuff_IllusoryDream::name);
         this->count = 0;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                           this->getBuffName(),
                           " triggered ");
     }
@@ -1060,7 +1060,7 @@ void ATKIncreaseBuff_IllusoryDream::update(const double)
     {
         this->p->triggerAction<AttackCountModifyAction>(this->number * (this->stack - this->lastStack));
         this->lastStack = this->stack;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                         this->getBuffName(),
                         "stack change and calculate increase again, lastStack: " + std::to_string(this->lastStack) + ", stack: " + std::to_string(this->stack));
     }
@@ -1226,7 +1226,7 @@ void FloatingExtraSecondaryAttributesBuff_Beam::listenerCallback(double n)
         break;
     }
 
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       "secondary attributes floated");
 }
@@ -1376,7 +1376,7 @@ void LifeFluctuationBuff::listenerCallback(double n)
         break;
     }
 
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       "life fluctuation triggered, secondary attributes floated");
 }
@@ -1419,7 +1419,7 @@ void FrostDecreePulseBuff::listenerCallback(DamageInfo& info)
     if(this->count >= this->triggerCount)
     {
         this->p->triggerAction<CreateSkillAction>(0,FrostDecreePulse::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "FrostDecreePulse created");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "FrostDecreePulse created");
         this->count = 0;
     }
 }
@@ -1456,7 +1456,7 @@ void InstantCooldownBuff_Beam::listenerCallback(double n)
     if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CDReduceAction>(1300,FrostWind::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "FrostWind CD reduced");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "FrostWind CD reduced");
         this->count -= triggerNum;
     }
 }
@@ -1502,7 +1502,7 @@ void ExtensiveArrowBuff::listenerCallback(DamageInfo& info)
             this->count -= this->triggerNum;
             this->timer = 0;
             this->p->triggerAction<CreateSkillAction>(0,IceArrow_Beam::name);
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                             this->getBuffName(),
                             "ice arrow triggered by ExtensiveArrow");
         }
@@ -1552,7 +1552,7 @@ void WaterSpoutRealBuff::listenerCallback1(Skill* const skill)
         skill->baseDamageTriggerInterval /= 3;
         skill->damageTriggerInterval = skill->baseDamageTriggerInterval / (1 + this->p->getCastingSpeed());
         
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout interval /3");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "WaterSpout interval /3");
 
         this->waterSpoutSkill = skill;
     }
@@ -1565,7 +1565,7 @@ void WaterSpoutRealBuff::listenerCallback2(DamageInfo& info)
     //     // 3风
     //     this->p->triggerAction<AttackAction>(0,this->waterSpoutSkill);
     //     this->p->triggerAction<AttackAction>(0,this->waterSpoutSkill);
-    //     Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout extra attack triggered");
+    //     Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "WaterSpout extra attack triggered");
     // }
 }
 
@@ -1604,7 +1604,7 @@ void IceRealBuff::listenerCallback(DamageInfo& info)
     if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CreateBuffAction>(0, NineIceBuff::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "NineIceBuff created");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "NineIceBuff created");
         this->count -= this->triggerNum;
     }
 }
@@ -1640,7 +1640,7 @@ void NineIceBuff::listenerCallback(Skill* const skill)
     if(skill->getSkillName() != Beam::name)
         return;
     skill->changeEnergyReduceDOWN(this->number * 9);
-    Logger::debugBuff(AutoAttack::getTimer(),
+    Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       " triggered, skill:" + skill->getSkillName() +  ", energyReduceDOWN: " + std::to_string(skill->getEnergyReduceDOWN()));
 }
@@ -1777,7 +1777,7 @@ VortexLuckyDoubledBuff::VortexLuckyDoubledBuff(Person *p, double n) : Buff(p)
 
     p->triggerAction<LuckyCountModifyAction>(this->number);
     this->p->luckyMultiplyingExtra += 0.2;
-    Logger::debugBuff(AutoAttack::getTimer(),this->getBuffName(),"triggered, current lucky: " + std::to_string(this->p->getLuckyCount()));
+    Logger::debugBuff(this->p->getSimulationTime(),this->getBuffName(),"triggered, current lucky: " + std::to_string(this->p->getLuckyCount()));
 }
 
 void VortexLuckyDoubledBuff::listenerCallback(double n)
@@ -1788,7 +1788,7 @@ void VortexLuckyDoubledBuff::listenerCallback(double n)
     this->number = this->p->getLuckyCount();
     this->p->triggerAction<LuckyCountModifyAction>(this->number);
     this->timer = 0;
-    Logger::debugBuff(AutoAttack::getTimer(),this->getBuffName(),"triggered, current lucky: " + std::to_string(this->p->getLuckyCount()));
+    Logger::debugBuff(this->p->getSimulationTime(),this->getBuffName(),"triggered, current lucky: " + std::to_string(this->p->getLuckyCount()));
 }
 
 void VortexLuckyDoubledBuff::update(const double deltaTime) { this->timer += deltaTime; }
@@ -1832,7 +1832,7 @@ void ConquerorBuff::listenerCallback(DamageInfo &info)
     if(this->count >= this->triggerNum)
     {
         this->p->triggerAction<CreateBuffAction>(1, StackMomentumBuff::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "StackMomentumBuff created");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "StackMomentumBuff created");
         this->count -= this->triggerNum;
     }
 }
@@ -1871,14 +1871,14 @@ void StackMomentumBuff::update(const double)
     {
         this->duration = 0;
         this->p->triggerAction<CreateBuffAction>(1, BreakThroughBuff::name);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "BreakThroughBuff created");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "BreakThroughBuff created");
     }
 
     if(this->stack != this->lastStack)
     {
         int temp = this->stack - this->lastStack;
         this->p->triggerAction<AttackCountModifyAction>(temp * this->number);
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(),
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(),
                           "stack changed, atk adjusted: " + std::to_string(temp * this->number));
         this->p->triggerAction<DreamIncreaseModifyAction>(temp * 0.016);
         this->lastStack = this->stack;
@@ -2011,7 +2011,7 @@ void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
         {
             this->p->triggerAction<AddFactorEnergyAction>(8);
             this->count -= this->arrowTriggerNum;
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       "Factor energy reverted: 8");
         }
@@ -2030,7 +2030,7 @@ void OccupationalFactorBuff_Beam::listenerCallback(Skill *const skill)
     if (skill->getSkillName() == Flood_Beam::name)
     {
         this->p->triggerAction<AddFactorEnergyAction>(400);  
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       "Factor energy reverted: 400");
     }
@@ -2043,7 +2043,7 @@ void OccupationalFactorBuff_Beam::update(const double deltaTime)
     {
         this->p->triggerAction<AddFactorEnergyAction>(20);
         this->timer -= this->beamTriggerInterval;
-        Logger::debugBuff(AutoAttack::getTimer(),
+        Logger::debugBuff(this->p->getSimulationTime(),
                       this->getBuffName(),
                       "Factor energy reverted: 20");
     }
@@ -2087,13 +2087,13 @@ void FantasyImpactBuff_Beam::listenerCallback(DamageInfo &info)
         this->stack += 1;
         if (this->triggerTimer < this->triggerInterval)
         { // 如果计时器未达到触发间隔
-            this->triggerTimer += 30 * AutoAttack::getDeltaTime();
+            this->triggerTimer += 30 * this->p->getSimulationDeltaTime();
         }
         if (this->stack >= (this->triggerStack + this->extraTriggerStack) &&
             this->triggerTimer >= this->triggerInterval)
         {
             this->p->triggerAction<CreateSkillAction>(0, FantasyImpact_Beam::name);
-            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "FantasyImpact_Beam created");
+            Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "FantasyImpact_Beam created");
             // 触发幻想冲击
             // 时阶加伤效果写在对应skill中
             this->triggerTimer = 0;
@@ -2103,7 +2103,7 @@ void FantasyImpactBuff_Beam::listenerCallback(DamageInfo &info)
         if (static_cast<int>(this->stack) % this->extremeLuckTriggerStack == 0)
         {
             this->p->triggerAction<CreateBuffAction>(0, ExtremeLuckBuff_Beam::name);
-            Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "ExtremeLuckBuff_Beam created");
+            Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "ExtremeLuckBuff_Beam created");
         }
     }
 }
@@ -2167,12 +2167,12 @@ void CoefficientAdjustmentBuff_Beam::listenerCallback(DamageInfo& info)
     if(info.skillName == Beam::name)
     {
         info.damageNum *= beamAdjustment;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Beam damage adjusted");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "Beam damage adjusted");
     }
     if(info.skillName == IceArrow_Beam::name || info.skillName == FrostBurst::name)
     {
         info.damageNum *= icearrowAdjustment;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "IceArrow/FrostBurst damage adjusted");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "IceArrow/FrostBurst damage adjusted");
     }
 }
 
@@ -2209,12 +2209,12 @@ void OtherExtraEnhanceBuff::listenerCallback(Skill* const skill)
     if(skill->getSkillName() == WaterSpout::name)
     {
         skill->dreamIncreaseAdd += 0.112*10;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "WaterSpout dreamIncreaseAdd applied");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "WaterSpout dreamIncreaseAdd applied");
     }
     if(skill->getSkillName() == Beam::name)
     {
         skill->dreamIncreaseAdd += 0;
-        Logger::debugBuff(AutoAttack::getTimer(), this->getBuffName(), "Beam dreamIncreaseAdd applied");
+        Logger::debugBuff(this->p->getSimulationTime(), this->getBuffName(), "Beam dreamIncreaseAdd applied");
     }
 }
 

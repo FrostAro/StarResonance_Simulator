@@ -59,8 +59,8 @@ void Beam::trigger(Person* p)
         addMultiplyingTimes += 1;
     }
 
-    Logger::debugSkill(AutoAttack::getTimer(),this->getSkillName(),"beam attacked, beam count: " + std::to_string(this->count));
-    Logger::debugSkill(AutoAttack::getTimer(),this->getSkillName(),"beam consumed energy, person current energy: " + std::to_string(p->getPresentEnergy()));
+    Logger::debugSkill(p->getSimulationTime(),this->getSkillName(),"beam attacked, beam count: " + std::to_string(this->count));
+    Logger::debugSkill(p->getSimulationTime(),this->getSkillName(),"beam consumed energy, person current energy: " + std::to_string(p->getPresentEnergy()));
 }
 
 std::string Beam::getSkillName() const{ return Beam::name; }
@@ -305,7 +305,7 @@ void IceArrow_Beam::setSkillType()
 void IceArrow_Beam::trigger(Person *p)
 {
 
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this); // 冰箭本体伤害
     p->triggerAction<AttackAction>(0, this); // 冰箭本体伤害
     p->triggerAction<EnergyRevertAction_Beam>(this->energyAdd,this);  // 冰光共鸣
@@ -349,7 +349,7 @@ void FrostBurst::setSkillType()
 
 void FrostBurst::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this); // 冰箭爆炸伤害
 }
 
@@ -384,7 +384,7 @@ void Ultimate_Beam::setSkillType()
 
 void Ultimate_Beam::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, UltiIncreaseBuff_Beam::name);
     p->triggerAction<AttackAction>(0, this);
 }
@@ -425,7 +425,7 @@ void FantasyImpact_Beam::setSkillType()
 
 void FantasyImpact_Beam::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<AttackAction>(0, this);
     // 二重：幻想冲击有50%几率再触发一次
     // if (p->isSuccess(0.5) ) {

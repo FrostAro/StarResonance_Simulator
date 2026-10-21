@@ -3,6 +3,7 @@
 #include <map>
 #include <unordered_map>
 #include <stdexcept>
+#include <atomic>
 
 class DamageInfo;
 class Person;
@@ -36,8 +37,8 @@ protected:
     // 静态成员变量
     // ============================================================================
     
-    static std::string name;  // Buff类型名称（类级别）
-    static int ID;            // 静态ID计数器（类级别）
+    static std::string name;                // Buff类型名称（类级别）
+    static std::atomic<int> ID;             // 静态ID计数器（类级别）
 
     // ============================================================================
     // 实例成员变量

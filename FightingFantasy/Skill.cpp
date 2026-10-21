@@ -33,7 +33,7 @@ void MukuChief::setSkillType()
 
 void MukuChief::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, MukuChiefBuff::name);
 }
 
@@ -79,7 +79,7 @@ void MukuScout::setSkillType()
 
 void MukuScout::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, MukuScoutBuff::name);
 }
 
@@ -128,7 +128,7 @@ void BYS::setSkillType()
 
 void BYS::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, BYSBuff::name);
 }
 
@@ -177,7 +177,7 @@ void YGLWS::setSkillType()
 
 void YGLWS::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, YGLWSBuff::name);
 }
 
@@ -225,7 +225,7 @@ void SXMQ::setSkillType()
 
 void SXMQ::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, SXMQBuff::name);
 }
 
@@ -267,7 +267,7 @@ void HYXZ::setSkillType()
 
 void HYXZ::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, HYXZBuff::name);
 }
 
@@ -315,7 +315,7 @@ void LSZZ::setSkillType()
 
 void LSZZ::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, LSZZBuff::name);
 }
 
@@ -363,7 +363,7 @@ void YZ::setSkillType()
 
 void YZ::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, YZBuff::name);
 }
 
@@ -411,7 +411,7 @@ void JQR::setSkillType()
 
 void JQR::trigger(Person *p)
 {
-    Logger::debugSkill(AutoAttack::getTimer(), this->getSkillName(), "triggered");
+    Logger::debugSkill(p->getSimulationTime(), this->getSkillName(), "triggered");
     p->triggerAction<CreateBuffAction>(0, JQRBuff::name);
 }
 

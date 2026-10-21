@@ -1,20 +1,17 @@
 #include "Buff.h"
 #include "GameConstants.h"
-#include <string>
 #include "Skill.h"
 #include "Action.h"
 
 // 静态成员初始化
-int Buff::ID = 0;
+std::atomic<int> Buff::ID{0};  // 静态ID计数器初始化为0
 std::string Buff::name = "Buff";
 
 // 构造函数
 Buff::Buff(Person *p)
     : buffID(Buff::getID()),  // 分配唯一ID
       p(p)
-{
-    ID++;  // 递增静态ID计数器
-}
+{}
 
 // 添加层数（堆叠）
 void Buff::addStack(const double n)
@@ -50,7 +47,7 @@ void Buff::stop()
 bool Buff::operator==(const Buff &other) const { return other.getBuffID() == this->getBuffID(); }
 
 // 获取下一个可用的BuffID
-int Buff::getID() { return Buff::ID; }
+int Buff::getID() { return Buff::ID.fetch_add(1, std::memory_order_relaxed); }
 
 // 重置持续时间到最大值
 void Buff::resetDuration() { this->duration = this->maxDuration; }
@@ -69,7 +66,7 @@ bool Buff::getAllowDuplicates() const { return this->allowDuplicates; }
 bool Buff::getIsInherent() const { return this->isInherent; }
 
 // 重置静态ID计数器（用于重新开始计数）
-void Buff::resetID() { Buff::ID = 0; }
+void Buff::resetID() { Buff::ID.store(0, std::memory_order_relaxed); }
 
 // buff何时应该被移除，默认为持续时间结束
 bool Buff::shouldBeRemoved() { return this->duration < 0; }

@@ -102,9 +102,6 @@ void SimulationWorker::run()
 
     bool loggedFirst = false;
     for (int i = 0; i < m_times; ++i) {
-        // 重置自动攻击计时器
-        AutoAttack::setTimer() = 0;
-
         // 创建 Beam 职业人物对象
         std::unique_ptr<Person> person = std::make_unique<Mage_Beam>(
             m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
@@ -123,6 +120,9 @@ void SimulationWorker::run()
         // 初始化角色（装备技能、Buff等）
         auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig, m_flowConfig);
         init->Initialize();
+
+        // 重置计时器
+        person->autoAttackPtr->setTimer(0);
 
         // 首次模拟：开启DEBUG供调试日志文件捕获（命名含 -gui-编译方式）
         if (i == 0)
@@ -144,7 +144,7 @@ void SimulationWorker::run()
         while (currentTime < m_maxTime && !QThread::currentThread()->isInterruptionRequested()) {
             person->autoAttackPtr->update(m_deltaTime);
             currentTime += m_deltaTime;
-            AutoAttack::setTimer() += m_deltaTime;
+            person->autoAttackPtr->setTimer(person->getSimulationTime() + m_deltaTime);
         }
 
         // 首次模拟结束：收尾日志文件并恢复 WARNING 级别

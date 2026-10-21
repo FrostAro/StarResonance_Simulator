@@ -77,9 +77,10 @@ public:
      * @param luckyNum 幸运伤害值
      * @param isCritical 是否暴击
      * @param isLucky 是否幸运
+     * @param time 时间戳
      * @details 使用提供的参数完全初始化伤害信息
      */
-    DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky);
+    DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky, double time);
     
     /**
      * @brief 拷贝构造函数（默认）
@@ -208,7 +209,7 @@ public:
      * @param skillName 发生错误的技能名称
      * @param errorType 错误类型枚举值
      */
-    ErrorInfo(std::string skillName, ErrorInfo::errorTypeEnum errorType);
+    ErrorInfo(std::string skillName, double time, ErrorInfo::errorTypeEnum errorType);
 
     // ============================================================================
     // 枚举字符串转换相关静态方法
@@ -220,7 +221,7 @@ public:
      * @param type 错误类型枚举值
      * @return std::string 对应的字符串表示
      */
-    static std::string errorTypeToString(errorTypeEnum type);
+    static std::string errorTypeToString(errorTypeEnum type, double time);
     
     /**
      * @brief 字符串转错误类型枚举
@@ -229,7 +230,7 @@ public:
      * @return errorTypeEnum 对应的枚举值
      * @throws std::invalid_argument 当字符串无法识别时抛出异常
      */
-    static errorTypeEnum stringToErrorType(const std::string& str);
+    static errorTypeEnum stringToErrorType(const std::string& str, double time);
     
     /**
      * @brief 获取错误类型映射表

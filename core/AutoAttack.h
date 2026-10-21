@@ -67,8 +67,8 @@ protected:
     // 静态成员变量
     // ============================================================================
     
-    static double timer;        // 全局计时器，用于同步所有AutoAttack实例的时间
-    static double deltaTime;    // 全局时间变量，用于同步所有更新事件倍速
+    double timer = 0;        // 全局计时器，用于同步所有AutoAttack实例的时间
+    double deltaTime = 10;    // 全局时间变量，用于同步所有更新事件倍速
 
     // ============================================================================
     // 实例成员变量
@@ -265,9 +265,10 @@ public:
     // 访问器和修改器
     // ============================================================================
 
-    static double getTimer();
-    static double& setTimer();
-    static double getDeltaTime();
+    double getTimer() const;
+    double setTimer(double newTimer);
+    double getDeltaTime() const;
+    double setDeltaTime(double newDeltaTime);
     bool getIsReleasingSkill() const;
     bool getIsOutBurst() const;
     int getNextOutBurstType() const;

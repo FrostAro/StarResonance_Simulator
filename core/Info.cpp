@@ -17,7 +17,7 @@ class Skill;
  * @details 初始化时间为当前AutoAttack计时器值
  */
 DamageInfo::DamageInfo()
-            : time(AutoAttack::getTimer())
+            : time(0)
             {}
 
 /**
@@ -28,14 +28,15 @@ DamageInfo::DamageInfo()
  * @param luckyNum 幸运伤害值
  * @param isCritical 是否暴击
  * @param isLucky 是否幸运
+ * @param time 时间戳
  */
-DamageInfo::DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky)
+DamageInfo::DamageInfo(std::string skillName, double damageNum, double luckyNum, bool isCritical, bool isLucky, double time)
             : skillName(skillName),
               damageNum(damageNum),
               luckyNum(luckyNum),
               isCritical(isCritical),
               isLucky(isLucky),
-              time(AutoAttack::getTimer())  // 使用当前时间戳
+              time(time)  // 使用传入的时间戳
             {}
 
 /**
@@ -130,10 +131,11 @@ PriorSkillInfo::PriorSkillInfo(std::string skillName, int priority)
  * 
  * @param skillName 发生错误的技能名称
  * @param errorType 错误类型枚举值
+ * @param time 时间戳
  */
-ErrorInfo::ErrorInfo(std::string skillName, ErrorInfo::errorTypeEnum errorType)
+ErrorInfo::ErrorInfo(std::string skillName, double time, ErrorInfo::errorTypeEnum errorType)
             : skillName(skillName),
-              time(AutoAttack::getTimer()),  // 记录当前时间
+              time(time),
               errorType(errorType)
             {}
 
@@ -171,13 +173,13 @@ static const std::map<std::string, ErrorInfo::errorTypeEnum> reverseErrorTypeMap
  * @param type 错误类型枚举值
  * @return std::string 对应的字符串表示
  */
-std::string ErrorInfo::errorTypeToString(errorTypeEnum type) {
+std::string ErrorInfo::errorTypeToString(errorTypeEnum type, double time) {
     auto it = errorTypeMap.find(type);
     if (it != errorTypeMap.end()) {
         return it->second;
     }
     // 未知类型处理
-    return "[Error,timer=" + std::to_string(AutoAttack::getTimer()) + "]: Error - Unknown error type turn to string";
+    return "[Error,timer=" + std::to_string(time) + "]: Error - Unknown error type turn to string";
 }
 
 /**
@@ -187,7 +189,7 @@ std::string ErrorInfo::errorTypeToString(errorTypeEnum type) {
  * @return errorTypeEnum 对应的枚举值
  * @throws std::invalid_argument 当字符串无法识别时抛出异常
  */
-ErrorInfo::errorTypeEnum ErrorInfo::stringToErrorType(const std::string& str) {
+ErrorInfo::errorTypeEnum ErrorInfo::stringToErrorType(const std::string& str, double time) {
     // 1. 尝试精确匹配
     auto it = reverseErrorTypeMap.find(str);
     if (it != reverseErrorTypeMap.end()) {
@@ -225,7 +227,7 @@ ErrorInfo::errorTypeEnum ErrorInfo::stringToErrorType(const std::string& str) {
     }
     
     // 4. 所有匹配失败，抛出异常
-    throw std::invalid_argument("[Error,timer=" + std::to_string(AutoAttack::getTimer()) + "]: Error - Unknown string turn to error type : " + str);
+    throw std::invalid_argument("[Error,timer=" + std::to_string(time) + "]: Error - Unknown string turn to error type : " + str);
 }
 
 /**
@@ -260,7 +262,7 @@ std::vector<std::string> ErrorInfo::getAllErrorTypeNames() {
 std::ostream& operator<<(std::ostream& os, const ErrorInfo& errorInfo) {
     os << "[ErrorInfo]: time: " << errorInfo.time 
     << " skillType:" << errorInfo.skillName
-    << " errorType:" << ErrorInfo::errorTypeToString(errorInfo.errorType);
+    << " errorType:" << ErrorInfo::errorTypeToString(errorInfo.errorType, errorInfo.time);
     return os;
 }
 

@@ -50,7 +50,7 @@ static std::unordered_map<std::string, DamageStatistics> simulateIcicleOnce(
     {
         p->autoAttackPtr->update(deltaTime);
         currentTime += deltaTime;
-        p->autoAttackPtr->setTimer() += deltaTime;
+        p->autoAttackPtr->setTimer(p->getSimulationTime() + deltaTime);
     }
 
     p->calculateDamageStatistics();

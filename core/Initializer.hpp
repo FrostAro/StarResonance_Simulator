@@ -156,7 +156,7 @@ protected:
      */
     void initializeAutoAttack()
     {
-        AutoAttack::deltaTime = this->deltaTime;
+        this->p->autoAttackPtr->deltaTime = this->deltaTime;
         // 初始化自动攻击系统技能优先级列表与无前摇技能列表
         // 创建一个临时的person
         std::unique_ptr<temp_Person> temp_p = std::make_unique<temp_Person>();

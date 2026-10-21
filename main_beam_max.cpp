@@ -161,7 +161,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
     initializer->Initialize();
 
     // 从 0 开始计时
-    AutoAttack::setTimer() = 0;
+    person->autoAttackPtr->setTimer(0);
 
     int currentTime = 0;
     int startedTime = -1;
@@ -171,7 +171,7 @@ static ScenarioResult runScenario(const beam_person& cfg,
     {
         person->autoAttackPtr->update(deltaTime);
         currentTime += deltaTime;
-        AutoAttack::setTimer() += deltaTime;
+        person->autoAttackPtr->setTimer(person->getSimulationTime() + deltaTime);
 
         // 找到 Beam 第一次出伤的时间
         if (startedTime < 0)
@@ -312,7 +312,7 @@ static FirstHitResult runFirstHit(const beam_person& cfg, const std::string& ski
     auto initializer = std::make_unique<SkillOnlyInitializer_Mage_Beam>(person.get(), deltaTime);
     initializer->SetupSkillsOnly();
 
-    AutoAttack::setTimer() = 0;
+    person->autoAttackPtr->setTimer(0);
 
     int currentTime = 0;
     const int maxGuard = 30000;  // 单个技能首次出伤的安全上限
@@ -321,7 +321,7 @@ static FirstHitResult runFirstHit(const beam_person& cfg, const std::string& ski
     {
         person->autoAttackPtr->update(deltaTime);
         currentTime += deltaTime;
-        AutoAttack::setTimer() += deltaTime;
+        person->autoAttackPtr->setTimer(person->getSimulationTime() + deltaTime);
 
         for (const auto& info : person->getDamageListInfoRef())
         {

@@ -217,12 +217,12 @@ DamageInfo Person::Damage(const Skill *skill)
         {
             luckyDamage = this->luckyDamage(skill);
             info = DamageInfo(skill->getSkillName(), damage,
-                        luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), this->isSuccess(this->Lucky));
+                        luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), this->isSuccess(this->Lucky), this->getSimulationTime());
         }
         else
         {
             info = DamageInfo(skill->getSkillName(), damage,
-                            luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), false);
+                            luckyDamage, this->isSuccess(this->Critical + skill->criticalAdd), false, this->getSimulationTime());
         }
         // if(info.skillName == Spear::name)
         // {
@@ -297,7 +297,7 @@ void Person::updateNowReleasingSkill(int deltaTime)
             this->nowReleasingSkill.reset();
             this->nowReleasingSkill = nullptr;
             //  向autoAttack传递技能释放完成消息，提醒autoAttack可以进行下一次技能释放
-            Logger::debugAction(AutoAttack::getTimer(),
+            Logger::debugAction(this->getSimulationTime(),
                                 "FacilitationSkill",
                                 " - facilitation skill finish ");
             this->autoAttackPtr->updateSkillFinish();
@@ -502,7 +502,7 @@ void Person::cleanupFinishedBuffs()
         }
         else if ((*it)->shouldBeRemoved())
         {
-            Logger::debugBuff(AutoAttack::getTimer(),
+            Logger::debugBuff(this->getSimulationTime(),
                                 (*it)->getBuffName(),
                                 " - is being removed.");
             toDestroy.push_back(std::move(*it));  // 移出所有权，此时不执行析构
@@ -1562,6 +1562,20 @@ double Person::getEnergyReduceUP() const { return energyReduceUP; }
 double Person::getEnergyReduceDOWN() const { return energyReduceDOWN; }
 
 const AutoAttack *Person::getAutoAttack() const { return this->autoAttackPtr.get(); }
+
+// 构造期 autoAttackPtr 还是空的（要到 initializeAutoAttack 才创建），
+// 此时任何"取当前时间"的调用都必须能安全返回，否则 Person / Mage_Beam 构造函数里
+// 那些 changeXxx* → triggerAction → Action::execute 的日志会直接空指针崩溃。
+double Person::getSimulationTime() const
+{
+    return this->autoAttackPtr ? this->autoAttackPtr->getTimer() : 0.0;
+}
+
+double Person::getSimulationDeltaTime() const
+{
+    return this->autoAttackPtr ? this->autoAttackPtr->getDeltaTime() : 10.0;
+}
+
 Skill* const Person::getNowReleasingSkill() const { return this->nowReleasingSkill.get(); }
 void Person::clearNowReleasingSkill() { this->nowReleasingSkill.reset(); }
 

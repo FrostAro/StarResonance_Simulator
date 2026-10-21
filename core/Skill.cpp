@@ -1,5 +1,6 @@
 #include "Skill.h"
 #include "AutoAttack.h"
+#include "Person.h"
 #include <iostream>
 #include <algorithm>
 #include <cctype>
@@ -199,7 +200,7 @@ std::string Skill::skillTypeToString(skillTypeEnum type)
         return it->second;
     }
     // 未知类型处理
-    return "[Error,timer=" + std::to_string(AutoAttack::getTimer()) + "]: Error       - Unknown skilltype turn to string";
+    return "[Error]: Error       - Unknown skilltype turn to string";
 }
 
 /**
@@ -234,7 +235,7 @@ Skill::skillTypeEnum Skill::stringToSkillType(const std::string &str)
     }
 
     // 3. 所有匹配失败，抛出异常
-    throw std::invalid_argument("[Eorror,timer=" + std::to_string(AutoAttack::getTimer()) + "]: Error       - Unknown string turn to skilltype : " + str);
+    throw std::invalid_argument("[Error]: Error       - Unknown string turn to skilltype : " + str);
 }
 
 /**
@@ -405,7 +406,7 @@ ContinuousSkill::ContinuousSkill() : Skill()
  */
 void ContinuousSkill::use(Person *p)
 {
-    addDamageTriggerTimer(AutoAttack::getDeltaTime());
+    addDamageTriggerTimer(p->getSimulationDeltaTime());
     if(this->damageTriggerTimer >= this->damageTriggerInterval){
         this->trigger(p);  // 触发具体效果
         this->damageTriggerTimer -= this->damageTriggerInterval;
@@ -432,7 +433,7 @@ FacilitationSkill::FacilitationSkill() : Skill()
  */
 void FacilitationSkill::use(Person* p)
 {
-    addDamageTriggerTimer(AutoAttack::getDeltaTime());
+    addDamageTriggerTimer(p->getSimulationDeltaTime());
     if(this->damageTriggerTimer >= this->damageTriggerInterval){
         this->trigger(p);  // 触发具体效果
         this->damageTriggerTimer -= this->damageTriggerInterval;
