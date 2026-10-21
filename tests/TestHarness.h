@@ -13,7 +13,10 @@
 // ============================================================================
 
 #include <cmath>
-#include <cstdio>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -68,7 +71,10 @@ inline int& failureCount()
 inline void reportFailure(const char* file, int line, const std::string& what)
 {
     ++failureCount();
-    std::printf("       [FAIL] %s:%d\n              %s\n", file, line, what.c_str());
+    // 用 std::cout 而不是 printf：与项目其余输出一致，且不可能出现
+    // "%d 配 double" 这类格式串与实参不匹配的未定义行为。
+    std::cout << "       [FAIL] " << file << ':' << line
+              << "\n              " << what << '\n';
 }
 
 // ---------------------------------------------------------------------------
@@ -86,11 +92,26 @@ inline std::string toStr(long v)               { return std::to_string(v); }
 inline std::string toStr(long long v)          { return std::to_string(v); }
 inline std::string toStr(unsigned v)           { return std::to_string(v); }
 inline std::string toStr(unsigned long v)      { return std::to_string(v); }
-inline std::string toStr(double v)             { return std::to_string(v); }
-inline std::string toStr(float v)              { return std::to_string(v); }
 inline std::string toStr(bool v)               { return v ? "true" : "false"; }
 inline std::string toStr(const std::string& v) { return v; }
 inline std::string toStr(const char* v)        { return std::string(v ? v : "(null)"); }
+
+// 浮点用 max_digits10（double=17、float=9），保证「打印出来的数原样读回去 == 原值」。
+// 不能用 std::to_string：它固定 6 位小数，两个只差 1e-9 的值会打印成一模一样，
+// 断言失败时你会盯着两条相同的数字发呆（金丝雀测试尤其受影响）。
+inline std::string toStr(double v)
+{
+    std::ostringstream oss;
+    oss << std::setprecision(std::numeric_limits<double>::max_digits10) << v;
+    return oss.str();
+}
+
+inline std::string toStr(float v)
+{
+    std::ostringstream oss;
+    oss << std::setprecision(std::numeric_limits<float>::max_digits10) << v;
+    return oss.str();
+}
 
 } // namespace test
 

@@ -11,10 +11,15 @@
 // ============================================================================
 
 #include "TestHarness.h"
-#include <iostream>   // 直接用 std::cout，故显式包含（不依赖 TestHarness.h 的传递包含）
+#include "core/Logger.h"   // 压低日志级别，避免产品代码的 DEBUG 日志刷屏
+#include <iostream>        // 直接用 std::cout，故显式包含（不依赖 TestHarness.h 的传递包含）
 
 int main()
 {
+    // 被测代码里有大量 Logger::debug（例如 changeXxxCount 每次都打一条），
+    // 测试输出只保留 WARNING 及以上，否则报告会被淹掉。
+    Logger::setLevel(Logger::Level::WARNING);
+
     auto& tests = test::registry();
 
     std::cout << "运行 " << tests.size() << " 个测试\n";

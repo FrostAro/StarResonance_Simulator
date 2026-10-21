@@ -10,23 +10,30 @@
 
 #include "Mage/Beam/Person.h"
 #include "Mage/Beam/Initializer.hpp"
+#include "Mage/Beam/SimulationHelper.h"
 
 #include "core/Logger.h"
 #include "core/Statistics.h"
 #include "core/SimulationLog.h"
+#include <cstdint>
 #include <iostream>
 #include <memory>
-#include <string>
-#include <vector>
 #include <random>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 /**
  * @brief 执行射线职业的模拟循环
- * 
+ *
  * 根据指定参数运行多次模拟，收集伤害统计数据
  * 注：射线默认每0.5s必出一发冰箭
- * 
+ *
+ * 「构造角色 → 初始化 → 跑循环 → 收集统计」这段不再自己实现，而是调用
+ * Mage/Beam/SimulationHelper.h 的 runBeamSimulationOnce —— 与 GUI、对比模式、
+ * 黄金基线测试共用同一份代码，避免参数（站街面板/武器归类/fantasyConfig）
+ * 在各入口之间悄悄分叉。这里只保留 CLI 独有的部分：随机种子、调试日志、打印。
+ *
  * @param damageStatisticsList 输出参数，存储所有模拟的伤害统计结果
  * @param times 模拟循环次数
  * @param maxTime 每次模拟的最大运行时间（毫秒）
@@ -42,94 +49,70 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
                             std::uint32_t seed)
 {
     // 参数验证：times必须大于0
-    if (times <= 0) 
+    if (times <= 0)
         return;
-    
+
+    // 站街面板：与 GUI「射线」默认值、tests 黄金基线共用同一套数值
+    SimConfig cfg;
+    cfg.primaryAttributes = 9272;
+    cfg.critical          = 10.12;
+    cfg.quickness         = 38.18;
+    cfg.lucky             = 23.21;
+    cfg.proficient        = 74.8;
+    cfg.almighty          = 20.88;
+    cfg.atk               = 8151;
+    cfg.refineATK         = 1100;
+    cfg.elementATK        = 430;
+    cfg.attackSpeed       = 0.0;
+    cfg.castingSpeed      = 0.0;
+    cfg.criticaldamage_set  = 0.0;
+    cfg.increasedamage_set  = 0.0;
+    cfg.elementdamage_set   = 0.0;
+    cfg.fantasyConfig     = 7;   // 机器人 + 嗜血毛球
+    cfg.flowConfig        = 0;   // 0=急速精通流，1=幸运流
+    cfg.weapon = WeaponConfig{SecondaryAttributeConfig::Proficient,
+                              SecondaryAttributeConfig::Quickness,
+                              0.06, 0.08};
+
+    // Person 构造参数描述（用于日志配置头）
+    const std::string personParams =
+        "三维=9272, 暴击=10.12, 急速=38.18, 幸运=23.21, 精通=74.8, 全能=20.88, "
+        "攻击=8151, 精炼=1100, 元素=430, 攻速=0, 施速=0, "
+        "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(cfg.fantasyConfig);
+
     // 循环执行指定次数的模拟
     while (times > 0)
     {
-        int currentTime = 0;  // 当前模拟时间g
-        
-        // 创建射线法师角色对象，并设置基础属性
-        // 参数顺序：三维属性,暴击,急速,幸运,精通,全能,攻击,精炼攻击,元素攻击,攻击速度,施法速度,
-        //          爆伤额外值,增伤额外值,元素增伤额外值,程序运行总tick
+        // 随机种子每轮重新掷（与旧实现一致：times>1 且随机时每轮不同）
+        const std::uint32_t runSeed = isRandomSeed ? std::random_device{}() : seed;
 
-        int fantasyConfig = 7; // 幻想配置参数（0-7），控制装备的幻想技能组合
-        int flowConfig = 0;   // 流派配置参数（0-1），0=急速精通流，1=幸运流
+        // 记录是否开启了本次的调试日志（多次模拟只取第一次）
+        bool loggedFirst = false;
 
-        // Person 构造参数描述（用于日志配置头）
-        const std::string personParams =
-            "三维=6760, 暴击=5, 急速=30, 幸运=5, 精通=45, 全能=10, "
-            "攻击=5000, 精炼=1000, 元素=230, 攻速=0, 施速=0, "
-            "爆伤=0, 增伤=0, 元素增伤=0, fantasyConfig=" + std::to_string(fantasyConfig);
+        auto stats = runBeamSimulationOnceWithHook(
+            cfg, runSeed, maxTime, deltaTime,
+            [&](Person* p)
+            {
+                // 初始化完成、主循环开始前：开日志 + 打印提示（与旧实现同一时机）
+                loggedFirst = SimulationLog::begin("beam", p, personParams);
+                std::cout << "Starting simulation..." << std::endl;
+            });
 
-        std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
-        // 理应为站街面板
-        /*三维属性*/ 9272,
-        /*暴击(%)*/ 10.12,/*例如51.63*/
-        /*急速(%)*/ 38.18,
-        /*幸运(%)*/ 23.21,
-        /*精通(%)*/ 74.8,
-        /*全能(%)*/ 20.88,
-        /*攻击(物理攻击/魔法攻击)*/ 8151,
-        /*精炼攻击*/ 1100,
-        /*元素攻击*/ 430,
-        /*额外攻击速度(%)*/ 0,
-        /*额外施法速度(%)*/ 0,
-        /*爆伤额外值*/ 0,/*例如0.2*/
-        /*增伤额外值*/ 0,
-        /*元素增伤额外值*/ 0,
-        /*程序运行总tick*/ maxTime,
-        /*幻想配置*/ fantasyConfig,
-        /*武器配置(第一属性, 第二属性, 增效, 加成)*/
-        WeaponConfig{SecondaryAttributeConfig::Proficient, SecondaryAttributeConfig::Quickness, 0.06, 0.08}
-        // 红武无视增效和第一第二属性，第一第二属性设置为SecondaryAttributeConfig::None即可，增效设置为0
-        );
-        
-        // 设置随机种子
-        if (isRandomSeed) {
-            // 使用真随机数种子
-            p->setRandomSeed(std::random_device{}());
-        } else {
-            // 使用固定种子，确保模拟可重现
-            p->setRandomSeed(seed);
-        }
-        
-        // 初始化角色（装备技能、设置buff等）
-        auto Initializer = std::make_unique<Initializer_Mage_Beam>(p.get(), deltaTime,fantasyConfig);
-        Initializer->Initialize();
-
-        // 记录首次模拟的调试日志（多次模拟只取第一次）
-        bool loggedFirst = SimulationLog::begin("beam", p.get(), personParams);
-
-        // 开始模拟运行
-        std::cout << "Starting simulation..." << std::endl;
-        while (currentTime < maxTime)
-        {
-            // 更新自动攻击系统
-            p->autoAttackPtr->update(deltaTime);
-
-            // 更新当前时间
-            currentTime += deltaTime;
-            p->autoAttackPtr->setTimer() += deltaTime;
-        }
-
-        // 首次模拟结束：收尾日志文件，后续模拟恢复 INFO 级别避免刷屏
+        // 模拟结束：收尾日志文件，恢复 INFO 级别避免后续刷屏
         if (loggedFirst)
         {
             SimulationLog::end();
             Logger::setLevel(Logger::Level::INFO);
         }
-        // 计算伤害统计信息
-        p->calculateDamageStatistics();
+
         std::cout << "Simulation ended." << std::endl;
-        
+
         // 打印本次模拟的详细统计
-        printDamageStatistics(p->damageStatsMap, maxTime);
-        
+        printDamageStatistics(stats, maxTime);
+
         // 将统计结果添加到列表中
-        damageStatisticsList.push_back(p->damageStatsMap);
-        
+        damageStatisticsList.push_back(std::move(stats));
+
         times--;
     }
 }
