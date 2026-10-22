@@ -37,6 +37,23 @@
 //    编译器无法验证，所以取槽处用 static_cast 并在 debug 下配合断言。
 // ============================================================================
 
+// ---------------------------------------------------------------------------
+// 调试期不变量：**派发某个 Action 期间，不允许 add/remove 同一 Action 的监听器**
+//
+// execute() 里遍历的是 `listOf<T>()` 返回的 vector。若某个回调在遍历过程中
+// 注册/注销**同一类型** T 的监听器，push_back 可能重分配、erase 会挪动元素，
+// 正在使用的迭代器立刻失效 → 未定义行为（可能不崩，只是结果错乱）。
+//
+// 这个不变量由 debug 断言守护：
+//   · Person::triggerAction<T>() 进入时 enterDispatch<T>()、退出时 leaveDispatch<T>()
+//   · add<T>() / remove<T>() 断言当前 T 的派发深度为 0
+// Release 下这些代码全部被 #ifndef NDEBUG 去掉，零开销。
+//
+// 已实测（Debug）：射线黄金/并行、冰矛、beam_max、对比模式四条路径均不触发。
+// 若将来有人写出"监听器在回调里给自己注册"的 Buff，Debug 会直接 abort，
+// 而不是留一个只在特定分配顺序下错的幽灵 bug。
+// ---------------------------------------------------------------------------
+
 namespace detail
 {
     /**
@@ -128,6 +145,13 @@ public:
     template <typename ActionT>
     void add(typename ActionT::ListenerPtr listener)
     {
+#ifndef NDEBUG
+        // 派发 T 的过程中又注册 T 的监听器 → push_back 可能重分配，
+        // 正在被遍历的 vector 迭代器失效（UB）
+        const auto guardIt = m_dispatchDepth.find(std::type_index(typeid(ActionT)));
+        assert((guardIt == m_dispatchDepth.end() || guardIt->second == 0) &&
+               "add<T>() 在 T 的派发过程中被调用：迭代器可能失效");
+#endif
         listOf<ActionT>().push_back(std::move(listener));
     }
 
@@ -137,6 +161,12 @@ public:
     template <typename ActionT>
     void remove(int buffID)
     {
+#ifndef NDEBUG
+        // 派发 T 的过程中注销 T 的监听器 → erase 会让迭代器失效
+        const auto guardIt = m_dispatchDepth.find(std::type_index(typeid(ActionT)));
+        assert((guardIt == m_dispatchDepth.end() || guardIt->second == 0) &&
+               "remove<T>() 在 T 的派发过程中被调用：迭代器可能失效");
+#endif
         slotOf<ActionT>().removeByBuffID(buffID);
     }
 
@@ -157,8 +187,28 @@ private:
         return *slot;
     }
 
+public:
+#ifndef NDEBUG
+    /// 进入/离开某类 Action 的派发（供 add/remove 检查自修改）
+    template <typename ActionT>
+    void enterDispatch() { ++m_dispatchDepth[std::type_index(typeid(ActionT))]; }
+    template <typename ActionT>
+    void leaveDispatch()
+    {
+        // 只递减、不删除：避免每次 triggerAction 都 new/delete 一个 map 节点
+        // （键最多几十个，常驻无害）
+        const auto it = m_dispatchDepth.find(std::type_index(typeid(ActionT)));
+        if (it != m_dispatchDepth.end()) --it->second;
+    }
+private:
+#endif
+
     /// key = Action 类型，value = 该类型的监听器 vector（类型已擦除）
     /// ⚠️ 成员名不能叫 slots：Qt 的 QObject 把 slots 定义成了宏（#define slots），
     ///    在 GUI 目标里会被展开成空，导致 std::unordered_map<...> slots; 变成语法错误。
     std::unordered_map<std::type_index, std::unique_ptr<detail::IListenerSlot>> m_slots;
+
+#ifndef NDEBUG
+    std::unordered_map<std::type_index, int> m_dispatchDepth;   // 派发深度（检测"派发期间自我注册/注销"）
+#endif
 };

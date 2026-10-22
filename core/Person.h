@@ -548,7 +548,14 @@ void Person::triggerAction(double count, Args &&...args)
 	auto it = std::make_unique<T>(std::forward<Args>(args)...);
 	if(it)
 	{
+#ifndef NDEBUG
+		// 标记"正在派发 T"，供 ActionListeners::add/remove 断言自修改（debug only）
+		this->actionListeners.enterDispatch<T>();
+#endif
 		it->execute(count,this);
+#ifndef NDEBUG
+		this->actionListeners.leaveDispatch<T>();
+#endif
 
 		// 不建议再使用队列处理事件
 		// 队列处理事件会导致模拟DPS偏低
