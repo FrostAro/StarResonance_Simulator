@@ -99,10 +99,33 @@ private:
     WeaponConfig m_weapon;    // 武器第一/第二属性（与 CLI 同口径）
 };
 
+/**
+ * @brief 配对对比工作对象：在独立 QThread 里跑完整一轮 CRN 对比
+ *
+ * @details 生命周期：构造 → moveToThread(m_compareThread) → QThread::started 触发
+ *          run() → 末尾 emit comparisonFinished（连接到 QThread::quit）→
+ *          QThread::finished 时 deleteLater 回收。
+ *
+ * @note run() 只在 m_compareThread 上执行，GUI 侧不要直接调用；对 UI 的反馈一律
+ *       通过 signal（Qt 默认 QueuedConnection，跨线程安全）；取消由
+ *       stopWorkerThreads() 的 requestInterruption() 驱动。
+ *
+ * @warning 若把 runPairedComparison 内部改成线程池，取消标志必须换成本类自己持有
+ *          的 std::atomic<bool>：QThread 的中断位只能被本线程读到。
+ */
 class ComparisonWorker : public QObject
 {
     Q_OBJECT
 public:
+    /**
+     * @param base        基准配置（当前输入面板）
+     * @param candidates  候选配置列表，每行一个（由候选文本框解析得到）
+     * @param pairs       配对数 = 使用的种子个数（建议 20+）
+     * @param seed        起始种子，实际使用 seed..seed+pairs-1
+     * @param maxTime     每次模拟时长（毫秒）
+     * @param deltaTime   模拟步长（毫秒）
+     * @param simulate    单次模拟函数（射线/冰矛二选一，由调用方决定）
+     */
     explicit ComparisonWorker(const SimConfig& base,
                               std::vector<SimConfig> candidates,
                               int pairs,
@@ -119,17 +142,17 @@ public slots:
     void run();  // 在子线程中执行配对对比
 
 signals:
-    void logMessage(const QString& msg);
-    void comparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs);
+    void logMessage(const QString& msg);                                      // 进度提示（一行文字）
+    void comparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs); // 逐候选一行结果
 
 private:
-    SimConfig m_base;
-    std::vector<SimConfig> m_candidates;
-    int m_pairs;
-    std::uint32_t m_seed;
-    int m_maxTime;
-    int m_deltaTime;
-    SimulateFn m_simulate;
+    SimConfig m_base;                       // 基准配置
+    std::vector<SimConfig> m_candidates;    // 候选配置（每个只与基准差一项）
+    int m_pairs;                            // 配对数（种子个数）
+    std::uint32_t m_seed;                   // 起始种子
+    int m_maxTime;                          // 每次模拟时长（毫秒）
+    int m_deltaTime;                        // 步长（毫秒）
+    SimulateFn m_simulate;                  // 职业相关的单次模拟函数
 };
 
 class MainWindow : public QMainWindow

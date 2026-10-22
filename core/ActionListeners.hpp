@@ -9,50 +9,34 @@
 #include <utility>
 #include <vector>
 
-// ============================================================================
-// 每个 Person 一份的监听器注册表
-//
-// 背景：监听器原本挂在 TypedAction<Derived, Listener> 的 `inline static` 成员上，
-// 于是整张表是**进程级**的 —— 两个 Person 同时存活时，A 的 Buff 注册的回调会被
-// B 触发的事件调用，互相激活形成无限递归（实测退出码 0xC00000FD 栈溢出），
-// 也让 Buff::ID 被迫全局唯一。
-//
-// 这个类把表搬到 Person 实例上：key 是 Action 类型，value 是该 Action 的监听器 vector。
-//
-// 难点：C++ 容器是同质的，而每种 Action 的 vector 元素类型都不同
-// （unique_ptr<DamageListener> / unique_ptr<EnergyListener> / ...）。
-// 解法是类型擦除 —— 键里记类型，值里只存"一个对象"：
-//
-//     key   = std::type_index(typeid(ActionT))   // 运行期类型身份证（本质是个指针）
-//     value = std::unique_ptr<IListenerSlot>     // 虚基类，删除逻辑类型无关
-//
-// 为什么这里**不能**用 shared_ptr<void>：
-//   std::shared_ptr<void> 能工作是因为它把删除器存在控制块里（运行期）；
-//   而 shared_ptr 可拷贝，一旦 ActionListeners 被拷贝，两个 Person 会静默共享
-//   同一批 vector —— 正好是本次要修掉的 bug。unique_ptr 会让这种拷贝编译失败。
-//   （unique_ptr<void> 则根本编不过：delete void* 非法。）
-//
-// ⚠️ 不变量：键为 typeid(ActionT) 的槽，内部一定是 ListenerSlot<ActionT::ListenerVector>。
-//    这条由本类保证（只有 slotOf 会建槽，且只用模板参数决定的类型建），
-//    编译器无法验证，所以取槽处用 static_cast 并在 debug 下配合断言。
-// ============================================================================
+/**
+ * @file ActionListeners.hpp
+ * @brief 每个 Person 一份的监听器注册表
+ *
+ * @details 监听器原先挂在 TypedAction 的 inline static 成员上，整张表是进程级的：
+ *          两个 Person 同时存活时，A 的 Buff 回调会被 B 的事件触发，互相激活形成
+ *          无限递归（实测栈溢出 0xC00000FD），也迫使 Buff::ID 全局唯一。
+ *          这里把表搬到 Person 实例上：键是 Action 类型，值是该类型的监听器 vector。
+ *
+ *          C++ 容器是同质的，而各 Action 的 vector 元素类型不同，所以用类型擦除：
+ *          键存 std::type_index(typeid(ActionT))，值存 unique_ptr<IListenerSlot>，
+ *          具体类型由 ListenerSlot<Vec> 提供，删除逻辑走虚函数。
+ *
+ * @note 不能用 shared_ptr<void>：它可拷贝，一旦 ActionListeners 被拷贝，两个 Person
+ *       会静默共享同一批 vector，正好是要修的 bug。unique_ptr 让这种拷贝编译失败。
+ *       （unique_ptr<void> 本身编不过：delete void* 非法。）
+ *
+ * @warning 不变量：键为 typeid(ActionT) 的槽，内部一定是 ListenerSlot<ActionT::ListenerVector>。
+ *          只有 slotOf 会建槽且类型由模板参数决定，编译器无法验证，因此取槽处用
+ *          static_cast 并在 debug 下配合断言。
+ */
 
-// ---------------------------------------------------------------------------
-// 调试期不变量：**派发某个 Action 期间，不允许 add/remove 同一 Action 的监听器**
-//
-// execute() 里遍历的是 `listOf<T>()` 返回的 vector。若某个回调在遍历过程中
-// 注册/注销**同一类型** T 的监听器，push_back 可能重分配、erase 会挪动元素，
-// 正在使用的迭代器立刻失效 → 未定义行为（可能不崩，只是结果错乱）。
-//
-// 这个不变量由 debug 断言守护：
-//   · Person::triggerAction<T>() 进入时 enterDispatch<T>()、退出时 leaveDispatch<T>()
-//   · add<T>() / remove<T>() 断言当前 T 的派发深度为 0
-// Release 下这些代码全部被 #ifndef NDEBUG 去掉，零开销。
-//
-// 已实测（Debug）：射线黄金/并行、冰矛、beam_max、对比模式四条路径均不触发。
-// 若将来有人写出"监听器在回调里给自己注册"的 Buff，Debug 会直接 abort，
-// 而不是留一个只在特定分配顺序下错的幽灵 bug。
-// ---------------------------------------------------------------------------
+/**
+ * @note 调试期不变量：派发某个 Action 期间不允许 add/remove 同一 Action 的监听器。
+ *       execute() 遍历的就是 listOf<T>() 返回的 vector，遍历中注册会让 push_back
+ *       重分配、注销会让 erase 挪动元素，迭代器立刻失效。由 Person::triggerAction<T>()
+ *       记录派发深度、add/remove 断言深度为 0 来守护，Release 下零开销。
+ */
 
 namespace detail
 {
@@ -80,7 +64,7 @@ namespace detail
 
         void removeByBuffID(int buffID) override
         {
-            // 语义与原 TypedAction::deleteListener 一致：只删**第一个**匹配项。
+            // 语义与原 TypedAction::deleteListener 一致：只删第一个匹配项。
             // 若将来某个 Buff 对同一 Action 注册多次，需要改成 erase-remove 全删，
             // 但那会改变行为 → 必须用黄金基线确认数值不变。
             const auto it = std::find_if(

@@ -46,7 +46,7 @@ struct WeaponConfig
 };
 
 /**
- * @brief 幻想提供的、**站街面板已经包含**的百分比被动加成。
+ * @brief 幻想提供的、站街面板已经包含的百分比被动加成。
  *
  * 这类加成的特点：游戏中它会直接计入站街面板，所以玩家输入的面板值
  * 已经把它包含进去了。如果直接拿面板值反解属性点数，这段百分比会被
@@ -116,15 +116,9 @@ private:
 	mutable std::uniform_int_distribution<int> intDist{0, 9999};    
 
 public:
-	// ==== 监听器注册表（每个 Person 一份） ====
-	//
-	// ⚠️ 声明顺序即生命线：必须在 buffList **之前**声明。
-	//    成员按**声明逆序**析构，所以 buffList 会先于 actionListeners 销毁；
-	//    而 Buff 的析构里要调 actionListeners.remove<>(...) 注销监听器，
-	//    若顺序反过来（表先销毁）就是 use-after-free。
-	//    （Person::~Person 函数体里也显式调用了 clearBuffs()，是第二道保险。）
-	//
-	// 必须 public：Buff 及其子类通过 p->actionListeners 访问，而 friendship 不继承。
+	// 监听器注册表（每个 Person 一份）。
+	// 声明顺序即生命线：必须在 buffList 之前，成员按声明逆序析构，这样 Buff 析构里
+	// 调 actionListeners.remove<>() 时表还活着。必须 public，因为 friendship 不继承。
 	ActionListeners actionListeners;
 
 protected:
@@ -276,13 +270,13 @@ public:
 	// 只是不再参与点数换算。即：
 	//     可点数化部分 = 总值 - 基础 - ExtraPercent
 	//
-	// ⚠️ 实现是**直接修改成员变量、不广播 Action 事件**，因为：
+	// ⚠️ 实现是直接修改成员变量、不广播 Action 事件，因为：
 	//    1.「总值不变、只切通道」不是一次属性变更，不该通知监听者；
 	//    2. Action 版会走 changeXxxCount，而它内部又按
 	//       「总值 - ExtraPercent - 基础」重算，会把已经挪进 ExtraPercent 的部分
 	//       再扣一次——这就是武器 6% 曾被扣两遍、精通峰值掉到 99% 的根源。
 	//
-	// ⚠️ 因此**仅限初始化期调用**（Person 构造 / Initializer::equipSkills）。
+	// ⚠️ 因此仅限初始化期调用（Person 构造 / Initializer::equipSkills）。
 	//    战斗中调用会让 DoubleProficientBuff、FloatingExtraSecondaryAttributesBuff*、
 	//    JQRBuff 等的缓存值脱钩，而且不会报错。
 	//
@@ -509,10 +503,9 @@ public:
     /**
      * @brief 模拟时钟（毫秒），AutoAttack 尚未创建时返回 0
      *
-     * 为什么需要这个包装：`autoAttackPtr` 要到 Initializer::initializeAutoAttack()
-     * 才被创建，而 Person / 职业子类的**构造函数**里就会调用 changeXxx* →
-     * triggerAction → Action::execute，那些地方要打带时间戳的日志。
-     * 直接写 `autoAttackPtr->getTimer()` 在构造期是空指针解引用。
+     * @details autoAttackPtr 要到 initializeAutoAttack() 才创建，而构造函数里就会
+     *          触发 changeXxx* → Action::execute 去打带时间戳的日志，
+     *          直接解引用在构造期是空指针。
      */
     double getSimulationTime() const;
 

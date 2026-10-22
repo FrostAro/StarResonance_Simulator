@@ -70,21 +70,27 @@ using SimulateFn = std::function<std::unordered_map<std::string, DamageStatistic
  */
 double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& statsMap, int maxTime);
 
-// ============================================================================
-// ComparisonResult - 单个候选配置的配对对比结果
-// ============================================================================
+/**
+ * @brief 单个候选配置的配对对比结果（表格的一行）
+ *
+ * @details deltaPercent 容易被噪声干扰，真正可信的是 deltaStd 与 tValue：
+ *          deltaStd 是 Δi 的样本标准差，CRN 生效时应远小于 baseStd / candStd；
+ *          若三者量级接近，说明随机流已分叉（候选改动了随机消耗顺序）。
+ *          tValue 的绝对值 >= 2 时（N≈20）可认为差异真实；tValue 为 0 表示
+ *          deltaStd 为 0 或 N<2，不是"没有提升"的意思。
+ */
 struct ComparisonResult
 {
     std::string label;          // 候选配置名
-    double baseDps = 0;         // 基准平均 DPS（对所有候选相同）
+    double baseDps = 0;         // 基准平均 DPS（所有候选共用）
     double candDps = 0;         // 候选平均 DPS
     double deltaDps = 0;        // candDps - baseDps
     double deltaPercent = 0;    // 相对提升 (%)
-    double baseStd = 0;         // 基准 DPS 标准差（未配对，仅参考）
-    double candStd = 0;         // 候选 DPS 标准差（未配对，仅参考）
-    double deltaStd = 0;        // 配对差值标准差（CRN 核心指标，应远小于上面两者）
-    double tValue = 0;          // 配对 t 值 = mean(delta) / (deltaStd / sqrt(N))
-    int pairs = 0;              // 配对数
+    double baseStd = 0;         // 基准 DPS 样本标准差（仅对照）
+    double candStd = 0;         // 候选 DPS 样本标准差（仅对照）
+    double deltaStd = 0;        // 配对差值的样本标准差（CRN 核心指标）
+    double tValue = 0;          // 配对 t 值 = mean(Δ) / (deltaStd / sqrt(N))
+    int pairs = 0;              // 实际使用的配对数
 };
 
 /**

@@ -1285,7 +1285,14 @@ LifeFluctuationBuff::LifeFluctuationBuff(Person *p, double)
     this->maxDuration = this->duration;
     this->isInherent = true;
 
-    // 寻找属性最大值,给最大固定值的属性+3.5%百分比
+    // 找出「百分比最高」的副属性，给它 +number（当前 number = 0.1，即 +10%）
+    //
+    // ⚠️ 注意与 FloatingExtraSecondaryAttributesBuff_Beam 的口径差异：
+    //    那个用 getXxxCount()（点数）比较，这个用 getXxx()（百分比）比较。
+    //    默认面板下两者恰好都选中精通，但某属性"额外通道很大、点数很小"时
+    //    会挑到不同目标。详见 SkillLogic.md 4.5 节。
+    //
+    // ⚠️ 旧注释写的 "+3.5%" 是从 FloatingExtra 复制过来的过期文案，实际见上。
     this->findMaxAttribute();
     switch (lastAttribute)
     {

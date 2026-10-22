@@ -4,7 +4,7 @@
 // 职责：固定种子跑完整 180 秒模拟，把「总 DPS / 各技能占比 / 计数 / 暴击率」钉住。
 // 与单元测试的分工：这里抓「变了」（test_attributes.cpp 抓「算错了」）。
 //
-// 构造路径**不自己复制**，而是调用 Mage/Beam/SimulationHelper.h 的
+// 构造路径不自己复制，而是调用 Mage/Beam/SimulationHelper.h 的
 // runBeamSimulationOnce —— 与 main_Beam.cpp / GUI / 对比模式共用同一份实现，
 // 从根上消除「测试盯着的构造路径和实际程序走的路悄悄分叉」这个风险。
 //
@@ -113,7 +113,7 @@ TEST(golden_beam_default, "黄金基线：默认面板")
 
     // 3. 出伤/触发计数 —— 先累加成【全局合计】再钉
     //
-    //    ⚠️ 6872 / 1406 / 4318 / 2594 都是**所有技能之和**，不是单个技能的
+    //    ⚠️ 6872 / 1406 / 4318 / 2594 都是所有技能之和，不是单个技能的
     //       （单个技能的量级是 1793 / 385 / 1670 / 1670）。别钉到 stats.at(某技能) 上。
     //    ⚠️ 为什么值得钉：整数、无浮点误差，任何 Buff 的触发次数一变立刻红，
     //       比总 DPS 的 ±0.01% 容差敏感得多；而且占比对"整体乘区变化"不敏感
@@ -145,13 +145,13 @@ TEST(golden_beam_default, "黄金基线：默认面板")
 // 第一次模拟留下的回调就会影响第二次。
 //
 // 现在监听器表已经下放到 Person（core/ActionListeners.h），不再是
-// TypedAction 的 inline static；但**库里仍有进程级状态**会跨模拟留存：
+// TypedAction 的 inline static；但库里仍有进程级状态会跨模拟留存：
 //   · Buff::ID / Skill::ID 计数器（只增不清）
 //   · SkillCreator / BuffCreator 的 creatorMap
 //   · Logger / SimulationLog 的全局配置
 // 所以这条金丝雀仍然必要：它盯的是"第二遍结果和第一遍一致"。
 //
-// ⚠️ 必须**顺序**跑：runBeamSimulationOnce 内部创建 Person 并在返回时销毁。
+// ⚠️ 必须顺序跑：runBeamSimulationOnce 内部创建 Person 并在返回时销毁。
 //    （历史上两个 Person 同时存活会栈溢出 0xC00000FD，那是监听器表全局共享
 //     导致的互相激活；下放 Person 后该问题已消失，并行用例见
 //     tests/test_parallel_isolation.cpp。）

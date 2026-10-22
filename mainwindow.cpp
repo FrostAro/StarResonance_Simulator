@@ -239,9 +239,23 @@ ComparisonWorker::~ComparisonWorker()
     // 日志回调只在 run() 末尾清理，不在析构中清——避免竞态清掉新 worker 的回调
 }
 
+// ============================================================================
+// ComparisonWorker::run —— 在 m_compareThread 里执行整轮配对对比
+//
+// 本函数运行在 m_compareThread 上，所有 UI 更新都走 signal（跨线程安全），
+// 不能在这里直接碰控件。
+//
+// 取消：stopWorkerThreads() 先 requestInterruption() 再 quit()+wait()，
+// shouldStop 回调逐次检查中断标志后跳出。
+//
+// 注意 shouldStop 这个 lambda 只能在本线程求值：QThread::currentThread() 返回
+// "当前调用者"的 QThread，换到别的线程里调会拿到没人 requestInterruption 过的
+// 对象，恒为 false，取消会静默失效。改成线程池时必须换成本类自己的 atomic 标志。
+// ============================================================================
 void ComparisonWorker::run()
 {
-    // 压低日志级别：配对对比会产生大量buff/技能DEBUG日志，避免刷屏卡顿GUI
+    // 压低日志级别：配对对比会产生大量 buff/技能 DEBUG 日志，避免刷屏卡顿 GUI。
+    // Logger 的级别是进程级的，保存旧值、结束后恢复，避免污染后续单次模拟。
     const Logger::Level oldLevel = Logger::getLevel();
     Logger::setLevel(Logger::Level::WARNING);
 
@@ -760,7 +774,14 @@ std::vector<SimConfig> MainWindow::parseCandidates(const SimConfig& base, const 
 
 void MainWindow::onRunClicked()
 {
-    // 两类线程都要检查：监听器/计时器都是进程级静态状态，两个模拟并发会互相污染
+    // 同一时间只允许一个模拟在跑。
+    //
+    // 注意：这条限制的原始理由已经过时（监听器表与 AutoAttack 时钟都已下放到
+    // Person 实例，两个模拟并发在数值上不会再互相污染）。现在仍然保留，是因为：
+    //   · SimulationLog 是全局单例（ofstream + 非原子状态），不支持多线程
+    //   · Logger 的级别是全局的，两个 worker 各自 setLevel 会互相覆盖
+    //   · 两个模拟同时跑会抢 CPU，GUI 进度反馈也会混乱
+    // 若将来要做"多个对比任务并行"，先把前两项改成 per-worker 的。
     if ((m_workerThread && m_workerThread->isRunning()) ||
         (m_compareThread && m_compareThread->isRunning()))
     {

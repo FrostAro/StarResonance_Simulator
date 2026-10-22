@@ -82,7 +82,7 @@ public:
  * 通过 CRTP 实现：每个派生动作继承 TypedAction<Derived, ListenerType>，
  * 从而获得自己的 ListenerPtr / ListenerVector 类型别名。
  *
- * @note 监听器**不再**存在这里。原来这里是
+ * @note 监听器不再存在这里。原来这里是
  *       `inline static std::vector<ListenerPtr> listeners;` —— 进程级全局表，
  *       导致多个 Person 互相污染（A 的回调被 B 的事件触发 → 递归栈溢出）。
  *       现在表在 Person::actionListeners（见 core/ActionListeners.h），

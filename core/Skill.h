@@ -41,7 +41,7 @@ protected:
 
     // 技能 ID 计数器（类级别，进程级共享）
     //
-    // 用 atomic + fetch_add 是**为了多 Person 并行**：原先是
+    // 用 atomic + fetch_add 是为了多 Person 并行：原先是
     //     skillID(ID); ID++;
     // 两次独立访问，两个线程同时造技能会拿到同一个 ID（数据竞争，UB）。
     // fetch_add 把"取号 + 自增"合成一步原子操作。

@@ -8,10 +8,20 @@
 #include <iomanip>
 #include <iostream>
 
+/**
+ * @brief 从统计表计算总 DPS
+ *
+ * @details 口径与 printDamageStatistics 的输出一致：总伤害含幸运期望，再除以秒数。
+ *          注意每技能"占比"的分子不含幸运，那是既有口径，不要为了统一而改。
+ *
+ * @param statsMap 按技能名统计的伤害表
+ * @param maxTime  模拟总时长（毫秒），<=0 时返回 0 避免除零
+ * @return 总 DPS（伤害/秒）
+ */
 double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& statsMap, int maxTime)
 {
     if (maxTime <= 0)
-        return 0;  // 避免除零（GUI输入被清空等情况）
+        return 0;  // 避免除零（GUI 输入被清空 / 配置错误等情况）
     double total = 0;
     for (const auto& [name, stat] : statsMap)
     {
@@ -20,7 +30,10 @@ double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& stat
     return total / (static_cast<double>(maxTime) / 1000.0);
 }
 
-// 平均值（空容器返回 0）
+
+/**
+ * @brief 算术平均（空容器返回 0）
+ */
 static double mean(const std::vector<double>& values)
 {
     if (values.empty())
@@ -31,7 +44,17 @@ static double mean(const std::vector<double>& values)
     return sum / static_cast<double>(values.size());
 }
 
-// 样本标准差（n-1），n<2 返回 0
+
+/**
+ * @brief 样本标准差（分母 n-1）
+ *
+ * @details 用 n-1 而非 n：这 N 个种子是从全部可能种子里抽的样本，除以 n-1 才是无偏估计。
+ *          n<2 时无法计算，约定返回 0（调用方据此把 t 值也置 0）。
+ *
+ * @param values 样本值
+ * @param avg    已算好的平均值（避免重复遍历）
+ * @return 样本标准差
+ */
 static double sampleStddev(const std::vector<double>& values, double avg)
 {
     if (values.size() < 2)
@@ -45,6 +68,30 @@ static double sampleStddev(const std::vector<double>& values, double avg)
     return std::sqrt(sum / static_cast<double>(values.size() - 1));
 }
 
+/**
+ * @brief 同种子配对对比（CRN）主流程
+ *
+ * @details 跑 (1 + 候选数) × 配对数 次独立模拟。基准先跑 P 个种子并缓存，各候选
+ *          再用同一组种子逐对相减：Δi = 候选(seed_i) - 基准(seed_i)。同种子下两份
+ *          模拟的随机波动同向同幅，相减时抵消，只剩配置差异，所以 deltaStd 应远小于
+ *          baseStd / candStd。前提是二者按相同顺序消费随机流；若候选改了幻想或自动
+ *          战斗这类结构，配对收益会打折。
+ *
+ *          取消：基准未跑完返回空；候选跑到一半只返回已完成全部种子的那些。
+ *
+ *          并行化改造点：结果按 task = variant * seedCount + seedIndex 落槽，再按
+ *          任务号升序聚合，浮点加法顺序与串行一致，才能保证结果逐位相同。
+ *
+ * @param base       基准配置
+ * @param candidates 候选配置列表
+ * @param firstSeed  起始种子，使用 firstSeed..firstSeed+seedCount-1
+ * @param seedCount  配对数即种子个数（建议 20 以上）
+ * @param maxTime    单次模拟时长（毫秒）
+ * @param deltaTime  模拟步长（毫秒）
+ * @param simulate   单次模拟函数
+ * @param shouldStop 可选提前终止回调
+ * @return 每个候选一条结果，按 candidates 顺序排列
+ */
 std::vector<ComparisonResult> runPairedComparison(
     const SimConfig& base,
     const std::vector<SimConfig>& candidates,
@@ -56,15 +103,20 @@ std::vector<ComparisonResult> runPairedComparison(
     const std::function<bool()>& shouldStop)
 {
     std::vector<ComparisonResult> results;
+
+    // 边界：配对数 <= 0 没有统计意义；simulate 为空说明调用方没给职业实现
     if (seedCount <= 0 || !simulate)
         return results;
 
-    // 1. 基准：在 seedCount 个种子下各跑一次并缓存（模拟是确定性的，可复用）
+    // 阶段 1：基准
+    //
+    // 只跑 seedCount 次并缓存（确定性 ⇒ 可复用）。所有候选共用这一份基准，
+    // 所以候选数再多，基准也只跑一次。
     std::vector<double> baseDpsBySeed(seedCount);
     for (int i = 0; i < seedCount; ++i)
     {
         if (shouldStop && shouldStop())
-            return results;  // 提前终止：基准尚未完成，无候选结果
+            return results;  // 基准未完成：没有可比对的基准，直接返回空
         const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
         auto map = simulate(base, seed, maxTime, deltaTime);
         baseDpsBySeed[i] = getTotalDPS(map, maxTime);
@@ -72,22 +124,36 @@ std::vector<ComparisonResult> runPairedComparison(
     const double baseAvg = mean(baseDpsBySeed);
     const double baseStd = sampleStddev(baseDpsBySeed, baseAvg);
 
-    // 2. 候选：与基准同种子配对，逐对求差值
+    // 阶段 2：逐个候选，与基准在相同种子下逐对相减
+    //
+    // 循环嵌套是「外层候选、内层种子」：这样每个候选的 P 个结果、P 个 Δ 都落在
+    // 本轮作用域内，算完就能产出一行 ComparisonResult，不需要额外的中间容器。
+    //
+    // 注意：遍历顺序不影响结果 —— 每个 (候选, 种子) 都是独立模拟，
+    // 换成「外层种子、内层候选」跑出来的数完全一样，只是代码组织不同。
     results.reserve(candidates.size());
     for (const auto& cand : candidates)
     {
         std::vector<double> candDpsBySeed(seedCount);
         std::vector<double> deltas(seedCount);
+
         for (int i = 0; i < seedCount; ++i)
         {
             if (shouldStop && shouldStop())
-                return results;  // 提前终止：返回已完成的候选
+                return results;  // 候选跑到一半取消：只返回已完整算完的候选
+
+            // 与基准阶段用同一个 seed 计算公式，保证两边种子一一对应
             const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
             auto map = simulate(cand, seed, maxTime, deltaTime);
             candDpsBySeed[i] = getTotalDPS(map, maxTime);
+
+            // CRN 的核心一步：同种子相减，抵消掉两边共同的随机波动
             deltas[i] = candDpsBySeed[i] - baseDpsBySeed[i];
         }
 
+        // ---- 统计量 ----
+        // candAvg/candStd：候选自身的均值与波动（未配对，仅作参考）
+        // deltaStd：配对差值的标准差 —— CRN 是否生效就看它比上面两个小多少
         const double candAvg = mean(candDpsBySeed);
         const double candStd = sampleStddev(candDpsBySeed, candAvg);
         const double deltaAvg = mean(deltas);
@@ -104,7 +170,15 @@ std::vector<ComparisonResult> runPairedComparison(
         r.deltaStd = deltaStd;
         r.pairs = seedCount;
 
-        // 配对 t 值 = mean(delta) / (deltaStd / sqrt(N))；deltaStd=0 视为完全一致
+        // ---- 配对 t 值 ----
+        //   t = mean(Δ) / SE，SE = deltaStd / sqrt(N)   （SE = 配对差值均值的标准误）
+        //
+        // 物理含义：「这点提升，相对于配对噪声看起来像不像真的」。
+        //   t 的绝对值 >= 2 ⇒ 在 N=20 量级下约 95% 置信，可认为差异真实存在
+        //   t 的绝对值很小  ⇒ 提升被噪声淹没，需要加大配对数或改动本身太小
+        //
+        // deltaStd == 0（所有种子下 Δ 完全一致，例如只改了确定性系数）时无法定义 t，
+        // 此时约定 tValue = 0（表示"无需用它判断显著性"，不是"没有提升"）。
         const double deltaSE = (seedCount > 0) ? deltaStd / std::sqrt(static_cast<double>(seedCount)) : 0.0;
         r.tValue = (deltaSE > 0) ? r.deltaDps / deltaSE : 0.0;
 

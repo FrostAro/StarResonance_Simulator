@@ -1,7 +1,7 @@
 #include "Person.h"
 #include "GameConstants.h"
 #include <cstddef>
-// #include <random>
+// include <random>
 #include <ctime>
 #include <memory>
 #include <cassert>
@@ -85,7 +85,7 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
 {
     // 武器属性：面板里属于武器的那 6% 应走「额外百分比通道」——
     // 即不参与点数换算，也不会被「双倍精通」之类的点数操作放大。
-    // reclassify 只改 extra 并重算 count，**属性总值保持不变**。
+    // reclassify 只改 extra 并重算 count，属性总值保持不变。
     constexpr double kWeaponPanelPercent = 0.06;
     if (weaponConfig.first != SecondaryAttributeConfig::None)
     {
@@ -1135,10 +1135,10 @@ double Person::changeAlmightyPercent(const double percent)
 //   1. extra += percent      （标记这段走额外通道）
 //   2. count 按新的「可点数化部分」重算
 //
-// 属性**总值不变**，所以所有依赖百分比的派生值都不用重算
+// 属性总值不变，所以所有依赖百分比的派生值都不用重算
 //（元素增伤、施法/攻击速度、幸运倍率、全能增伤等），只有点数 count 会变小。
 //
-// 注意：这里直接改成员变量，**不走 Action 事件**。原因：
+// 注意：这里直接改成员变量，不走 Action 事件。原因：
 //   - 「总值不变、只是通道切换」不是一次属性变更，不该广播给监听者；
 //   - Action 版会走 changeXxxCount，而它内部又按「总值 - extra - base」重算，
 //     会把已经在 weaponConfig 里挪进 extra 的部分再扣一次（武器 6% 被扣两遍的根源）。
