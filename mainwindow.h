@@ -17,6 +17,9 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPlainTextEdit>
+#include <QElapsedTimer>
+#include <QTimer>
+#include <atomic>
 #include <memory>
 #include "core/Person.h"
 #include "core/AutoAttack.h"
@@ -66,8 +69,11 @@ public:
                               uint32_t seed,
                               int fantasyConfig,
                               int flowConfig,
+                              int workerCount,
                               const WeaponConfig& weapon);
     ~SimulationWorker(); 
+    /// 请求取消（可从 GUI 线程调用；内部是原子写）
+    void requestCancel() { m_cancel.store(true, std::memory_order_relaxed); }
 public slots:
     void run();  // 在子线程中执行模拟循环
 signals:
@@ -96,7 +102,9 @@ private:
     uint32_t m_seed;
     int m_fantasyConfig;  // 保存幻想配置索引
     int m_flowConfig;     // 保存流派配置：0=急速精通流，1=幸运流
+    int m_workerCount;    // 并行线程数（times>1 时生效）
     WeaponConfig m_weapon;    // 武器第一/第二属性（与 CLI 同口径）
+    std::atomic<bool> m_cancel{false};   // 取消标志（times>1 时被多个工作线程并发读）
 };
 
 /**
@@ -107,11 +115,12 @@ private:
  *          QThread::finished 时 deleteLater 回收。
  *
  * @note run() 只在 m_compareThread 上执行，GUI 侧不要直接调用；对 UI 的反馈一律
- *       通过 signal（Qt 默认 QueuedConnection，跨线程安全）；取消由
- *       stopWorkerThreads() 的 requestInterruption() 驱动。
+ *       通过 signal（Qt 默认 QueuedConnection，跨线程安全）。
  *
- * @warning 若把 runPairedComparison 内部改成线程池，取消标志必须换成本类自己持有
- *          的 std::atomic<bool>：QThread 的中断位只能被本线程读到。
+ * @warning 取消必须用本类自己的 std::atomic<bool>（requestCancel）。
+ *          不能用 QThread::currentThread()->isInterruptionRequested()：
+ *          内部线程池里的工作线程不是 Qt 线程，那个调用在那里恒为 false，
+ *          取消会静默失效。
  */
 class ComparisonWorker : public QObject
 {
@@ -124,6 +133,7 @@ public:
      * @param seed        起始种子，实际使用 seed..seed+pairs-1
      * @param maxTime     每次模拟时长（毫秒）
      * @param deltaTime   模拟步长（毫秒）
+     * @param workerCount 并行线程数，1 = 串行（结果与并行逐位相同）
      * @param simulate    单次模拟函数（射线/冰矛二选一，由调用方决定）
      */
     explicit ComparisonWorker(const SimConfig& base,
@@ -132,18 +142,26 @@ public:
                               std::uint32_t seed,
                               int maxTime,
                               int deltaTime,
+                              int workerCount,
                               SimulateFn simulate)
         : m_base(base), m_candidates(std::move(candidates)), m_pairs(pairs),
           m_seed(seed), m_maxTime(maxTime), m_deltaTime(deltaTime),
-          m_simulate(std::move(simulate)) {}
+          m_workerCount(workerCount), m_simulate(std::move(simulate)) {}
     ~ComparisonWorker();
+
+    /// 请求取消（可从 GUI 线程调用；内部是原子写）
+    void requestCancel() { m_cancel.store(true, std::memory_order_relaxed); }
+
+    /// 本次使用的并行线程数（状态栏显示用）
+    int workerCount() const { return m_workerCount; }
 
 public slots:
     void run();  // 在子线程中执行配对对比
 
 signals:
-    void logMessage(const QString& msg);                                      // 进度提示（一行文字）
-    void comparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs); // 逐候选一行结果
+    void logMessage(const QString& msg);  // 进度提示（一行文字）
+    /// 每个候选一行结果；finished = false 表示被取消（rows 只含已完成的候选）
+    void comparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs, bool finished);
 
 private:
     SimConfig m_base;                       // 基准配置
@@ -152,6 +170,8 @@ private:
     std::uint32_t m_seed;                   // 起始种子
     int m_maxTime;                          // 每次模拟时长（毫秒）
     int m_deltaTime;                        // 步长（毫秒）
+    int m_workerCount;                      // 并行线程数
+    std::atomic<bool> m_cancel{false};      // 取消标志（多线程并发读）
     SimulateFn m_simulate;                  // 职业相关的单次模拟函数
 };
 
@@ -168,7 +188,7 @@ private slots:
     void onProfessionChanged(int index);
     void appendLog(const QString& msg);
     void onSimulationFinished(const QVector<QVector<QVariant>>& stats, int totalTime);
-    void onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs);
+    void onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs, bool finished);
 
 private:
     void setupUI();
@@ -210,6 +230,7 @@ private:
     QLineEdit* m_incSetEdit;
     QLineEdit* m_eleIncSetEdit;
     QLineEdit* m_timesEdit;
+    QLineEdit* m_threadsEdit;   // 非对比模式的并行线程数（times>1 时生效）
     QLineEdit* m_maxTimeEdit;
     QLineEdit* m_deltaTimeEdit;
     QCheckBox* m_randomSeedCheck;
@@ -219,12 +240,17 @@ private:
     // 对比模式控件
     QCheckBox* m_compareCheck;
     QLineEdit* m_comparePairsEdit;
+    QLineEdit* m_compareThreadsEdit;   // 并行线程数（1 = 串行）
     QPlainTextEdit* m_candidatesEdit;
 
     QTextEdit* m_logText;
     QTableWidget* m_resultTable;
     QLabel* m_statusLabel;   // 状态栏文字
     QAction* m_darkModeAction;  // 暗色主题切换
+
+    // 对比耗时刷新（A 档进度：只显示已用时间）
+    QTimer* m_compareTickTimer;
+    QElapsedTimer m_compareClock;
 
     QThread* m_workerThread;
     QThread* m_compareThread;    // 对比模式线程（与 m_workerThread 互斥使用，析构时两者都要回收）

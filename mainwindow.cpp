@@ -21,6 +21,8 @@
 #include <QAction>
 #include <random>
 #include <utility>
+#include <algorithm>   // std::min / std::max（线程数默认值）
+#include <thread>      // std::thread::hardware_concurrency
 #include <QDebug>
 
 // 包含您的核心头文件（路径根据实际项目调整）
@@ -31,6 +33,7 @@
 #include "core/Statistics.h"
 #include "core/Action.h"
 #include "core/SimulationLog.h"
+#include "core/ParallelFor.hpp"
 #include <sstream>
 
 //==============================================================================
@@ -58,6 +61,7 @@ SimulationWorker::SimulationWorker(const QString& profession,
                                    uint32_t seed,
                                    int fantasyConfig,
                                    int flowConfig,
+                                   int workerCount,
                                    const WeaponConfig& weapon)
     : m_profession(profession),
       m_primaryAttr(primaryAttr),
@@ -81,6 +85,7 @@ SimulationWorker::SimulationWorker(const QString& profession,
       m_seed(seed),
       m_fantasyConfig(fantasyConfig),
       m_flowConfig(flowConfig),
+      m_workerCount(workerCount),
       m_weapon(weapon)
 {}
 
@@ -96,77 +101,133 @@ void SimulationWorker::run()
     const Logger::Level oldLevel = Logger::getLevel();
     Logger::setLevel(Logger::Level::WARNING);
 
-    // 不把 Logger 输出转发到实时日志面板：面板只显示本 worker 的"开始/完成"提示，
-    // 详细 debug 信息仅由 SimulationLog 写入文件（如有）
-    std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList;
+    // 每次模拟的结果（按下标落槽；并行时各线程写不同格子，无需加锁）
+    std::vector<std::unordered_map<std::string, DamageStatistics>> damageStatisticsList(
+        static_cast<std::size_t>(m_times));
+    std::vector<std::uint8_t> doneFlag(static_cast<std::size_t>(m_times), 0);
 
-    bool loggedFirst = false;
-    for (int i = 0; i < m_times; ++i) {
-        // 创建 Beam 职业人物对象
-        std::unique_ptr<Person> person = std::make_unique<Mage_Beam>(
+    // 种子统一在主线程预生成：std::random_device 不保证线程安全
+    std::vector<std::uint32_t> seeds(static_cast<std::size_t>(m_times));
+    if (m_randomSeed)
+    {
+        std::random_device rd;
+        for (auto& s : seeds)
+            s = rd();
+    }
+    else
+    {
+        for (auto& s : seeds)
+            s = m_seed;
+    }
+
+    // 调试日志的参数描述（只有单次模拟会用到）
+    std::ostringstream params;
+    params << "三维=" << m_primaryAttr << ", 暴击=" << m_crit << ", 急速=" << m_quickness
+           << ", 幸运=" << m_lucky << ", 精通=" << m_proficient << ", 全能=" << m_almighty
+           << ", 攻击=" << m_atk << ", 精炼=" << m_refineAtk << ", 元素=" << m_elementAtk
+           << ", 攻速=" << m_attackSpeed << ", 施速=" << m_castingSpeed
+           << ", 爆伤=" << m_critDmgSet << ", 增伤=" << m_incSet << ", 元素增伤=" << m_eleIncSet
+           << ", fantasyConfig=" << m_fantasyConfig;
+
+    // 单次模拟的完整流程：构造 → 设种子 → 初始化 → 跑循环 → 收集统计
+    // captureLog 只在单次路径为 true：SimulationLog 是全局单例（ofstream + 非原子状态），
+    // 只能单线程使用，多线程路径必须关掉，否则日志会互相踩。
+    auto runOnce = [&](int index, bool captureLog)
+    {
+        auto person = std::make_unique<Mage_Beam>(
             m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
             m_atk, m_refineAtk, m_elementAtk,
             m_attackSpeed, m_castingSpeed,
             m_critDmgSet, m_incSet, m_eleIncSet,
             m_maxTime, m_fantasyConfig, m_weapon);
 
-        // 设置随机种子
-        if (m_randomSeed) {
-            person->setRandomSeed(std::random_device{}());
-        } else {
-            person->setRandomSeed(m_seed);
-        }
+        person->setRandomSeed(seeds[static_cast<std::size_t>(index)]);
 
-        // 初始化角色（装备技能、Buff等）
-        auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), m_deltaTime, m_fantasyConfig, m_flowConfig);
+        auto init = std::make_unique<Initializer_Mage_Beam>(
+            person.get(), m_deltaTime, m_fantasyConfig, m_flowConfig);
         init->Initialize();
 
-        // 重置计时器
         person->autoAttackPtr->setTimer(0);
 
-        // 首次模拟：开启DEBUG供调试日志文件捕获（命名含 -gui-编译方式）
-        if (i == 0)
+        // 捕获调试日志时临时开 DEBUG，跑完立刻恢复
+        bool logged = false;
+        if (captureLog)
         {
             Logger::setLevel(Logger::Level::DEBUG);
-            std::ostringstream params;
-            params << "三维=" << m_primaryAttr << ", 暴击=" << m_crit << ", 急速=" << m_quickness
-                   << ", 幸运=" << m_lucky << ", 精通=" << m_proficient << ", 全能=" << m_almighty
-                   << ", 攻击=" << m_atk << ", 精炼=" << m_refineAtk << ", 元素=" << m_elementAtk
-                   << ", 攻速=" << m_attackSpeed << ", 施速=" << m_castingSpeed
-                   << ", 爆伤=" << m_critDmgSet << ", 增伤=" << m_incSet << ", 元素增伤=" << m_eleIncSet
-                   << ", fantasyConfig=" << m_fantasyConfig;
-            loggedFirst = SimulationLog::begin("gui", person.get(), params.str());
+            logged = SimulationLog::begin("gui", person.get(), params.str());
         }
 
-        emit logMessage(QString("开始第 %1 次模拟...").arg(i + 1));
-
         int currentTime = 0;
-        while (currentTime < m_maxTime && !QThread::currentThread()->isInterruptionRequested()) {
+        while (currentTime < m_maxTime &&
+               !m_cancel.load(std::memory_order_relaxed))
+        {
             person->autoAttackPtr->update(m_deltaTime);
             currentTime += m_deltaTime;
             person->autoAttackPtr->setTimer(person->getSimulationTime() + m_deltaTime);
         }
 
-        // 首次模拟结束：收尾日志文件并恢复 WARNING 级别
-        if (i == 0 && loggedFirst)
+        if (captureLog)
         {
-            SimulationLog::end();
+            if (logged)
+                SimulationLog::end();
             Logger::setLevel(Logger::Level::WARNING);
         }
 
-        // 收集统计
         person->calculateDamageStatistics();
-        damageStatisticsList.push_back(person->damageStatsMap);
+        return person->damageStatsMap;
+    };
 
-        emit logMessage(QString("第 %1 次模拟完成").arg(i + 1));
+    if (m_times == 1)
+    {
+        // 单次模拟：保留原有的调试日志捕获行为
+        emit logMessage(QString("开始第 1 次模拟..."));
+        damageStatisticsList[0] = runOnce(0, true);
+        doneFlag[0] = 1;
+        emit logMessage(QString("第 1 次模拟完成"));
     }
+    else
+    {
+        // 多次模拟：每次互相独立，按次数分摊到多线程
+        emit logMessage(QString("开始 %1 次模拟（%2 线程）...").arg(m_times).arg(m_workerCount));
+
+        parallelFor(m_times, m_workerCount,
+                    [&](int index)
+                    {
+                        damageStatisticsList[static_cast<std::size_t>(index)] = runOnce(index, false);
+                        doneFlag[static_cast<std::size_t>(index)] = 1;
+                    },
+                    [this]() { return m_cancel.load(std::memory_order_relaxed); });
+
+        emit logMessage(QString("模拟结束"));
+    }
+
+    // 只统计真正跑完的那几次（取消时后面的下标没有数据）
+    int completed = 0;
+    for (auto f : doneFlag)
+        if (f) ++completed;
 
     // 准备表格数据
     QVector<QVector<QVariant>> tableData;
-    if (m_times == 1) {
-        // 单次结果直接转换
-        const auto& statsMap = damageStatisticsList[0];
-        for (const auto& [skillName, stat] : statsMap) {
+    if (completed <= 0)
+    {
+        emit logMessage("已中断，没有完成的模拟。");
+        emit simulationFinished(tableData, m_maxTime);
+        Logger::setLevel(oldLevel);
+        return;
+    }
+
+    if (completed == 1)
+    {
+        // 只有一次跑完：找到那一个下标，直接转换（times=1 或刚开跑就取消时走到这里）
+        std::size_t only = 0;
+        for (std::size_t i = 0; i < doneFlag.size(); ++i)
+        {
+            if (doneFlag[i]) { only = i; break; }
+        }
+
+        const auto& statsMap = damageStatisticsList[only];
+        for (const auto& [skillName, stat] : statsMap)
+        {
             double totalDmg = stat.damage + stat.luckyDamage;
             double dps = totalDmg / (m_maxTime / 1000.0);
             double critRate = stat.damageCount > 0 ? (stat.CritDamageCount / stat.damageCount) * 100.0 : 0.0;
@@ -180,17 +241,23 @@ void SimulationWorker::run()
                 << critRate;
             tableData.append(row);
         }
-    } else {
+    }
+    else
+    {
         // 多次模拟：先累加所有结果，再求平均。
-        // 注意用 double 累加器：DamageStatistics 里的 count 字段是 int，直接 /= m_times
+        // 注意用 double 累加器：DamageStatistics 里的 count 字段是 int，直接 /= 次数
         // 会整除截断（387.8 -> 387），截断后再算暴击率/幸运率就是有偏的。
         struct Acc {
             double damage = 0, luckyDamage = 0;
             double damageCount = 0, luckyDamageCount = 0, critCount = 0;
         };
         std::unordered_map<std::string, Acc> accumulatedMap;
-        for (const auto& statsMap : damageStatisticsList) {
-            for (const auto& [skillName, stat] : statsMap) {
+        for (std::size_t i = 0; i < damageStatisticsList.size(); ++i)
+        {
+            if (!doneFlag[i])
+                continue;
+            for (const auto& [skillName, stat] : damageStatisticsList[i])
+            {
                 auto& acc = accumulatedMap[skillName];
                 acc.damage += stat.damage;
                 acc.damageCount += stat.damageCount;
@@ -200,12 +267,13 @@ void SimulationWorker::run()
             }
         }
         // 转换为表格数据（每项为该次数的均值）
-        for (const auto& [skillName, raw] : accumulatedMap) {
-            const double damage = raw.damage / m_times;
-            const double luckyDamage = raw.luckyDamage / m_times;
-            const double damageCount = raw.damageCount / m_times;
-            const double luckyCount = raw.luckyDamageCount / m_times;
-            const double critCount = raw.critCount / m_times;
+        for (const auto& [skillName, raw] : accumulatedMap)
+        {
+            const double damage = raw.damage / completed;
+            const double luckyDamage = raw.luckyDamage / completed;
+            const double damageCount = raw.damageCount / completed;
+            const double luckyCount = raw.luckyDamageCount / completed;
+            const double critCount = raw.critCount / completed;
             double dps = (damage + luckyDamage) / (m_maxTime / 1000.0);
             double critRate = damageCount > 0 ? (critCount / damageCount) * 100.0 : 0.0;
             QVector<QVariant> row;
@@ -218,7 +286,7 @@ void SimulationWorker::run()
                 << critRate;
             tableData.append(row);
         }
-        emit logMessage(QString("已完成 %1 次模拟，输出 %1 次平均值。").arg(m_times));
+        emit logMessage(QString("已完成 %1 次模拟，输出 %2 次平均值。").arg(completed).arg(completed));
     }
 
     emit simulationFinished(tableData, m_maxTime);
@@ -245,12 +313,9 @@ ComparisonWorker::~ComparisonWorker()
 // 本函数运行在 m_compareThread 上，所有 UI 更新都走 signal（跨线程安全），
 // 不能在这里直接碰控件。
 //
-// 取消：stopWorkerThreads() 先 requestInterruption() 再 quit()+wait()，
-// shouldStop 回调逐次检查中断标志后跳出。
-//
-// 注意 shouldStop 这个 lambda 只能在本线程求值：QThread::currentThread() 返回
-// "当前调用者"的 QThread，换到别的线程里调会拿到没人 requestInterruption 过的
-// 对象，恒为 false，取消会静默失效。改成线程池时必须换成本类自己的 atomic 标志。
+// 取消：stopWorkerThreads() 先 requestCancel() 再 quit()+wait()。
+// 取消标志是本类持有的 std::atomic<bool>，因为内部的线程池用的是 std::thread，
+// 不是 Qt 线程 —— QThread 的中断位在那里面恒为 false，取消会静默失效。
 // ============================================================================
 void ComparisonWorker::run()
 {
@@ -260,22 +325,26 @@ void ComparisonWorker::run()
     Logger::setLevel(Logger::Level::WARNING);
 
     // 不把 Logger 输出转发到实时日志面板：面板只显示本 worker 的"开始/完成"提示
-    emit logMessage(QString("开始配对对比：基准 + %1 个候选，%2 对，种子 %3..%4")
+    emit logMessage(QString("开始配对对比：基准 + %1 个候选，%2 对，%3 线程，种子 %4..%5")
                         .arg(m_candidates.size())
                         .arg(m_pairs)
+                        .arg(m_workerCount)
                         .arg(m_seed)
                         .arg(m_seed + m_pairs - 1));
 
-    // 支持窗口关闭/中断时提前停止（配合 shouldStop 回调，避免关闭窗口时卡死）
-    auto shouldStop = []() { return QThread::currentThread()->isInterruptionRequested(); };
-    auto results = runPairedComparison(m_base, m_candidates, m_seed, m_pairs,
-                                       m_maxTime, m_deltaTime, m_simulate, shouldStop);
+    // 取消回调：可被线程池里的多个工作线程并发调用，所以只读原子标志
+    auto shouldStop = [this]() { return m_cancel.load(std::memory_order_relaxed); };
 
-    if (QThread::currentThread()->isInterruptionRequested())
+    std::vector<ComparisonResult> results;
+    const bool finished = threadRunPairedComparison(m_base, m_candidates, m_seed, m_pairs,
+                                                   m_maxTime, m_deltaTime, m_workerCount,
+                                                   m_simulate, results, shouldStop);
+
+    if (!finished)
         emit logMessage("对比已中断，仅输出已完成的候选。");
 
     QVector<QVector<QVariant>> rows;
-    rows.reserve(results.size());
+    rows.reserve(static_cast<int>(results.size()));
     for (const auto& r : results)
     {
         QVector<QVariant> row;
@@ -285,7 +354,7 @@ void ComparisonWorker::run()
         rows.append(row);
     }
 
-    emit comparisonFinished(rows, m_pairs);
+    emit comparisonFinished(rows, m_pairs, finished);
 
     // 恢复日志级别
     Logger::setLevel(oldLevel);
@@ -362,7 +431,8 @@ static const char* kDarkStyle = R"(
 // MainWindow 实现
 //==============================================================================
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_workerThread(nullptr), m_compareThread(nullptr), m_worker(nullptr), m_compareWorker(nullptr)
+    : QMainWindow(parent), m_workerThread(nullptr), m_compareThread(nullptr), m_worker(nullptr),
+      m_compareWorker(nullptr), m_compareTickTimer(nullptr)
 {
     // 默认浅色主题 + 更大默认窗口
     setStyleSheet(kLightStyle);
@@ -400,6 +470,18 @@ void MainWindow::stopWorkerThreads()
     // 析构与重跑前统一回收：不留下仍在跑模拟的线程。
     // 注意不能只处理 m_workerThread —— 对比模式用的是 m_compareThread，
     // 旧实现漏了它，关窗时对比线程仍在跑，程序会卡住不退出。
+    //
+    // 对比线程内部的并行用的是 std::thread，QThread 的 requestInterruption()
+    // 对它们无效，必须先让 worker 自己置取消标志，否则要等所有模拟跑完。
+    if (m_worker)
+        m_worker->requestCancel();
+    if (m_compareWorker)
+        m_compareWorker->requestCancel();
+
+    // 停掉耗时刷新计时器
+    if (m_compareTickTimer)
+        m_compareTickTimer->stop();
+
     for (QThread **slot : {&m_workerThread, &m_compareThread})
     {
         QThread *thread = *slot;
@@ -548,6 +630,13 @@ QWidget *MainWindow::createInputPanel()
     simLayout->addWidget(m_randomSeedCheck, 3, 0, 1, 2);
     addField(simLayout, 4, "固定种子", m_seedEdit = new QLineEdit("42"));
     m_seedEdit->setEnabled(false); // 初始禁用，因为随机种子默认未勾选
+    // 并行线程数：仅当「模拟循环次数 > 1」时生效（单次模拟是 tick 串行的，无法再拆）
+    addField(simLayout, 5, "线程数", m_threadsEdit = new QLineEdit(
+        QString::number(static_cast<int>(std::max(1u, std::min(8u,
+            std::thread::hardware_concurrency() == 0 ? 1u : std::thread::hardware_concurrency()))))));
+    m_threadsEdit->setToolTip(
+        "多次模拟时并行跑几次；对「模拟循环次数」为 1 无影响。\n"
+        "并行与串行结果一致，只是更快。");
     mainLayout->addWidget(simBox);
 
     // 连接随机种子复选框与种子输入框的启用状态
@@ -564,7 +653,14 @@ QWidget *MainWindow::createInputPanel()
         "基准与每个候选在相同随机种子下配对模拟，程序随机互相抵消，1%级提升也能测出。");
     compareLayout->addWidget(m_compareCheck, 0, 0, 1, 2);
     addField(compareLayout, 1, "配对次数", m_comparePairsEdit = new QLineEdit("20"));
-    compareLayout->addWidget(new QLabel("候选配置(每行一个)"), 2, 0);
+    // 并行线程数：默认 min(硬件核数, 8)。对比任务是 (1+候选数)×配对数 个独立模拟，可直接并行
+    const unsigned hw = std::thread::hardware_concurrency();
+    const int defaultWorkers = static_cast<int>(std::max(1u, std::min(8u, hw == 0 ? 1u : hw)));
+    addField(compareLayout, 2, "线程数", m_compareThreadsEdit = new QLineEdit(QString::number(defaultWorkers)));
+    m_compareThreadsEdit->setToolTip(
+        "并行跑对比任务的线程数；1 = 串行。\n"
+        "并行与串行的结果逐位相同，只是耗时不同。");
+    compareLayout->addWidget(new QLabel("候选配置(每行一个)"), 3, 0);
     m_candidatesEdit = new QPlainTextEdit;
     m_candidatesEdit->setPlainText(
         "# 每行一个候选：关键词 增量\n"
@@ -573,12 +669,13 @@ QWidget *MainWindow::createInputPanel()
         "精通 +10\n"
         "# 幻想用绝对值：0-7=具体幻想(见上面板)，如：幻想 5");
     m_candidatesEdit->setFixedHeight(80);
-    compareLayout->addWidget(m_candidatesEdit, 2, 1);
+    compareLayout->addWidget(m_candidatesEdit, 3, 1);
     mainLayout->addWidget(compareBox);
 
     // 勾选对比模式时：启用对比配置，禁用无关的模拟循环次数；反之恢复
     connect(m_compareCheck, &QCheckBox::toggled, [this](bool on){
         m_comparePairsEdit->setEnabled(on);
+        m_compareThreadsEdit->setEnabled(on);
         m_candidatesEdit->setEnabled(on);
         m_timesEdit->setEnabled(!on);
     });
@@ -816,6 +913,12 @@ void MainWindow::onRunClicked()
         }
         int pairs = m_comparePairsEdit->text().toInt();
         if (pairs <= 0) pairs = 20;
+
+        // 并行线程数：夹到 [1, 32]，core 内部还会再按种子数夹一次
+        int workers = m_compareThreadsEdit->text().toInt();
+        if (workers < 1)  workers = 1;
+        if (workers > 32) workers = 32;
+
         int maxTime = m_maxTimeEdit->text().toInt();
         int deltaTime = m_deltaTimeEdit->text().toInt();
         uint32_t seed = m_randomSeedCheck->isChecked() ? std::random_device{}() : m_seedEdit->text().toUInt();
@@ -825,7 +928,7 @@ void MainWindow::onRunClicked()
 
         m_compareThread = new QThread(this);
         m_compareWorker = new ComparisonWorker(base, std::move(candidates), pairs, seed,
-                                               maxTime, deltaTime, runBeamSimulationOnce);
+                                               maxTime, deltaTime, workers, runBeamSimulationOnce);
         m_compareWorker->moveToThread(m_compareThread);
 
         connect(m_compareThread, &QThread::started, m_compareWorker, &ComparisonWorker::run);
@@ -837,7 +940,22 @@ void MainWindow::onRunClicked()
 
         m_compareThread->start();
         m_runButton->setEnabled(false);
-        m_statusLabel->setText("对比模拟中...");
+        m_statusLabel->setText(QString("对比模拟中…（%1 线程）").arg(workers));
+
+        // A 档进度：只刷新"已用时间"，不做细粒度进度
+        m_compareClock.start();
+        if (!m_compareTickTimer)
+        {
+            m_compareTickTimer = new QTimer(this);
+            connect(m_compareTickTimer, &QTimer::timeout, this, [this]() {
+                const int w = m_compareWorker ? m_compareWorker->workerCount() : 0;
+                m_statusLabel->setText(
+                    QString("对比模拟中…已用 %1 s（%2 线程）")
+                        .arg(m_compareClock.elapsed() / 1000.0, 0, 'f', 1)
+                        .arg(w));
+            });
+        }
+        m_compareTickTimer->start(200);
         return;
     }
 
@@ -871,6 +989,12 @@ void MainWindow::onRunClicked()
     int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
     const WeaponConfig weapon = buildWeaponConfig();        // 与 CLI 同口径
 
+    // 并行线程数：只在「模拟循环次数 > 1」时有意义；夹到 [1, 32]，且不超过次数
+    int workerCount = m_threadsEdit->text().toInt();
+    if (workerCount < 1)  workerCount = 1;
+    if (workerCount > 32) workerCount = 32;
+    if (workerCount > times) workerCount = times;
+
     // 清空之前的日志和表格
     m_logText->clear();
     m_resultTable->setRowCount(0);
@@ -899,6 +1023,7 @@ void MainWindow::onRunClicked()
                                     seed,
                                     fantasyConfig,
                                     flowConfig,
+                                    workerCount,
                                     weapon);
     m_worker->moveToThread(m_workerThread);
 
@@ -974,10 +1099,18 @@ void MainWindow::onSimulationFinished(const QVector<QVector<QVariant>> &stats, i
     m_worker = nullptr;
 }
 
-void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs)
+void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, int pairs, bool finished)
 {
+    // 停掉"已用时间"刷新
+    if (m_compareTickTimer)
+        m_compareTickTimer->stop();
+
     m_runButton->setEnabled(true);
-    m_statusLabel->setText("对比完成");
+
+    const double usedSec = m_compareClock.isValid() ? m_compareClock.elapsed() / 1000.0 : 0.0;
+    m_statusLabel->setText(finished
+        ? QString("对比完成（%1 s）").arg(usedSec, 0, 'f', 1)
+        : QString("对比已中断（%1 s，仅保留已完成候选）").arg(usedSec, 0, 'f', 1));
 
     QStringList headers = {"候选配置", "基准DPS", "候选DPS", "ΔDPS", "Δ%", "配对σ", "t值"};
     m_resultTable->setColumnCount(7);
@@ -1004,7 +1137,16 @@ void MainWindow::onComparisonFinished(const QVector<QVector<QVariant>>& rows, in
             m_resultTable->setItem(i, j, item);
         }
     }
-    appendLog(QString("对比完成：%1 对。配对σ远小于基准DPS表示CRN生效；|t值|≥2视为差异显著。").arg(pairs));
+    if (finished)
+    {
+        appendLog(QString("对比完成：%1 对，用时 %2 s。配对σ远小于基准DPS表示CRN生效；|t值|≥2视为差异显著。")
+                      .arg(pairs).arg(usedSec, 0, 'f', 1));
+    }
+    else
+    {
+        appendLog(QString("对比已中断：用时 %1 s，仅保留 %2 个已完成候选。")
+                      .arg(usedSec, 0, 'f', 1).arg(rows.size()));
+    }
 
     // 清空指针，防止下次点击时访问已销毁对象
     m_compareThread = nullptr;
