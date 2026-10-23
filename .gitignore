@@ -38,3 +38,4 @@ log/
 .cache/
 .dsh-downloads/
 build-msvc-review/
+dist/

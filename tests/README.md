@@ -22,7 +22,7 @@
    - [钉值优先级：整数计数 > 浮点 DPS](#钉值优先级整数计数--浮点-dps)
    - [金丝雀：检测进程级状态残留](#金丝雀检测进程级状态残留)
    - [并行隔离](#并行隔离多-person-同时跑必须和单线程一致)
-   - [并行对比](#并行对比结果必须与串行逐位相同)
+   - [并行执行](#并行执行结果必须与串行逐位相同)
    - [重钉（re-pin）流程](#重钉re-pin流程)
 5. [加一个新测试](#5-加一个新测试)
 6. [约定与限制](#6-约定与限制)
@@ -425,7 +425,7 @@ $LASTEXITCODE            # PowerShell 查退出码
 
 | 目标 | 文件 | 跑什么 | 当前内容 | 耗时 |
 |---|---|---|---|---|
-| `dps_unit_tests` | `tests/test_attributes.cpp`<br>`tests/test_comparison_parallel.cpp` | 属性换算/边界/守恒等**不变量**；并行对比与串行逐位一致 | 12 个用例 | 毫秒级 |
+| `dps_unit_tests` | `tests/test_attributes.cpp`<br>`tests/test_comparison_parallel.cpp` | 属性换算/边界/守恒等**不变量**；并行执行与串行逐位一致 | 15 个用例 | 毫秒级 |
 | `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 并行隔离 | 5 个用例 | **0.7 秒** |
 
 **为什么拆两个 exe**：拆进程是最彻底的隔离手段。`dps_golden_tests` 里还要跑双线程并行，
@@ -524,10 +524,17 @@ workerA.join(); workerB.join();
 **这条测试是「监听器表下放 Person」的毕业证**。把 `ActionListeners` 的表改回
 进程级共享（`inline static`），它会立刻崩溃 —— 已验证。
 
-### 并行对比：结果必须与串行逐位相同
+### 并行执行：结果必须与串行逐位相同
 
-`core/Comparison.cpp` 有两条路径：串行 `runPairedComparison` 与并行
-`threadInitializeBase + threadComparison`（统一入口 `threadRunPairedComparison`）。
+并行化分两层，共用一套分配逻辑（`core/ParallelFor.h::parallelFor`）：
+
+| 层 | 用途 | 入口 |
+|---|---|---|
+| 对比模式 | 基准 + 候选的种子分摊 | `threadInitializeBase` / `threadComparison` |
+| 单次模拟模式 | 循环次数 > 1 时按次分摊 | `SimulationWorker::run`（GUI） |
+
+`parallelFor(count, workerCount, body, shouldStop)` 的分配方式：`count / workerCount`
+作为每线程固定份，余数由前 `remaining` 个线程各多做一个 —— 每个下标恰好被执行一次。
 
 `tests/test_comparison_parallel.cpp` 用**确定性假模拟**（DPS 只由 `cfg.atk` 和 `seed` 决定）
 跑毫秒级验证：
@@ -540,9 +547,15 @@ workerA.join(); workerB.join();
 | 空候选 / 非法配对数 | 除零、空输入 |
 | 取消语义 | 只输出「所有种子都完成」的候选，且清空旧结果 |
 | 统一入口 | 各线程数下与串行一致、取消正确传播 |
+| parallelFor 覆盖 | 各种 `count × workers` 组合下每个下标恰好执行一次 |
+| parallelFor 等价 / 取消 | 与串行结果一致；取消返回 false 且不再执行后续 |
 
-> 并行化的关键约定：**结果按任务号落槽，再按种子升序聚合**。只要守住这一条，
+> 并行化的关键约定：**结果按任务号落槽，再按种子/次数升序聚合**。只要守住这一条，
 > 并行与串行的浮点结果就完全一致，不需要容差。
+>
+> 取消一律用 `std::atomic<bool>`，**不能用 `QThread` 中断位** —— 工作线程不是 Qt 线程，
+> `isInterruptionRequested()` 在那里恒为 false。
+
 
 ### 重钉（re-pin）流程
 
@@ -768,7 +781,8 @@ TEST(no_negative_count_on_low_panel, "低面板不产生负点数")
 | `tests/TestHarness.h` | 框架本体（宏 + 内部函数） |
 | `tests/test_main.cpp` | 运行器（`main`，两个测试程序共用） |
 | `tests/test_attributes.cpp` | 数值单元测试（属性换算、边界、守恒） |
-| `tests/test_comparison_parallel.cpp` | 并行对比一致性（覆盖完整性、串行/并行逐位相等、取消） |
+| `tests/test_comparison_parallel.cpp` | 并行执行一致性（覆盖完整性、串行/并行逐位相等、取消、`parallelFor`） |
 | `tests/test_golden_beam.cpp` | 黄金基线 + 金丝雀 |
 | `tests/test_parallel_isolation.cpp` | 双线程模拟隔离 |
+| `core/ParallelFor.h` | 通用并行循环（对比模式与多次模拟共用） |
 | `CMakeLists.txt` 第 6 节 | `enable_testing()` + 两个测试目标 + `add_test` |
