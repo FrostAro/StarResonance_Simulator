@@ -189,7 +189,7 @@ std::vector<ComparisonResult> runPairedComparison(
     return results;
 }
 
-void threadInitializeBase(
+bool threadInitializeBase(
     const SimConfig &base,
     std::uint32_t firstSeed,
     int seedCount,
@@ -197,53 +197,74 @@ void threadInitializeBase(
     int deltaTime,
     int threadCount,
     const SimulateFn &simulate,
-    std::vector<double> &baseDpsBySeed)
+    std::vector<double> &baseDpsBySeed,
+    const std::function<bool()> &shouldStop)
 {
     // 前 remainingSeeds 个线程各多跑一个种子，其余线程只跑 seedsPerThread 个
-    if (seedCount <= 0)
-        return;
+    if (seedCount <= 0 || !simulate)
+        return true; // 没有活要干，视为已完成
+
     if (threadCount <= 0)
         threadCount = 1;
     if (threadCount > seedCount)
         threadCount = seedCount;
-    baseDpsBySeed.resize(seedCount);
+
+    baseDpsBySeed.resize(static_cast<std::size_t>(seedCount));
+
     std::vector<std::thread> threads;
-    threads.reserve(threadCount);
-    int seedsPerThread = seedCount / threadCount;
-    int remainingSeeds = seedCount % threadCount;
-    // threads初始化
+    threads.reserve(static_cast<std::size_t>(threadCount));
+
+    const int seedsPerThread = seedCount / threadCount;
+    const int remainingSeeds = seedCount % threadCount;
+
+    // 取消标志：任一工作线程发现 shouldStop 为真就置位，其余线程下次检查时退出
+    std::atomic<bool> cancelled{false};
+
     for (int i = 0; i < threadCount; ++i)
     {
         threads.emplace_back([&, i]()
-                             {
-            // 自己应该要跑的种子
-            for(int j = 0; j < seedsPerThread; ++j)
+        {
+            // 自己负责的固定份
+            for (int j = 0; j < seedsPerThread; ++j)
             {
-                int seedIndex = i * seedsPerThread + j;
+                // 每个种子开始前检查一次；一次模拟约 0.35s，取消延迟以此为上限
+                if (shouldStop && shouldStop())
+                {
+                    cancelled.store(true, std::memory_order_relaxed);
+                    return;
+                }
+
+                const int seedIndex = i * seedsPerThread + j;
                 const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedIndex);
                 auto map = simulate(base, seed, maxTime, deltaTime);
-                // std::lock_guard<std::mutex> lock(baseDpsMutex);
-                // 按字分开存的，并发写不会冲突
-                baseDpsBySeed[seedIndex] = getTotalDPS(map, maxTime);
+                // 各线程写不同下标，互不相交，无需加锁
+                baseDpsBySeed[static_cast<std::size_t>(seedIndex)] = getTotalDPS(map, maxTime);
             }
-            // 如果存在余数，并且并未越界，则帮忙跑一个
-            if (remainingSeeds > 0 && i < remainingSeeds)
+
+            // 余数：只有前 remainingSeeds 个线程各多跑一个
+            if (i < remainingSeeds)
             {
-                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedsPerThread * threadCount + i);
+                if (shouldStop && shouldStop())
+                {
+                    cancelled.store(true, std::memory_order_relaxed);
+                    return;
+                }
+
+                const int seedIndex = seedsPerThread * threadCount + i;
+                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedIndex);
                 auto map = simulate(base, seed, maxTime, deltaTime);
-                // std::lock_guard<std::mutex> lock(baseDpsMutex);
-                baseDpsBySeed[seedsPerThread * threadCount + i] = getTotalDPS(map, maxTime);
-            } });
+                baseDpsBySeed[static_cast<std::size_t>(seedIndex)] = getTotalDPS(map, maxTime);
+            }
+        });
     }
 
     for (auto &th : threads)
-    {
-        if (th.joinable())
-            th.join(); // ← 必须，否则返回即 terminate
-    }
+        th.join();
+
+    return !cancelled.load();
 }
 
-void threadComparison(
+bool threadComparison(
     const std::vector<double> &baseDpsBySeed,
     const std::vector<SimConfig> &cands,
     std::uint32_t firstSeed,
@@ -252,11 +273,12 @@ void threadComparison(
     int deltaTime,
     int threadCount,
     const SimulateFn &simulate,
-    std::vector<ComparisonResult> &results)
+    std::vector<ComparisonResult> &results,
+    const std::function<bool()> &shouldStop)
 {
     results.clear();
     if (seedCount <= 0 || cands.empty() || !simulate)
-        return;
+        return true; // 没有活要干，视为已完成
 
     assert(baseDpsBySeed.size() >= static_cast<std::size_t>(seedCount) &&
            "baseDpsBySeed 容量不足：应先用 threadInitializeBase 填好");
@@ -269,12 +291,15 @@ void threadComparison(
     const double baseAvg = mean(baseDpsBySeed);
     const double baseStd = sampleStddev(baseDpsBySeed, baseAvg);
 
-    // [候选][种子] 矩阵：每个 (c,s) 只有一个线程写
+    // [候选][种子] 矩阵：每个 (c,s) 只有一个线程写，天然无竞争
     std::vector<std::vector<double>> candDps(
         cands.size(), std::vector<double>(static_cast<std::size_t>(seedCount), 0.0));
 
-    std::atomic<int> nextTask{0};
     const int taskCount = static_cast<int>(cands.size()) * seedCount;
+    std::vector<std::uint8_t> taskDone(static_cast<std::size_t>(taskCount), 0);
+
+    std::atomic<int> nextTask{0};
+    std::atomic<bool> cancelled{false};
 
     auto body = [&]()
     {
@@ -283,28 +308,57 @@ void threadComparison(
             const int task = nextTask.fetch_add(1, std::memory_order_relaxed);
             if (task >= taskCount)
                 return;
+            if (cancelled.load(std::memory_order_relaxed))
+                return;
+
+            // 每取一个任务检查一次取消；一次模拟约 0.35s，取消延迟以此为上限
+            if (shouldStop && shouldStop())
+            {
+                cancelled.store(true, std::memory_order_relaxed);
+                return;
+            }
+
             const std::size_t c = static_cast<std::size_t>(task / seedCount);
             const int s = task % seedCount;
             const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(s);
             auto map = simulate(cands[c], seed, maxTime, deltaTime);
             candDps[c][static_cast<std::size_t>(s)] = getTotalDPS(map, maxTime);
+            taskDone[static_cast<std::size_t>(task)] = 1; // 任务号唯一，无竞争
         }
     };
 
     std::vector<std::thread> threads;
-    threads.reserve(threadCount);
+    threads.reserve(static_cast<std::size_t>(threadCount));
     for (int t = 0; t < threadCount; ++t)
         threads.emplace_back(body);
     for (auto &th : threads)
         th.join();
 
-    // 单线程聚合，seed 顺序固定 → 与串行逐位一致
+    // 单线程聚合：seed 顺序固定，浮点求和顺序与串行一致
+    // 取消时只输出「所有种子都已完成」的候选，避免用残缺样本算出错误统计
     results.reserve(cands.size());
     for (std::size_t c = 0; c < cands.size(); ++c)
     {
+        bool complete = true;
+        for (int s = 0; s < seedCount; ++s)
+        {
+            if (!taskDone[c * static_cast<std::size_t>(seedCount) + static_cast<std::size_t>(s)])
+            {
+                complete = false;
+                break;
+            }
+        }
+        if (!complete)
+            break; // 后面的候选更不可能完整，直接结束（保持与串行一致的「已完成前缀」语义）
+
         std::vector<double> deltas(static_cast<std::size_t>(seedCount));
         for (int s = 0; s < seedCount; ++s)
-            deltas[static_cast<std::size_t>(s)] = candDps[c][static_cast<std::size_t>(s)] - baseDpsBySeed[static_cast<std::size_t>(s)];
+        {
+            // CRN 核心：同一种子下候选减基准
+            deltas[static_cast<std::size_t>(s)] =
+                candDps[c][static_cast<std::size_t>(s)] -
+                baseDpsBySeed[static_cast<std::size_t>(s)];
+        }
 
         const double candAvg = mean(candDps[c]);
         const double candStd = sampleStddev(candDps[c], candAvg);
@@ -327,7 +381,10 @@ void threadComparison(
 
         results.push_back(std::move(r));
     }
+
+    return !cancelled.load();
 }
+
 
 void printComparisonResults(const std::vector<ComparisonResult> &results, int pairs)
 {

@@ -192,3 +192,60 @@ TEST(thread_compare_edge, "空候选与非法配对数应安全返回")
     threadInitializeBase(base, 42, 6, 1000, 10, -5, fake, b2);
     CHECK_EQ(static_cast<int>(b2.size()), 6);
 }
+
+// ---------------------------------------------------------------------------
+// 5. 取消：正常路径返回 true，取消后返回 false 且不输出半成品
+// ---------------------------------------------------------------------------
+TEST(thread_compare_cancel, "取消语义：返回值与部分结果")
+{
+    const SimConfig base = makeBase();
+    const std::vector<SimConfig> cands = makeCandidates();
+    const SimulateFn fake = makeFakeSimulate();
+
+    // ---- 正常路径：两个函数都应返回 true ----
+    {
+        std::vector<double> baseDps;
+        CHECK_TRUE(threadInitializeBase(base, 42, 20, 1000, 10, 4, fake, baseDps));
+
+        std::vector<ComparisonResult> results;
+        CHECK_TRUE(threadComparison(baseDps, cands, 42, 20, 1000, 10, 4, fake, results));
+        CHECK_EQ(results.size(), cands.size());
+    }
+
+    // ---- 立即取消：还没开始就该退出 ----
+    {
+        auto stopNow = []() { return true; };
+
+        std::vector<double> baseDps;
+        CHECK_FALSE(threadInitializeBase(base, 42, 20, 1000, 10, 4, fake, baseDps, stopNow));
+        CHECK_EQ(static_cast<int>(baseDps.size()), 20);   // resize 已做，但值未填
+
+        // 用一份完整的基准 + 立即取消，候选一个都完成不了 → 结果为空
+        std::vector<double> goodBase;
+        threadInitializeBase(base, 42, 20, 1000, 10, 4, fake, goodBase);
+
+        std::vector<ComparisonResult> results;
+        CHECK_FALSE(threadComparison(goodBase, cands, 42, 20, 1000, 10, 4, fake, results, stopNow));
+        CHECK_TRUE(results.empty());
+    }
+
+    // ---- 中途取消：只允许输出「所有种子都完成」的候选 ----
+    {
+        std::vector<double> goodBase;
+        threadInitializeBase(base, 42, 20, 1000, 10, 4, fake, goodBase);
+
+        std::atomic<int> probe{0};
+        // 第 30 次探测后请求取消（总任务 3*20=60，确保取消发生在中途）
+        auto stopLater = [&probe]() { return probe.fetch_add(1) >= 30; };
+
+        // 单线程跑，保证任务分配顺序可预测
+        std::vector<ComparisonResult> results;
+        const bool ok = threadComparison(goodBase, cands, 42, 20, 1000, 10, 1, fake, results, stopLater);
+
+        CHECK_FALSE(ok);
+        CHECK_TRUE(results.size() <= cands.size());
+        // 输出的每一行都必须基于完整样本，不能出现「只跑了一半」的候选
+        for (const auto& r : results)
+            CHECK_EQ(r.pairs, 20);
+    }
+}

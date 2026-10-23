@@ -134,8 +134,15 @@ std::vector<ComparisonResult> runPairedComparison(
  * @param threadCount   并行线程数，会被夹到 [1, seedCount]
  * @param simulate      单次模拟函数
  * @param baseDpsBySeed 输出参数，函数内会 resize 到 seedCount
+ * @param shouldStop    可选取消回调，在**每个种子开始前**于工作线程内调用
+ * @return true = 全部种子跑完；false = 被取消，baseDpsBySeed 可能只填了一部分
+ *
+ * @warning shouldStop 会被多个工作线程并发调用，必须线程安全。
+ *          注意不能用 QThread::currentThread()->isInterruptionRequested()：
+ *          它在非 Qt 线程上恒为 false，会让取消静默失效；应传一个 atomic 标志。
+ * @note 取消延迟上限是一次模拟的耗时（约 0.35 秒），已开始的那次不会被打断。
  */
-void threadInitializeBase(
+bool threadInitializeBase(
     const SimConfig& base,
     std::uint32_t firstSeed,
     int seedCount,
@@ -143,7 +150,8 @@ void threadInitializeBase(
     int deltaTime,
     int threadCount,
     const SimulateFn& simulate,
-    std::vector<double>& baseDpsBySeed);
+    std::vector<double>& baseDpsBySeed,
+    const std::function<bool()>& shouldStop = {});
 
 /**
  * @brief 并行执行候选配对对比：先并行填 [候选][种子] 矩阵，再单线程聚合
@@ -160,9 +168,15 @@ void threadInitializeBase(
  * @param deltaTime     模拟步长（毫秒）
  * @param threadCount   并行线程数，会被夹到 [1, seedCount]
  * @param simulate      单次模拟函数
- * @param results       输出参数，函数开头会 clear，每个候选一行
+ * @param results       输出参数，函数开头会 clear，每个完整候选一行
+ * @param shouldStop    可选取消回调，在**每个任务开始前**于工作线程内调用
+ * @return true = 全部任务跑完；false = 被取消
+ *
+ * @warning shouldStop 会被多个工作线程并发调用，必须线程安全；
+ *          不要用 QThread 的中断位（在非 Qt 线程上恒为 false）。
+ * @note 取消时只输出「所有种子都已完成」的候选，避免用残缺样本算出错误统计。
  */
-void threadComparison(
+bool threadComparison(
     const std::vector<double>& baseDpsBySeed,
     const std::vector<SimConfig>& cands,
     std::uint32_t firstSeed,
@@ -171,7 +185,8 @@ void threadComparison(
     int deltaTime,
     int threadCount,
     const SimulateFn& simulate,
-    std::vector<ComparisonResult>& results);
+    std::vector<ComparisonResult>& results,
+    const std::function<bool()>& shouldStop = {});
 
 /**
  * @brief 打印对比结果表
