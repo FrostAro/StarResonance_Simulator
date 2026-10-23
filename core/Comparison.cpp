@@ -385,6 +385,27 @@ bool threadComparison(
     return !cancelled.load();
 }
 
+bool threadRunPairedComparison(
+    const SimConfig& base,
+    const std::vector<SimConfig>& candidates,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn& simulate,
+    std::vector<ComparisonResult>& results,
+    const std::function<bool()>& shouldStop)
+{
+    results.clear();
+    std::vector<double> baseDpsBySeed;
+    if (!threadInitializeBase(base, firstSeed, seedCount, maxTime, deltaTime,
+                              threadCount, simulate, baseDpsBySeed, shouldStop))
+        return false;
+    return threadComparison(baseDpsBySeed, candidates, firstSeed, seedCount,
+                            maxTime, deltaTime, threadCount, simulate, results, shouldStop);
+}
+
 
 void printComparisonResults(const std::vector<ComparisonResult> &results, int pairs)
 {

@@ -249,3 +249,49 @@ TEST(thread_compare_cancel, "取消语义：返回值与部分结果")
             CHECK_EQ(r.pairs, 20);
     }
 }
+
+// ---------------------------------------------------------------------------
+// 6. 并行统一入口：与串行一致 + 取消传播
+// ---------------------------------------------------------------------------
+TEST(thread_run_paired, "并行统一入口：结果与串行一致、取消正确传播")
+{
+    const SimConfig base = makeBase();
+    const std::vector<SimConfig> cands = makeCandidates();
+    const SimulateFn fake = makeFakeSimulate();
+
+    // 串行参照
+    const auto serial = runPairedComparison(base, cands, 42, 20, 1000, 10, fake);
+    CHECK_EQ(serial.size(), cands.size());
+
+    // 各线程数下都必须与串行逐字段相等
+    for (int threadCount : {1, 2, 3, 4, 8, 20})
+    {
+        std::vector<ComparisonResult> par;
+        CHECK_TRUE(threadRunPairedComparison(base, cands, 42, 20, 1000, 10,
+                                             threadCount, fake, par));
+        CHECK_EQ(par.size(), serial.size());
+        if (par.size() != serial.size())
+            continue;
+
+        for (std::size_t i = 0; i < serial.size(); ++i)
+        {
+            CHECK_EQ(par[i].label,        serial[i].label);
+            CHECK_EQ(par[i].baseDps,      serial[i].baseDps);
+            CHECK_EQ(par[i].candDps,      serial[i].candDps);
+            CHECK_EQ(par[i].deltaDps,     serial[i].deltaDps);
+            CHECK_EQ(par[i].deltaPercent, serial[i].deltaPercent);
+            CHECK_EQ(par[i].deltaStd,     serial[i].deltaStd);
+            CHECK_EQ(par[i].tValue,       serial[i].tValue);
+            CHECK_EQ(par[i].pairs,        serial[i].pairs);
+        }
+    }
+
+    // 立即取消：返回 false，且必须把上一次留下的脏数据清掉
+    {
+        auto stopNow = []() { return true; };
+        std::vector<ComparisonResult> dirty(3);   // 预置旧结果
+        CHECK_FALSE(threadRunPairedComparison(base, cands, 42, 20, 1000, 10,
+                                              4, fake, dirty, stopNow));
+        CHECK_TRUE(dirty.empty());
+    }
+}

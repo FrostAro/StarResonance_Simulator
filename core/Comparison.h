@@ -134,7 +134,7 @@ std::vector<ComparisonResult> runPairedComparison(
  * @param threadCount   并行线程数，会被夹到 [1, seedCount]
  * @param simulate      单次模拟函数
  * @param baseDpsBySeed 输出参数，函数内会 resize 到 seedCount
- * @param shouldStop    可选取消回调，在**每个种子开始前**于工作线程内调用
+ * @param shouldStop    可选取消回调，在每个种子开始前于工作线程内调用
  * @return true = 全部种子跑完；false = 被取消，baseDpsBySeed 可能只填了一部分
  *
  * @warning shouldStop 会被多个工作线程并发调用，必须线程安全。
@@ -169,7 +169,7 @@ bool threadInitializeBase(
  * @param threadCount   并行线程数，会被夹到 [1, seedCount]
  * @param simulate      单次模拟函数
  * @param results       输出参数，函数开头会 clear，每个完整候选一行
- * @param shouldStop    可选取消回调，在**每个任务开始前**于工作线程内调用
+ * @param shouldStop    可选取消回调，在每个任务开始前于工作线程内调用
  * @return true = 全部任务跑完；false = 被取消
  *
  * @warning shouldStop 会被多个工作线程并发调用，必须线程安全；
@@ -179,6 +179,43 @@ bool threadInitializeBase(
 bool threadComparison(
     const std::vector<double>& baseDpsBySeed,
     const std::vector<SimConfig>& cands,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn& simulate,
+    std::vector<ComparisonResult>& results,
+    const std::function<bool()>& shouldStop = {});
+
+/**
+ * @brief 并行配对对比：先并行跑基准，再并行跑候选
+ *
+ * @details 阶段一由 threadInitializeBase 得到每种子一个基准 DPS；阶段二由
+ *          threadComparison 并行填 [候选][种子] 矩阵后单线程聚合。
+ *          两阶段必须串行：阶段二的 CRN 配对要拿阶段一的基准逐种子相减，
+ *          基准不完整就没有可比对的参照。结果与 runPairedComparison 逐位相同。
+ *
+ * @param base        基准配置
+ * @param candidates  候选配置列表
+ * @param firstSeed   起始种子
+ * @param seedCount   配对数即种子个数
+ * @param maxTime     单次模拟时长（毫秒）
+ * @param deltaTime   模拟步长（毫秒）
+ * @param threadCount 并行线程数，会被夹到 [1, seedCount]
+ * @param simulate    单次模拟函数
+ * @param results     输出参数，函数开头会 clear，每个完整候选一行
+ * @param shouldStop  可选取消回调，在每个任务开始前于工作线程内调用
+ * @return true = 全部跑完；false = 被取消
+ *
+ * @warning shouldStop 会被多个工作线程并发调用，必须线程安全；
+ *          不要用 QThread 的中断位（在非 Qt 线程上恒为 false）。
+ * @note 基准阶段被取消时直接返回 false 且 results 为空 —— 残缺的基准算出的
+ *       提升率全是垃圾，不能拿去和候选相减。
+ */
+bool threadRunPairedComparison(
+    const SimConfig& base,
+    const std::vector<SimConfig>& candidates,
     std::uint32_t firstSeed,
     int seedCount,
     int maxTime,
