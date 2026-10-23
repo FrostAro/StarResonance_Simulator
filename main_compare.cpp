@@ -8,6 +8,10 @@
 //   3. 在 buildCandidates() 里按行添加要对比的候选配置
 //   4. 编译运行 dps_simulator_compare.exe，阅读对比表
 //
+// 命令行参数（都可省略）:
+//   dps_simulator_compare.exe [配对数=20] [起始种子=42] [线程数=8]
+//   线程数传 1 即串行；并行与串行的结果逐位相同，只是耗时不同。
+//
 // 编译目标: dps_simulator_compare（见 CMakeLists.txt）
 // ============================================================================
 
@@ -95,14 +99,22 @@ int main(int argc, char** argv)
     const int deltaTime = 10;    // 步长（毫秒，建议 10-30）
     int pairs = 20;              // 配对数（建议 20+，越多配对σ越稳）
     std::uint32_t firstSeed = 42;
+    int workers = 8;             // 并行线程数；1 = 串行（结果与并行逐位相同）
 
-    // 命令行可选参数：dps_simulator_compare [配对数] [起始种子]
+    // 命令行可选参数：dps_simulator_compare [配对数] [起始种子] [线程数]
     if (argc > 1)
         pairs = std::atoi(argv[1]);
     if (argc > 2)
         firstSeed = static_cast<std::uint32_t>(std::atoi(argv[2]));
+    if (argc > 3)
+        workers = std::atoi(argv[3]);
     if (pairs <= 0)
         pairs = 1;
+    if (workers <= 0)
+        workers = 1;
+    // 线程数超过任务数只会空转；这里按"任务数 = (1 + 候选数) × 配对数"粗略上限夹一下
+    if (workers > pairs)
+        workers = pairs;
 
     // 职业切换：true=射线，false=冰矛
     const bool useBeam = true;
@@ -157,11 +169,23 @@ int main(int argc, char** argv)
 
     std::cout << "职业: " << (useBeam ? "射线(Beam)" : "冰矛(Icicle)")
               << " | 配对数: " << pairs
+              << " | 线程数: " << workers
               << " | 种子: " << firstSeed << ".." << (firstSeed + pairs - 1)
               << " | 时长: " << maxTime << "ms | 步长: " << deltaTime << "ms\n";
 
     auto candidates = buildCandidates(base);
-    auto results = runPairedComparison(base, candidates, firstSeed, pairs, maxTime, deltaTime, simulate);
+
+    // 并行入口：workers == 1 时内部走的是两阶段串行路径，结果与 runPairedComparison 逐位相同。
+    // 控制台没有取消需求（Ctrl+C 直接结束进程），所以不传 shouldStop。
+    std::vector<ComparisonResult> results;
+    const bool finished = threadRunPairedComparison(base, candidates, firstSeed, pairs,
+                                                    maxTime, deltaTime, workers, simulate,
+                                                    results);
+    if (!finished)
+    {
+        std::cout << "(对比被中断，以下只包含已完成的候选)\n";
+    }
+
     printComparisonResults(results, pairs);
 
     return 0;
