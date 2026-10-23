@@ -4,6 +4,7 @@
 // ============================================================================
 
 #include "Comparison.h"
+#include "ParallelFor.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -200,68 +201,23 @@ bool threadInitializeBase(
     std::vector<double> &baseDpsBySeed,
     const std::function<bool()> &shouldStop)
 {
-    // 前 remainingSeeds 个线程各多跑一个种子，其余线程只跑 seedsPerThread 个
+    // 没有活要干，视为已完成
     if (seedCount <= 0 || !simulate)
-        return true; // 没有活要干，视为已完成
-
-    if (threadCount <= 0)
-        threadCount = 1;
-    if (threadCount > seedCount)
-        threadCount = seedCount;
+        return true;
 
     baseDpsBySeed.resize(static_cast<std::size_t>(seedCount));
 
-    std::vector<std::thread> threads;
-    threads.reserve(static_cast<std::size_t>(threadCount));
-
-    const int seedsPerThread = seedCount / threadCount;
-    const int remainingSeeds = seedCount % threadCount;
-
-    // 取消标志：任一工作线程发现 shouldStop 为真就置位，其余线程下次检查时退出
-    std::atomic<bool> cancelled{false};
-
-    for (int i = 0; i < threadCount; ++i)
-    {
-        threads.emplace_back([&, i]()
-        {
-            // 自己负责的固定份
-            for (int j = 0; j < seedsPerThread; ++j)
-            {
-                // 每个种子开始前检查一次；一次模拟约 0.35s，取消延迟以此为上限
-                if (shouldStop && shouldStop())
-                {
-                    cancelled.store(true, std::memory_order_relaxed);
-                    return;
-                }
-
-                const int seedIndex = i * seedsPerThread + j;
-                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedIndex);
-                auto map = simulate(base, seed, maxTime, deltaTime);
-                // 各线程写不同下标，互不相交，无需加锁
-                baseDpsBySeed[static_cast<std::size_t>(seedIndex)] = getTotalDPS(map, maxTime);
-            }
-
-            // 余数：只有前 remainingSeeds 个线程各多跑一个
-            if (i < remainingSeeds)
-            {
-                if (shouldStop && shouldStop())
-                {
-                    cancelled.store(true, std::memory_order_relaxed);
-                    return;
-                }
-
-                const int seedIndex = seedsPerThread * threadCount + i;
-                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedIndex);
-                auto map = simulate(base, seed, maxTime, deltaTime);
-                baseDpsBySeed[static_cast<std::size_t>(seedIndex)] = getTotalDPS(map, maxTime);
-            }
-        });
-    }
-
-    for (auto &th : threads)
-        th.join();
-
-    return !cancelled.load();
+    // 每个种子一个任务；下标互不相交，各线程写不同格子，无需加锁
+    return parallelFor(seedCount, threadCount,
+                       [&](int seedIndex)
+                       {
+                           const std::uint32_t seed =
+                               firstSeed + static_cast<std::uint32_t>(seedIndex);
+                           auto map = simulate(base, seed, maxTime, deltaTime);
+                           baseDpsBySeed[static_cast<std::size_t>(seedIndex)] =
+                               getTotalDPS(map, maxTime);
+                       },
+                       shouldStop);
 }
 
 bool threadComparison(

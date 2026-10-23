@@ -1,15 +1,17 @@
 // ============================================================================
-// 并行配对对比的一致性测试
+// 并行执行的一致性测试
 //
-// 用确定性的假模拟（DPS 只由 cfg.atk 和 seed 决定），毫秒级跑完，验证三件事：
+// 用确定性的假模拟（DPS 只由 cfg.atk 和 seed 决定），毫秒级跑完，验证：
 //   1. threadInitializeBase 的种子覆盖完整（不重不漏，含余数）
-//   2. 候选与基准完全相同是 deltaPercent / deltaStd 必须为 0
+//   2. 候选与基准完全相同时 deltaPercent / deltaStd 必须为 0
 //      （这一条能抓住"多分配的余数位是 0、被算进均值"那类偏差）
 //   3. 并行结果与串行 runPairedComparison 逐字段精确相等
+//   4. 通用并行循环 parallelFor 的覆盖、等价性与取消
 // ============================================================================
 
 #include "TestHarness.h"
 #include "core/Comparison.h"
+#include "core/ParallelFor.hpp"
 
 #include <cstdint>
 #include <string>
@@ -294,4 +296,64 @@ TEST(thread_run_paired, "并行统一入口：结果与串行一致、取消正�
                                               4, fake, dirty, stopNow));
         CHECK_TRUE(dirty.empty());
     }
+}
+
+// ---------------------------------------------------------------------------
+// 7. 通用并行循环：覆盖完整、与串行等价、取消传播
+// ---------------------------------------------------------------------------
+TEST(parallel_for_basic, "parallelFor：每个下标恰好执行一次")
+{
+    for (int count : {1, 2, 5, 7, 20, 33})
+    {
+        for (int workers : {1, 2, 3, 4, 8, 100})
+        {
+            std::vector<int> hits(static_cast<std::size_t>(count), 0);
+
+            const bool ok = parallelFor(count, workers, [&](int i) {
+                hits[static_cast<std::size_t>(i)] += 1;   // 下标唯一，无竞争
+            });
+
+            CHECK_TRUE(ok);
+            for (int i = 0; i < count; ++i)
+                CHECK_EQ(hits[static_cast<std::size_t>(i)], 1);   // 不重不漏
+        }
+    }
+}
+
+TEST(parallel_for_equivalent, "parallelFor：与串行结果一致")
+{
+    constexpr int kCount = 20;
+    std::vector<double> serial(static_cast<std::size_t>(kCount), 0.0);
+    for (int i = 0; i < kCount; ++i)
+        serial[static_cast<std::size_t>(i)] = static_cast<double>(i) * 1.5;
+
+    for (int workers : {1, 2, 4, 8, 32})
+    {
+        std::vector<double> out(static_cast<std::size_t>(kCount), 0.0);
+        parallelFor(kCount, workers, [&](int i) {
+            out[static_cast<std::size_t>(i)] = static_cast<double>(i) * 1.5;
+        });
+        for (int i = 0; i < kCount; ++i)
+            CHECK_EQ(out[static_cast<std::size_t>(i)], serial[static_cast<std::size_t>(i)]);
+    }
+}
+
+TEST(parallel_for_cancel, "parallelFor：取消返回 false 且不再执行后续")
+{
+    // 立即取消
+    int executed = 0;
+    CHECK_FALSE(parallelFor(100, 4, [&](int) { ++executed; }, []() { return true; }));
+    CHECK_EQ(executed, 0);
+
+    // 中途取消：原子计数，保证线程安全
+    std::atomic<int> calls{0};
+    std::atomic<int> done{0};
+    const bool ok = parallelFor(100, 1, [&](int) { ++done; },
+                                [&calls]() { return calls.fetch_add(1) >= 10; });
+    CHECK_FALSE(ok);
+    CHECK_TRUE(done.load() <= 10);   // 单线程：取消后不再执行
+
+    // 边界：count<=0 视为完成
+    CHECK_TRUE(parallelFor(0, 4, [](int) {}));
+    CHECK_TRUE(parallelFor(-3, 4, [](int) {}));
 }
