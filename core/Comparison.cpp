@@ -7,6 +7,9 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <atomic>
+#include <cassert>
+#include <thread>
 
 /**
  * @brief 从统计表计算总 DPS
@@ -18,23 +21,22 @@
  * @param maxTime  模拟总时长（毫秒），<=0 时返回 0 避免除零
  * @return 总 DPS（伤害/秒）
  */
-double getTotalDPS(const std::unordered_map<std::string, DamageStatistics>& statsMap, int maxTime)
+double getTotalDPS(const std::unordered_map<std::string, DamageStatistics> &statsMap, int maxTime)
 {
     if (maxTime <= 0)
-        return 0;  // 避免除零（GUI 输入被清空 / 配置错误等情况）
+        return 0; // 避免除零（GUI 输入被清空 / 配置错误等情况）
     double total = 0;
-    for (const auto& [name, stat] : statsMap)
+    for (const auto &[name, stat] : statsMap)
     {
         total += stat.damage + stat.luckyDamage;
     }
     return total / (static_cast<double>(maxTime) / 1000.0);
 }
 
-
 /**
  * @brief 算术平均（空容器返回 0）
  */
-static double mean(const std::vector<double>& values)
+static double mean(const std::vector<double> &values)
 {
     if (values.empty())
         return 0;
@@ -43,7 +45,6 @@ static double mean(const std::vector<double>& values)
         sum += v;
     return sum / static_cast<double>(values.size());
 }
-
 
 /**
  * @brief 样本标准差（分母 n-1）
@@ -55,7 +56,7 @@ static double mean(const std::vector<double>& values)
  * @param avg    已算好的平均值（避免重复遍历）
  * @return 样本标准差
  */
-static double sampleStddev(const std::vector<double>& values, double avg)
+static double sampleStddev(const std::vector<double> &values, double avg)
 {
     if (values.size() < 2)
         return 0;
@@ -93,14 +94,14 @@ static double sampleStddev(const std::vector<double>& values, double avg)
  * @return 每个候选一条结果，按 candidates 顺序排列
  */
 std::vector<ComparisonResult> runPairedComparison(
-    const SimConfig& base,
-    const std::vector<SimConfig>& candidates,
+    const SimConfig &base,
+    const std::vector<SimConfig> &candidates,
     std::uint32_t firstSeed,
     int seedCount,
     int maxTime,
     int deltaTime,
-    const SimulateFn& simulate,
-    const std::function<bool()>& shouldStop)
+    const SimulateFn &simulate,
+    const std::function<bool()> &shouldStop)
 {
     std::vector<ComparisonResult> results;
 
@@ -116,7 +117,7 @@ std::vector<ComparisonResult> runPairedComparison(
     for (int i = 0; i < seedCount; ++i)
     {
         if (shouldStop && shouldStop())
-            return results;  // 基准未完成：没有可比对的基准，直接返回空
+            return results; // 基准未完成：没有可比对的基准，直接返回空
         const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
         auto map = simulate(base, seed, maxTime, deltaTime);
         baseDpsBySeed[i] = getTotalDPS(map, maxTime);
@@ -132,7 +133,7 @@ std::vector<ComparisonResult> runPairedComparison(
     // 注意：遍历顺序不影响结果 —— 每个 (候选, 种子) 都是独立模拟，
     // 换成「外层种子、内层候选」跑出来的数完全一样，只是代码组织不同。
     results.reserve(candidates.size());
-    for (const auto& cand : candidates)
+    for (const auto &cand : candidates)
     {
         std::vector<double> candDpsBySeed(seedCount);
         std::vector<double> deltas(seedCount);
@@ -140,7 +141,7 @@ std::vector<ComparisonResult> runPairedComparison(
         for (int i = 0; i < seedCount; ++i)
         {
             if (shouldStop && shouldStop())
-                return results;  // 候选跑到一半取消：只返回已完整算完的候选
+                return results; // 候选跑到一半取消：只返回已完整算完的候选
 
             // 与基准阶段用同一个 seed 计算公式，保证两边种子一一对应
             const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(i);
@@ -188,7 +189,147 @@ std::vector<ComparisonResult> runPairedComparison(
     return results;
 }
 
-void printComparisonResults(const std::vector<ComparisonResult>& results, int pairs)
+void threadInitializeBase(
+    const SimConfig &base,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn &simulate,
+    std::vector<double> &baseDpsBySeed)
+{
+    // 前 remainingSeeds 个线程各多跑一个种子，其余线程只跑 seedsPerThread 个
+    if (seedCount <= 0)
+        return;
+    if (threadCount <= 0)
+        threadCount = 1;
+    if (threadCount > seedCount)
+        threadCount = seedCount;
+    baseDpsBySeed.resize(seedCount);
+    std::vector<std::thread> threads;
+    threads.reserve(threadCount);
+    int seedsPerThread = seedCount / threadCount;
+    int remainingSeeds = seedCount % threadCount;
+    // threads初始化
+    for (int i = 0; i < threadCount; ++i)
+    {
+        threads.emplace_back([&, i]()
+                             {
+            // 自己应该要跑的种子
+            for(int j = 0; j < seedsPerThread; ++j)
+            {
+                int seedIndex = i * seedsPerThread + j;
+                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedIndex);
+                auto map = simulate(base, seed, maxTime, deltaTime);
+                // std::lock_guard<std::mutex> lock(baseDpsMutex);
+                // 按字分开存的，并发写不会冲突
+                baseDpsBySeed[seedIndex] = getTotalDPS(map, maxTime);
+            }
+            // 如果存在余数，并且并未越界，则帮忙跑一个
+            if (remainingSeeds > 0 && i < remainingSeeds)
+            {
+                const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(seedsPerThread * threadCount + i);
+                auto map = simulate(base, seed, maxTime, deltaTime);
+                // std::lock_guard<std::mutex> lock(baseDpsMutex);
+                baseDpsBySeed[seedsPerThread * threadCount + i] = getTotalDPS(map, maxTime);
+            } });
+    }
+
+    for (auto &th : threads)
+    {
+        if (th.joinable())
+            th.join(); // ← 必须，否则返回即 terminate
+    }
+}
+
+void threadComparison(
+    const std::vector<double> &baseDpsBySeed,
+    const std::vector<SimConfig> &cands,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn &simulate,
+    std::vector<ComparisonResult> &results)
+{
+    results.clear();
+    if (seedCount <= 0 || cands.empty() || !simulate)
+        return;
+
+    assert(baseDpsBySeed.size() >= static_cast<std::size_t>(seedCount) &&
+           "baseDpsBySeed 容量不足：应先用 threadInitializeBase 填好");
+
+    if (threadCount < 1)
+        threadCount = 1;
+    if (threadCount > seedCount)
+        threadCount = seedCount;
+
+    const double baseAvg = mean(baseDpsBySeed);
+    const double baseStd = sampleStddev(baseDpsBySeed, baseAvg);
+
+    // [候选][种子] 矩阵：每个 (c,s) 只有一个线程写
+    std::vector<std::vector<double>> candDps(
+        cands.size(), std::vector<double>(static_cast<std::size_t>(seedCount), 0.0));
+
+    std::atomic<int> nextTask{0};
+    const int taskCount = static_cast<int>(cands.size()) * seedCount;
+
+    auto body = [&]()
+    {
+        for (;;)
+        {
+            const int task = nextTask.fetch_add(1, std::memory_order_relaxed);
+            if (task >= taskCount)
+                return;
+            const std::size_t c = static_cast<std::size_t>(task / seedCount);
+            const int s = task % seedCount;
+            const std::uint32_t seed = firstSeed + static_cast<std::uint32_t>(s);
+            auto map = simulate(cands[c], seed, maxTime, deltaTime);
+            candDps[c][static_cast<std::size_t>(s)] = getTotalDPS(map, maxTime);
+        }
+    };
+
+    std::vector<std::thread> threads;
+    threads.reserve(threadCount);
+    for (int t = 0; t < threadCount; ++t)
+        threads.emplace_back(body);
+    for (auto &th : threads)
+        th.join();
+
+    // 单线程聚合，seed 顺序固定 → 与串行逐位一致
+    results.reserve(cands.size());
+    for (std::size_t c = 0; c < cands.size(); ++c)
+    {
+        std::vector<double> deltas(static_cast<std::size_t>(seedCount));
+        for (int s = 0; s < seedCount; ++s)
+            deltas[static_cast<std::size_t>(s)] = candDps[c][static_cast<std::size_t>(s)] - baseDpsBySeed[static_cast<std::size_t>(s)];
+
+        const double candAvg = mean(candDps[c]);
+        const double candStd = sampleStddev(candDps[c], candAvg);
+        const double deltaAvg = mean(deltas);
+        const double deltaStd = sampleStddev(deltas, deltaAvg);
+
+        ComparisonResult r;
+        r.label = cands[c].label;
+        r.baseDps = baseAvg;
+        r.candDps = candAvg;
+        r.deltaDps = candAvg - baseAvg;
+        r.deltaPercent = (baseAvg != 0) ? (r.deltaDps / baseAvg) * 100.0 : 0.0;
+        r.baseStd = baseStd;
+        r.candStd = candStd;
+        r.deltaStd = deltaStd;
+        r.pairs = seedCount;
+
+        const double deltaSE = deltaStd / std::sqrt(static_cast<double>(seedCount));
+        r.tValue = (deltaSE > 0) ? r.deltaDps / deltaSE : 0.0;
+
+        results.push_back(std::move(r));
+    }
+}
+
+void printComparisonResults(const std::vector<ComparisonResult> &results, int pairs)
 {
     std::cout << "====================================================\n";
     std::cout << " 配对对比模式（CRN 同种子）\n";
@@ -202,7 +343,7 @@ void printComparisonResults(const std::vector<ComparisonResult>& results, int pa
     }
 
     // 基准信息
-    const auto& first = results.front();
+    const auto &first = results.front();
     std::cout << " 基准 DPS = " << std::fixed << std::setprecision(0) << first.baseDps
               << "（基准σ = " << first.baseStd << "，配对 N = " << pairs << "）\n\n";
 
@@ -218,7 +359,7 @@ void printComparisonResults(const std::vector<ComparisonResult>& results, int pa
               << std::endl;
 
     // 数据行
-    for (const auto& r : results)
+    for (const auto &r : results)
     {
         std::cout << std::left << std::setw(16) << r.label
                   << std::right << std::setw(12) << r.baseDps

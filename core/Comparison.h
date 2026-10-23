@@ -121,6 +121,59 @@ std::vector<ComparisonResult> runPairedComparison(
     const std::function<bool()>& shouldStop = {});
 
 /**
+ * @brief 并行初始化基准：把 seedCount 个种子分摊到 threadCount 个线程
+ *
+ * @details 前 remainingSeeds 个线程各多跑一个种子，其余线程只跑 seedsPerThread 个。
+ *          每个线程只写自己那几个下标，所以不需要锁。
+ *
+ * @param base          基准配置
+ * @param firstSeed     起始种子，使用 firstSeed..firstSeed+seedCount-1
+ * @param seedCount     配对数即种子个数
+ * @param maxTime       单次模拟时长（毫秒）
+ * @param deltaTime     模拟步长（毫秒）
+ * @param threadCount   并行线程数，会被夹到 [1, seedCount]
+ * @param simulate      单次模拟函数
+ * @param baseDpsBySeed 输出参数，函数内会 resize 到 seedCount
+ */
+void threadInitializeBase(
+    const SimConfig& base,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn& simulate,
+    std::vector<double>& baseDpsBySeed);
+
+/**
+ * @brief 并行执行候选配对对比：先并行填 [候选][种子] 矩阵，再单线程聚合
+ *
+ * @details 每个 (候选, 种子) 是一个独立任务，用原子取号分配，天然处理余数；
+ *          聚合阶段按种子升序遍历，浮点求和顺序与串行一致，结果与
+ *          runPairedComparison 逐位相同。
+ *
+ * @param baseDpsBySeed 已由 threadInitializeBase 填好的基准 DPS，每种子一个
+ * @param cands         候选配置列表
+ * @param firstSeed     起始种子
+ * @param seedCount     配对数即种子个数
+ * @param maxTime       单次模拟时长（毫秒）
+ * @param deltaTime     模拟步长（毫秒）
+ * @param threadCount   并行线程数，会被夹到 [1, seedCount]
+ * @param simulate      单次模拟函数
+ * @param results       输出参数，函数开头会 clear，每个候选一行
+ */
+void threadComparison(
+    const std::vector<double>& baseDpsBySeed,
+    const std::vector<SimConfig>& cands,
+    std::uint32_t firstSeed,
+    int seedCount,
+    int maxTime,
+    int deltaTime,
+    int threadCount,
+    const SimulateFn& simulate,
+    std::vector<ComparisonResult>& results);
+
+/**
  * @brief 打印对比结果表
  */
 void printComparisonResults(const std::vector<ComparisonResult>& results, int pairs);
