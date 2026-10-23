@@ -106,14 +106,16 @@ void executeSimulation_Beam(std::vector<std::unordered_map<std::string, DamageSt
         // 记录是否开启了本次的调试日志（多次模拟只取第一次）
         bool loggedFirst = false;
 
-        auto stats = runBeamSimulationOnceWithHook(
-            cfg, runSeed, maxTime, deltaTime,
-            [&](Person* p)
-            {
-                // 初始化完成、主循环开始前：开日志 + 打印提示（与旧实现同一时机）
-                loggedFirst = SimulationLog::begin("beam", p, personParams);
-                std::cout << "Starting simulation..." << std::endl;
-            });
+        // 初始化完成、主循环开始前：开日志 + 打印提示（与旧实现同一时机）
+        BeamRunHooks hooks;
+        hooks.afterInit = [&](Person* p)
+        {
+            loggedFirst = SimulationLog::begin("beam", p, personParams);
+            std::cout << "Starting simulation..." << std::endl;
+        };
+
+        auto stats = runBeamSimulationOnceWithHooks(
+            cfg, runSeed, maxTime, deltaTime, hooks);
 
         // 模拟结束：收尾日志文件，恢复 INFO 级别避免后续刷屏
         if (loggedFirst)

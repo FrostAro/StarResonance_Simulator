@@ -27,8 +27,7 @@
 
 // 包含您的核心头文件（路径根据实际项目调整）
 #include "Mage/Beam/Person.h"
-#include "Mage/Beam/Initializer.hpp"
-#include "Mage/Beam/SimulationHelper.h"
+#include "Mage/Beam/SimulationHelper.h"   // 跑循环的唯一实现（含 Initializer）
 #include "core/Logger.h"
 #include "core/Statistics.h"
 #include "core/Action.h"
@@ -39,54 +38,20 @@
 //==============================================================================
 // SimulationWorker 实现
 //==============================================================================
-SimulationWorker::SimulationWorker(const QString& profession,
-                                   double primaryAttr,
-                                   double crit,
-                                   double quickness,
-                                   double lucky,
-                                   double proficient,
-                                   double almighty,
-                                   int atk,
-                                   int refineAtk,
-                                   int elementAtk,
-                                   double attackSpeed,
-                                   double castingSpeed,
-                                   double critDmgSet,
-                                   double incSet,
-                                   double eleIncSet,
+SimulationWorker::SimulationWorker(const SimConfig& config,
                                    int times,
                                    int maxTime,
                                    int deltaTime,
                                    bool randomSeed,
                                    uint32_t seed,
-                                   int fantasyConfig,
-                                   int flowConfig,
-                                   int workerCount,
-                                   const WeaponConfig& weapon)
-    : m_profession(profession),
-      m_primaryAttr(primaryAttr),
-      m_crit(crit),
-      m_quickness(quickness),
-      m_lucky(lucky),
-      m_proficient(proficient),
-      m_almighty(almighty),
-      m_atk(atk),
-      m_refineAtk(refineAtk),
-      m_elementAtk(elementAtk),
-      m_attackSpeed(attackSpeed),
-      m_castingSpeed(castingSpeed),
-      m_critDmgSet(critDmgSet),
-      m_incSet(incSet),
-      m_eleIncSet(eleIncSet),
+                                   int workerCount)
+    : m_cfg(config),
       m_times(times),
       m_maxTime(maxTime),
       m_deltaTime(deltaTime),
       m_randomSeed(randomSeed),
       m_seed(seed),
-      m_fantasyConfig(fantasyConfig),
-      m_flowConfig(flowConfig),
-      m_workerCount(workerCount),
-      m_weapon(weapon)
+      m_workerCount(workerCount)
 {}
 
 SimulationWorker::~SimulationWorker()
@@ -120,61 +85,45 @@ void SimulationWorker::run()
             s = m_seed;
     }
 
-    // 调试日志的参数描述（只有单次模拟会用到）
+    // 调试日志的配置头（只有单次模拟会用到）
     std::ostringstream params;
-    params << "三维=" << m_primaryAttr << ", 暴击=" << m_crit << ", 急速=" << m_quickness
-           << ", 幸运=" << m_lucky << ", 精通=" << m_proficient << ", 全能=" << m_almighty
-           << ", 攻击=" << m_atk << ", 精炼=" << m_refineAtk << ", 元素=" << m_elementAtk
-           << ", 攻速=" << m_attackSpeed << ", 施速=" << m_castingSpeed
-           << ", 爆伤=" << m_critDmgSet << ", 增伤=" << m_incSet << ", 元素增伤=" << m_eleIncSet
-           << ", fantasyConfig=" << m_fantasyConfig;
+    params << "三维=" << m_cfg.primaryAttributes << ", 暴击=" << m_cfg.critical << ", 急速=" << m_cfg.quickness
+           << ", 幸运=" << m_cfg.lucky << ", 精通=" << m_cfg.proficient << ", 全能=" << m_cfg.almighty
+           << ", 攻击=" << m_cfg.atk << ", 精炼=" << m_cfg.refineATK << ", 元素=" << m_cfg.elementATK
+           << ", 攻速=" << m_cfg.attackSpeed << ", 施速=" << m_cfg.castingSpeed
+           << ", 爆伤=" << m_cfg.criticaldamage_set << ", 增伤=" << m_cfg.increasedamage_set
+           << ", 元素增伤=" << m_cfg.elementdamage_set
+           << ", fantasyConfig=" << m_cfg.fantasyConfig;
 
-    // 单次模拟的完整流程：构造 → 设种子 → 初始化 → 跑循环 → 收集统计
-    // captureLog 只在单次路径为 true：SimulationLog 是全局单例（ofstream + 非原子状态），
-    // 只能单线程使用，多线程路径必须关掉，否则日志会互相踩。
+    // 单次模拟：跑循环的部分全部委托给 Mage/Beam/SimulationHelper.h，
+    // 这里只负责两个「调用方关注点」—— 什么时候开调试日志、被取消时要停。
+    // captureLog 只在次数为 1 时为 true：SimulationLog 是全局单例
+    // （ofstream + 非原子状态），只能单线程使用，并行路径必须关掉。
     auto runOnce = [&](int index, bool captureLog)
     {
-        auto person = std::make_unique<Mage_Beam>(
-            m_primaryAttr, m_crit, m_quickness, m_lucky, m_proficient, m_almighty,
-            m_atk, m_refineAtk, m_elementAtk,
-            m_attackSpeed, m_castingSpeed,
-            m_critDmgSet, m_incSet, m_eleIncSet,
-            m_maxTime, m_fantasyConfig, m_weapon);
-
-        person->setRandomSeed(seeds[static_cast<std::size_t>(index)]);
-
-        auto init = std::make_unique<Initializer_Mage_Beam>(
-            person.get(), m_deltaTime, m_fantasyConfig, m_flowConfig);
-        init->Initialize();
-
-        person->autoAttackPtr->setTimer(0);
-
-        // 捕获调试日志时临时开 DEBUG，跑完立刻恢复
         bool logged = false;
-        if (captureLog)
-        {
-            Logger::setLevel(Logger::Level::DEBUG);
-            logged = SimulationLog::begin("gui", person.get(), params.str());
-        }
 
-        int currentTime = 0;
-        while (currentTime < m_maxTime &&
-               !m_cancel.load(std::memory_order_relaxed))
-        {
-            person->autoAttackPtr->update(m_deltaTime);
-            currentTime += m_deltaTime;
-            person->autoAttackPtr->setTimer(person->getSimulationTime() + m_deltaTime);
-        }
+        BeamRunHooks hooks;
+        hooks.shouldStop = [this]() { return m_cancel.load(std::memory_order_relaxed); };
 
         if (captureLog)
         {
-            if (logged)
-                SimulationLog::end();
-            Logger::setLevel(Logger::Level::WARNING);
+            hooks.afterInit = [&](Person* person)
+            {
+                Logger::setLevel(Logger::Level::DEBUG);
+                logged = SimulationLog::begin("gui", person, params.str());
+            };
+            // 关日志必须发生在统计之前：统计输出不属于调试日志
+            hooks.beforeStats = [&](Person*)
+            {
+                if (logged)
+                    SimulationLog::end();
+                Logger::setLevel(Logger::Level::WARNING);
+            };
         }
 
-        person->calculateDamageStatistics();
-        return person->damageStatsMap;
+        return runBeamSimulationOnceWithHooks(
+            m_cfg, seeds[static_cast<std::size_t>(index)], m_maxTime, m_deltaTime, hooks);
     };
 
     if (m_times == 1)
@@ -959,22 +908,11 @@ void MainWindow::onRunClicked()
         return;
     }
 
-    // 读取所有输入值
-    QString prof = "beam";
-    double primaryAttr = m_primaryAttrEdit->text().toDouble();
-    double crit = m_critEdit->text().toDouble();
-    double quickness = m_quicknessEdit->text().toDouble();
-    double lucky = m_luckyEdit->text().toDouble();
-    double proficient = m_proficientEdit->text().toDouble();
-    double almighty = m_almightyEdit->text().toDouble();
-    int atk = m_atkEdit->text().toInt();
-    int refineAtk = m_refineAtkEdit->text().toInt();
-    int elementAtk = m_elementAtkEdit->text().toInt();
-    double attackSpeed = m_attackSpeedEdit->text().toDouble();
-    double castingSpeed = m_castingSpeedEdit->text().toDouble();
-    double critDmgSet = m_critDmgSetEdit->text().toDouble();
-    double incSet = m_incSetEdit->text().toDouble();
-    double eleIncSet = m_eleIncSetEdit->text().toDouble();
+    // 面板字段统一由 buildBaseConfig() 读一次 —— 对比模式的基准走的也是这个函数，
+    // 两边共用才不会出现「同一个面板，单次模式和对比模式算出不同 DPS」。
+    // 这里只读不属于角色配置的模拟参数。
+    const SimConfig cfg = buildBaseConfig();
+
     int times = m_timesEdit->text().toInt();
     if (times <= 0)
     {
@@ -985,9 +923,6 @@ void MainWindow::onRunClicked()
     int deltaTime = m_deltaTimeEdit->text().toInt();
     bool randomSeed = m_randomSeedCheck->isChecked();
     uint32_t seed = m_seedEdit->text().toUInt();
-    int fantasyConfig = m_fantasyCombo->currentIndex();     // 面板index直接对应幻想配置0..7
-    int flowConfig = m_professionCombo->currentIndex();     // 0=急速精通流，1=幸运流
-    const WeaponConfig weapon = buildWeaponConfig();        // 与 CLI 同口径
 
     // 并行线程数：只在「模拟循环次数 > 1」时有意义；夹到 [1, 32]，且不超过次数
     int workerCount = m_threadsEdit->text().toInt();
@@ -1001,30 +936,7 @@ void MainWindow::onRunClicked()
 
     // 创建并启动工作线程
     m_workerThread = new QThread(this);
-    m_worker = new SimulationWorker(prof,
-                                    primaryAttr,
-                                    crit,
-                                    quickness,
-                                    lucky,
-                                    proficient,
-                                    almighty,
-                                    atk,
-                                    refineAtk,
-                                    elementAtk,
-                                    attackSpeed,
-                                    castingSpeed,
-                                    critDmgSet,
-                                    incSet,
-                                    eleIncSet,
-                                    times,
-                                    maxTime,
-                                    deltaTime,
-                                    randomSeed,
-                                    seed,
-                                    fantasyConfig,
-                                    flowConfig,
-                                    workerCount,
-                                    weapon);
+    m_worker = new SimulationWorker(cfg, times, maxTime, deltaTime, randomSeed, seed, workerCount);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &SimulationWorker::run);

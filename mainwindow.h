@@ -47,30 +47,29 @@ class SimulationWorker : public QObject
 {
     Q_OBJECT
 public:
-        explicit SimulationWorker(const QString& profession,
-                              double primaryAttr,
-                              double crit,
-                              double quickness,
-                              double lucky,
-                              double proficient,
-                              double almighty,
-                              int atk,
-                              int refineAtk,
-                              int elementAtk,
-                              double attackSpeed,
-                              double castingSpeed,
-                              double critDmgSet,
-                              double incSet,
-                              double eleIncSet,
+    /**
+     * @brief 构造时直接收一份完整配置
+     *
+     * @details 早先这里摊开了 26 个参数，与 SimConfig 的字段一一对应，
+     *          等于在「面板读取」和「模拟执行」之间又多了一份手抄清单；
+     *          手抄清单漏一个字段不会报错，只会算出另一个 DPS。
+     *          现在面板统一由 MainWindow::buildBaseConfig() 读一次。
+     *
+     * @param config      角色配置（站街面板 + 武器 + 幻想/流派）
+     * @param times       模拟循环次数，> 1 时按次分摊到 workerCount 个线程
+     * @param maxTime     单次模拟总时长（毫秒）
+     * @param deltaTime   模拟步长（毫秒）
+     * @param randomSeed  是否随机种子（否则每个种子都用 seed）
+     * @param seed        起始种子
+     * @param workerCount 并行线程数（times == 1 时忽略）
+     */
+    explicit SimulationWorker(const SimConfig& config,
                               int times,
                               int maxTime,
                               int deltaTime,
                               bool randomSeed,
                               uint32_t seed,
-                              int fantasyConfig,
-                              int flowConfig,
-                              int workerCount,
-                              const WeaponConfig& weapon);
+                              int workerCount);
     ~SimulationWorker(); 
     /// 请求取消（可从 GUI 线程调用；内部是原子写）
     void requestCancel() { m_cancel.store(true, std::memory_order_relaxed); }
@@ -80,30 +79,13 @@ signals:
     void logMessage(const QString& msg);
     void simulationFinished(const QVector<QVector<QVariant>>& stats, int totalTime);
 private:
-    QString m_profession;
-    double m_primaryAttr;
-    double m_crit;
-    double m_quickness;
-    double m_lucky;
-    double m_proficient;
-    double m_almighty;
-    int m_atk;
-    int m_refineAtk;
-    int m_elementAtk;
-    double m_attackSpeed;
-    double m_castingSpeed;
-    double m_critDmgSet;
-    double m_incSet;
-    double m_eleIncSet;
+    SimConfig m_cfg;          // 角色配置（与对比模式的基准同源，见 buildBaseConfig）
     int m_times;
     int m_maxTime;
     int m_deltaTime;
     bool m_randomSeed;
     uint32_t m_seed;
-    int m_fantasyConfig;  // 保存幻想配置索引
-    int m_flowConfig;     // 保存流派配置：0=急速精通流，1=幸运流
     int m_workerCount;    // 并行线程数（times>1 时生效）
-    WeaponConfig m_weapon;    // 武器第一/第二属性（与 CLI 同口径）
     std::atomic<bool> m_cancel{false};   // 取消标志（times>1 时被多个工作线程并发读）
 };
 

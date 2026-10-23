@@ -19,6 +19,9 @@
  *          就会随时间悄悄不一致（曾经 GUI 不传 weaponConfig，同一份面板在 GUI
  *          和 CLI 算出不同 DPS）。
  *
+ *          调用方各自的关注点（取消、调试日志开关）通过 BeamRunHooks 注入，
+ *          不要让调用方再复制一遍循环 —— 复制出来的那份迟早会漏掉某个修正。
+ *
  * @note 线程安全约定（做并行批量对比的前提）：
  *       本函数是纯函数式的，每次调用都新建自己的 Mage_Beam、只读入参、按值返回
  *       统计表，因此可以从 N 个线程同时调用，只要各线程传入自己的 cfg 和 seed。
@@ -33,20 +36,49 @@
  *       SimulationLog 不是线程安全的（ofstream + 非原子 bool），不要在并行路径调用。
  */
 
+/**
+ * @brief 单次模拟的三个可选钩子：取消与调试日志都挂在这里
+ *
+ * @details 这些是「调用方关注点」，不属于模拟本身，所以不放进 SimConfig
+ *          （SimConfig 要能被候选 lambda 整体复制，钩子带状态、不可复制语义）。
+ */
+struct BeamRunHooks
+{
+    /**
+     * @brief Initialize() 之后、主循环之前调用，参数是刚建好的 Person
+     * @details main_Beam 用它开 SimulationLog（需要注册表已填充，故必须在 Initialize 之后）
+     */
+    std::function<void(Person*)> afterInit;
+
+    /**
+     * @brief 主循环结束、calculateDamageStatistics() 之前调用
+     * @details SimulationLog 必须在这里关：放 afterInit 里关会把整段日志丢掉，
+     *          放到统计之后又会把统计输出混进文件
+     */
+    std::function<void(Person*)> beforeStats;
+
+    /**
+     * @brief 每个 tick 开始前问一次，返回 true 则提前结束本次模拟（GUI 取消）
+     * @warning 会被多个工作线程并发调用，必须线程安全（通常是读一个 atomic 标志）；
+     *          不能用 QThread::currentThread()->isInterruptionRequested()，
+     *          在 std::thread 里它恒为 false，取消会静默失效
+     */
+    std::function<bool()> shouldStop;
+};
+
 namespace beam_sim_detail {
 
 /**
- * @brief 真正的实现。外部请用下面三个具名入口，不要直接调这个。
+ * @brief 真正的实现。外部请用下面的具名入口，不要直接调这个。
  *
- * @param afterInit 可选钩子：Initialize() 之后、主循环之前调用，参数是刚建好的
- *                  Person*。main_Beam 用它开 SimulationLog；其余调用方传空。
+ * @param hooks 三个可选钩子，全空即等价于「跑完一整轮、什么都不插」
  */
 inline std::unordered_map<std::string, DamageStatistics> runOnceImpl(
     const SimConfig& cfg,
     std::uint32_t seed,
     int maxTime,
     int deltaTime,
-    const std::function<void(Person*)>& afterInit)
+    const BeamRunHooks& hooks)
 {
     auto person = std::make_unique<Mage_Beam>(
         cfg.primaryAttributes, cfg.critical, cfg.quickness, cfg.lucky, cfg.proficient, cfg.almighty,
@@ -59,17 +91,27 @@ inline std::unordered_map<std::string, DamageStatistics> runOnceImpl(
     auto init = std::make_unique<Initializer_Mage_Beam>(person.get(), deltaTime, cfg.fantasyConfig, cfg.flowConfig);
     init->Initialize();
 
-    if (afterInit)
+    if (hooks.afterInit)
     {
-        afterInit(person.get());
+        hooks.afterInit(person.get());
     }
 
     int currentTime = 0;
     while (currentTime < maxTime)
     {
+        if (hooks.shouldStop && hooks.shouldStop())
+        {
+            break;
+        }
+
         person->autoAttackPtr->update(deltaTime);
         currentTime += deltaTime;
         person->autoAttackPtr->setTimer(person->getSimulationTime() + deltaTime);
+    }
+
+    if (hooks.beforeStats)
+    {
+        hooks.beforeStats(person.get());
     }
 
     person->calculateDamageStatistics();
@@ -89,21 +131,23 @@ inline std::unordered_map<std::string, DamageStatistics> runOnceImpl(
 inline std::unordered_map<std::string, DamageStatistics> runBeamSimulationOnce(
     const SimConfig& cfg, std::uint32_t seed, int maxTime, int deltaTime)
 {
-    return beam_sim_detail::runOnceImpl(cfg, seed, maxTime, deltaTime, {});
+    return beam_sim_detail::runOnceImpl(cfg, seed, maxTime, deltaTime, BeamRunHooks{});
 }
 
 /**
- * @brief 同上，但允许在 Initialize() 之后、主循环之前插入一段逻辑
+ * @brief 带钩子的版本（GUI / main_Beam 用），其余三个参数同 runBeamSimulationOnce
  *
- * main_Beam 用它开 SimulationLog（需要拿到 Person*）。
- * 单独一个函数而不是给上面那个加默认参数，原因见上面的注释。
+ * @details 不能给 4 参版本加一个带默认值的钩子参数：默认参数不改变函数类型，
+ *          但一旦声明成 5 个形参，函数指针类型就变成 5 参，
+ *          `SimulateFn simulate = runBeamSimulationOnce;` 这种写法会编译失败。
+ *          所以「插钩子」必须显式写 5 参，调用点一眼能看出这里额外做了事。
  */
-inline std::unordered_map<std::string, DamageStatistics> runBeamSimulationOnceWithHook(
+inline std::unordered_map<std::string, DamageStatistics> runBeamSimulationOnceWithHooks(
     const SimConfig& cfg,
     std::uint32_t seed,
     int maxTime,
     int deltaTime,
-    const std::function<void(Person*)>& afterInit)
+    const BeamRunHooks& hooks)
 {
-    return beam_sim_detail::runOnceImpl(cfg, seed, maxTime, deltaTime, afterInit);
+    return beam_sim_detail::runOnceImpl(cfg, seed, maxTime, deltaTime, hooks);
 }
