@@ -426,7 +426,7 @@ $LASTEXITCODE            # PowerShell 查退出码
 | 目标 | 文件 | 跑什么 | 当前内容 | 耗时 |
 |---|---|---|---|---|
 | `dps_unit_tests` | `tests/test_attributes.cpp`<br>`tests/test_comparison_parallel.cpp` | 属性换算/边界/守恒等**不变量**；并行执行与串行逐位一致 | 15 个用例 | 毫秒级 |
-| `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 并行隔离 | 5 个用例 | **0.7 秒** |
+| `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 取消钩子 + 并行隔离 | 6 个用例 | **0.8 秒** |
 
 **为什么拆两个 exe**：拆进程是最彻底的隔离手段。`dps_golden_tests` 里还要跑双线程并行，
 单独一个可执行文件能保证它不受单元测试留下的状态影响。

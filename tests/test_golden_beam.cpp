@@ -183,6 +183,42 @@ TEST(golden_beam_canary, "金丝雀：同种子连跑两遍")
     }
 }
 
+// ---------------------------------------------------------------------------
+// BeamRunHooks：GUI 的取消与调试日志都挂在这几个钩子上
+//
+// 这里只测「提前结束」：它保证取消不会把整轮模拟跑完（关窗口要立刻退出）。
+// 日志钩子依赖 SimulationLog 这个全局单例，测试进程里没有意义，不测。
+// ---------------------------------------------------------------------------
+TEST(beam_run_hooks_stop_early, "取消钩子：中途返回 true 应提前结束模拟")
+{
+    const auto full = runBeamSimulationOnce(defaultBeamSimConfig(), kSeed, kMaxTime, kDeltaTime);
+
+    int tickCalls = 0;   // shouldStop 被问了几次
+    int initCalls = 0;   // afterInit 触发次数
+    int statsCalls = 0;  // beforeStats 触发次数
+    int seq = 0;
+    int initSeq = 0;
+    int statsSeq = 0;
+
+    BeamRunHooks hooks;
+    hooks.afterInit   = [&](Person*) { initCalls++;  initSeq  = ++seq; };
+    hooks.beforeStats = [&](Person*) { statsCalls++; statsSeq = ++seq; };
+    hooks.shouldStop  = [&]() { return ++tickCalls > 1000; };
+
+    const auto partial = runBeamSimulationOnceWithHooks(
+        defaultBeamSimConfig(), kSeed, kMaxTime, kDeltaTime, hooks);
+
+    CHECK_EQ(initCalls, 1);      // 每个钩子恰好一次
+    CHECK_EQ(statsCalls, 1);
+    CHECK_TRUE(initSeq < statsSeq);   // afterInit 必须早于 beforeStats
+    CHECK_EQ(tickCalls, 1001);        // 第 1001 次询问返回 true 后才停，不再多问
+
+    // 只跑了 1000 tick（10 秒）：总伤害应远小于 180 秒的完整一轮，但又不为 0
+    const double partialDamage = totalAllDamage(partial);
+    CHECK_TRUE(partialDamage > 0);
+    CHECK_TRUE(partialDamage < totalAllDamage(full) * 0.2);
+}
+
 TEST(thread_init_base_coverage, "并行初始化基准覆盖完整")
 {
     SimConfig base;
