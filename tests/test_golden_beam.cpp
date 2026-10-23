@@ -182,3 +182,55 @@ TEST(golden_beam_canary, "金丝雀：同种子连跑两遍")
         CHECK_EQ(stat1.releasedTimes,    stat2.releasedTimes);
     }
 }
+
+TEST(thread_init_base_coverage, "并行初始化基准覆盖完整")
+{
+    SimConfig base;
+    base.label = "基准";
+    base.primaryAttributes = 6760;
+    base.critical = 5;
+    base.quickness = 30;
+    base.lucky = 5;
+    base.proficient = 45;
+    base.almighty = 10;
+    base.atk = 5000;
+    base.refineATK = 1000;
+    base.elementATK = 230;
+    base.attackSpeed = 0;
+    base.castingSpeed = 0;
+    base.criticaldamage_set = 0;
+    base.increasedamage_set = 0;
+    base.elementdamage_set = 0;
+    base.fantasyConfig = 5;
+    // 武器第一/第二属性：与 main_Beam.cpp / GUI 同口径（精通 + 急速，6% 增效、8% 加成）
+    base.weapon.first = SecondaryAttributeConfig::Proficient;
+    base.weapon.second = SecondaryAttributeConfig::Quickness;
+    base.weapon.enhanceIncrease = 0.06;
+    base.weapon.extraIncrease = 0.08;
+
+    // 用确定性假模拟：DPS 直接等于 seed，才能逐值反查覆盖是否完整。
+    // 若换成真实模拟（runBeamSimulationOnce），DPS 不可预测，只能断言"非 NaN"。
+    const SimulateFn fake = [](const SimConfig&, std::uint32_t seed, int, int)
+    {
+        std::unordered_map<std::string, DamageStatistics> m;
+        DamageStatistics s;
+        s.skillName = "Fake";
+        s.damage = static_cast<double>(seed);
+        s.damageCount = 1;
+        m["Fake"] = s;
+        return m;
+    };
+
+    for (int tc : {1, 3, 8, 20, 100})
+    {
+        for (int sc : {1, 5, 7, 20})
+        {
+            std::vector<double> out(sc, std::nan(""));
+            threadInitializeBase(base, 42, sc, 1000, 10, tc, fake, out);
+
+            // 覆盖完整：每个位置都被写过（NaN 残留 = 漏算），且值对应正确的种子
+            for (int i = 0; i < sc; ++i)
+                CHECK_EQ(out[i], static_cast<double>(42 + i));
+        }
+    }
+}

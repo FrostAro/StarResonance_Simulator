@@ -152,6 +152,7 @@ enable_testing()
 # 顺带让 ctest 的报告能直接指认是"数值单元测试"还是"黄金基线"挂了。
 add_executable(dps_unit_tests
     tests/test_attributes.cpp
+    tests/test_comparison_parallel.cpp
     tests/test_main.cpp
     ${BEAM_SOURCES}
 )
