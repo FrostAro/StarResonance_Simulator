@@ -72,6 +72,31 @@ cmake --build build --config Release --target all --parallel 4
 ./build/bin/Release/dps_simulator_icicle.exe
 ```
 
+#### 可执行程序一览
+
+| 程序 | 用途 |
+|---|---|
+| `dps_simulator_gui` | 图形界面（模拟 + 对比模式） |
+| `dps_simulator_beam` | 射线单次/串行多次模拟，输出每次明细 |
+| `dps_simulator_beam_parallel` | **射线并行多次模拟**，只输出平均 DPS 与波动 |
+| `dps_simulator_beam_max` | 各场景技能伤害峰值统计 |
+| `dps_simulator_icicle` | 冰矛单次模拟 |
+| `dps_simulator_compare` | 对比模式命令行走廊（同种子配对，可多线程） |
+
+`dps_simulator_beam_parallel` 用法：
+
+```bash
+./build/bin/Release/dps_simulator_beam_parallel.exe [次数=8] [线程数=8] [种子=42] [1=随机种子]
+
+# 例：8 次 8 线程，固定种子 42..49（可复现）
+./build/bin/Release/dps_simulator_beam_parallel.exe 8 8 42
+# 例：16 次随机种子
+./build/bin/Release/dps_simulator_beam_parallel.exe 16 16 42 1
+```
+
+固定种子时第 `i` 次使用 `种子+i`，所以「次数 8 线程 1」与「次数 8 线程 8」的
+输出逐字相同（实测 1.01 s → 0.21 s，4.9 倍）。
+
 #### Windows / MinGW-w64 GCC
 
 ```powershell
