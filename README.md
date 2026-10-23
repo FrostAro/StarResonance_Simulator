@@ -156,11 +156,26 @@ std::unique_ptr<Mage_Beam> p = std::make_unique<Mage_Beam>(
 ### 控制台用法
 
 ```bash
-./bin/dps_simulator_compare [配对数] [起始种子]
+./bin/dps_simulator_compare [配对数] [起始种子] [线程数]
 ```
 
 - `配对数`：默认 20，建议 20+，越多越稳
 - `起始种子`：默认 42，配对使用的种子为 `起始种子 .. 起始种子+配对数-1`
+- `线程数`：默认 8，传 `1` 即串行
+
+对比任务是 `(1 + 候选数) × 配对数` 个**互相独立**的模拟，可以直接并行。实测（5 候选 × 20 对 = 120 次，32 逻辑核）：
+
+| 线程数 | 耗时 | 加速比 |
+|---|---|---|
+| 1（串行） | 10.7 s | 1.0× |
+| 4 | 3.7 s | 2.9× |
+| **8（默认）** | **2.3 s** | **4.6×** |
+| 16 | 1.5 s | 7.1× |
+| 32 | 1.3 s | 8.3× |
+
+超过 16 线后收益明显递减（内存带宽/缓存限制），所以默认给 8、可自己调。
+
+**并行与串行的结果逐位相同** —— 聚合仍按种子升序进行，浮点求和顺序不变；`tests/test_comparison_parallel.cpp` 守着这一点。
 
 修改 `main_compare.cpp` 三处：
 
@@ -203,6 +218,10 @@ make([](SimConfig& c){ c.fantasyConfig = 0; }, "换幻想0");     // 幻想：�
    ```
 
 4. 点「运行模拟」，结果表显示每个候选的 基准DPS/候选DPS/ΔDPS/Δ%/配对σ/t值（ΔDPS、Δ% 绿涨红跌）
+
+> 目前只有命令行版支持多线程对比；GUI 仍在用串行路径（结果与并行相同，只是慢一些）。
+> GUI 接并行时需要把取消回调从 `QThread` 中断位换成 `std::atomic<bool>`
+> （中断位在非 Qt 线程里恒为 false，会导致取消静默失效）。
 
 **候选关键词表：**
 
@@ -254,15 +273,15 @@ cd build && ctest -C Release --output-on-failure
 ```
 
 ```
-1/2 Test #1: unit_tests .......   Passed    0.01 sec
-2/2 Test #2: golden_beam ......   Passed    0.59 sec
+1/2 Test #1: unit_tests .......   Passed    0.04 sec
+2/2 Test #2: golden_beam ......   Passed    0.55 sec
 100% tests passed, 0 tests failed out of 2
 ```
 
-| 目标 | 测什么 | 抓什么 |
-|---|---|---|
-| `dps_unit_tests` | 属性换算、边界、守恒等**不变量** | 「算错了」 |
-| `dps_golden_tests` | 固定种子跑完整 180 秒，对比**钉值** + 金丝雀 + **双线程并行隔离** | 「变了」 |
+| 目标 | 文件 | 测什么 | 抓什么 |
+|---|---|---|---|
+| `dps_unit_tests` | `test_attributes.cpp`<br>`test_comparison_parallel.cpp` | 属性换算/边界/守恒等**不变量**，以及并行对比与串行逐位一致 | 「算错了」 |
+| `dps_golden_tests` | `test_golden_beam.cpp`<br>`test_parallel_isolation.cpp` | 固定种子跑完整 180 秒，对比**钉值** + 金丝雀 + 双线程并行隔离 | 「变了」 |
 
 改数值时：不变量测试应仍绿，黄金基线**必然红**——那不是失败，是「提醒你该重钉了」。
 流程是「记录新值 → 更新钉值 → 提交信息写明旧值→新值」。

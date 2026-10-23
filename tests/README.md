@@ -19,8 +19,10 @@
    - [两个测试目标的分工](#两个测试目标的分工)
    - [两套测试抓的东西不一样](#核心概念两套测试抓的东西不一样)
    - [黄金基线的口径](#黄金基线的口径很容易搞错)
-   - [钉值优先级：整数计数 &gt; 浮点 DPS](#钉值优先级整数计数--浮点-dps)
-   - [金丝雀：为什么必须顺序跑](#金丝雀为什么必须顺序跑)
+   - [钉值优先级：整数计数 > 浮点 DPS](#钉值优先级整数计数--浮点-dps)
+   - [金丝雀：检测进程级状态残留](#金丝雀检测进程级状态残留)
+   - [并行隔离](#并行隔离多-person-同时跑必须和单线程一致)
+   - [并行对比](#并行对比结果必须与串行逐位相同)
    - [重钉（re-pin）流程](#重钉re-pin流程)
 5. [加一个新测试](#5-加一个新测试)
 6. [约定与限制](#6-约定与限制)
@@ -423,8 +425,8 @@ $LASTEXITCODE            # PowerShell 查退出码
 
 | 目标 | 文件 | 跑什么 | 当前内容 | 耗时 |
 |---|---|---|---|---|
-| `dps_unit_tests` | `tests/test_attributes.cpp` | 属性换算、边界、守恒等**不变量** | 6 个用例 / 16 条断言 | 毫秒级 |
-| `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 并行隔离 | 4 个用例 | **0.7 秒** |
+| `dps_unit_tests` | `tests/test_attributes.cpp`<br>`tests/test_comparison_parallel.cpp` | 属性换算/边界/守恒等**不变量**；并行对比与串行逐位一致 | 12 个用例 | 毫秒级 |
+| `dps_golden_tests` | `tests/test_golden_beam.cpp`<br>`tests/test_parallel_isolation.cpp` | 完整 180 秒模拟：对比**钉值** + 金丝雀 + 并行隔离 | 5 个用例 | **0.7 秒** |
 
 **为什么拆两个 exe**：拆进程是最彻底的隔离手段。`dps_golden_tests` 里还要跑双线程并行，
 单独一个可执行文件能保证它不受单元测试留下的状态影响。
@@ -521,6 +523,26 @@ workerA.join(); workerB.join();
 
 **这条测试是「监听器表下放 Person」的毕业证**。把 `ActionListeners` 的表改回
 进程级共享（`inline static`），它会立刻崩溃 —— 已验证。
+
+### 并行对比：结果必须与串行逐位相同
+
+`core/Comparison.cpp` 有两条路径：串行 `runPairedComparison` 与并行
+`threadInitializeBase + threadComparison`（统一入口 `threadRunPairedComparison`）。
+
+`tests/test_comparison_parallel.cpp` 用**确定性假模拟**（DPS 只由 `cfg.atk` 和 `seed` 决定）
+跑毫秒级验证：
+
+| 用例 | 抓什么 |
+|---|---|
+| 并行基准初始化：种子覆盖完整 | 余数种子漏算、下标错位（NaN 预填 + 期望值精确比对） |
+| 候选与基准相同时提升为 0 | 统计里混进多余的 0 样本（曾导致相同配置报 −20%） |
+| 并行与串行逐字段相等 | 聚合顺序变了 → 浮点末位漂移 |
+| 空候选 / 非法配对数 | 除零、空输入 |
+| 取消语义 | 只输出「所有种子都完成」的候选，且清空旧结果 |
+| 统一入口 | 各线程数下与串行一致、取消正确传播 |
+
+> 并行化的关键约定：**结果按任务号落槽，再按种子升序聚合**。只要守住这一条，
+> 并行与串行的浮点结果就完全一致，不需要容差。
 
 ### 重钉（re-pin）流程
 
@@ -745,6 +767,8 @@ TEST(no_negative_count_on_low_panel, "低面板不产生负点数")
 |---|---|
 | `tests/TestHarness.h` | 框架本体（宏 + 内部函数） |
 | `tests/test_main.cpp` | 运行器（`main`，两个测试程序共用） |
-| `tests/test_attributes.cpp` | 数值单元测试 |
-| `tests/test_golden_beam.cpp` | 黄金基线测试 |
+| `tests/test_attributes.cpp` | 数值单元测试（属性换算、边界、守恒） |
+| `tests/test_comparison_parallel.cpp` | 并行对比一致性（覆盖完整性、串行/并行逐位相等、取消） |
+| `tests/test_golden_beam.cpp` | 黄金基线 + 金丝雀 |
+| `tests/test_parallel_isolation.cpp` | 双线程模拟隔离 |
 | `CMakeLists.txt` 第 6 节 | `enable_testing()` + 两个测试目标 + `add_test` |
