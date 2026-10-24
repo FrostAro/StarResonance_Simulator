@@ -101,7 +101,7 @@ TEST(golden_beam_default, "黄金基线：默认面板")
     const double totalDPS  = allDamage / (kMaxTime / 1000.0);
 
     // 1. 总 DPS ±0.01%（含幸运伤害）
-    CHECK_NEAR(totalDPS, 5372804.2890256951, totalDPS * 0.0001);
+    CHECK_NEAR(totalDPS, 4953874.9379231595, totalDPS * 0.0001);
 
     // 2. 四个主力技能占比各 ±0.5pp（分子只有普通伤害）
     //    用 .at() 而不是 []：技能没出伤时直接抛异常、能立刻定位，

@@ -18,7 +18,7 @@ Buff::Buff(Person *p)
 void Buff::addStack(const double n)
 {
     this->lastStack = stack;  // 保存上一次的层数
-    if (this->stack < this->maxStack)
+    if (this->stack + n < this->maxStack)
     {
         this->stack += n;     // 增加层数
     }

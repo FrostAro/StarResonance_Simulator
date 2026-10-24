@@ -1832,7 +1832,7 @@ ConquerorBuff::ConquerorBuff(Person *p, double)
 void ConquerorBuff::listenerCallback(DamageInfo &info)
 {
     // 射线出伤8次后给予叠势buff
-    if(info.skillName == Beam::name)
+    if(info.skillName == Beam::name && this->p->findBuffInBuffList(BreakThroughBuff::name) == -1)
     {
         this->count += 1;
     }
@@ -1860,7 +1860,6 @@ StackMomentumBuff::StackMomentumBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 8000;
     this->maxDuration = this->duration;
-    this->isInherent = true;
     this->isStackable = true;
     this->maxStack = 5;
 
@@ -1908,7 +1907,6 @@ BreakThroughBuff::BreakThroughBuff(Person *p, double n) : Buff(p)
 {
     this->duration = 8000;
     this->maxDuration = this->duration;
-    this->isInherent = true;
 
     this->enhance = 1.5;
     this->number = 400;

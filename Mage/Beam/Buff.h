@@ -625,6 +625,8 @@ public:
     ~WaterSpoutRealBuff() override;
 };
 
+
+// 叠势迸破
 class ConquerorBuff : public Buff
 {
 public:
@@ -653,7 +655,6 @@ public:
     int triggerNum = 5;
 
 public:
-    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;
@@ -670,7 +671,6 @@ public:
     double enhance = 1.5;
 
 public:
-    static constexpr bool kInherent = true;   // 编译期固有标记：供 Initializer 判定，无需构造临时实例
     void update(double deltaTime) override;
     bool shouldBeRemoved() override;
     std::string getBuffName() const override;

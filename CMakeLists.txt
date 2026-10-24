@@ -97,14 +97,14 @@ if(MSVC)
 endif()
 
 # ===== 2. 创建冰矛控制台程序 =====
-add_executable(dps_simulator_icicle ${ICICLE_SOURCES} ./main_icicle.cpp)
+add_executable(dps_simulator_icicle ${ICICLE_SOURCES} ./main_Icicle.cpp)
 target_link_libraries(dps_simulator_icicle PRIVATE core_lib)
 set_target_properties(dps_simulator_icicle PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # ===== 3. 创建射线控制台程序 =====
-add_executable(dps_simulator_beam ${BEAM_SOURCES} ./main_beam.cpp)
+add_executable(dps_simulator_beam ${BEAM_SOURCES} ./main_Beam.cpp)
 target_link_libraries(dps_simulator_beam PRIVATE core_lib)
 set_target_properties(dps_simulator_beam PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
