@@ -134,7 +134,7 @@ Person::Person(const double PrimaryAttributes, const double critical, const doub
         }
     }
     this->enhanceIncrease += weaponConfig.enhanceIncrease;
-    this->triggerAction<AttackIncreaseModifyAction>(weaponConfig.extraIncrease);
+    // this->triggerAction<AttackIncreaseModifyAction>(weaponConfig.extraIncrease);
     // 计算属性数值（将百分比转换为属性点数）
     // 可点数化部分 = 总值 - 基础 - 额外通道，必须夹取后再反解：
     // 面板低于 基础+额外 时（暴击/幸运 < base+6%、精通 < 12%、急速/全能 < 6%）
